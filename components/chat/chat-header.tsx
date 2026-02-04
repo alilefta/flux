@@ -16,7 +16,7 @@ export const ChatHeader = ({ serverId, name, type, imageUrl }: ChatHeaderProps) 
 	return (
 		<div className="text-md font-semibold px-4 flex items-center h-12 border-b border-white/5 bg-white/[0.02] shrink-0 backdrop-blur-sm z-10">
 			{/* 1. Mobile Toggle (Hidden on Desktop) */}
-			<button className="md:hidden mr-2 text-zinc-400 hover:text-white transition-colors">
+			<button title="Show menu" className="md:hidden mr-2 text-zinc-400 hover:text-white transition-colors">
 				<Menu className="w-5 h-5" />
 			</button>
 
@@ -41,7 +41,7 @@ export const ChatHeader = ({ serverId, name, type, imageUrl }: ChatHeaderProps) 
 								<Wifi className="w-3 h-3" />
 							</div>
 						</TooltipTrigger>
-						<TooltipContent className="bg-black border-white/10 text-xs">Real-time connection: Stable</TooltipContent>
+						<TooltipContent className="bg-black border-white/10 text-xs text-zinc-500">Real-time connection: Stable</TooltipContent>
 					</Tooltip>
 				</TooltipProvider>
 
@@ -54,7 +54,7 @@ export const ChatHeader = ({ serverId, name, type, imageUrl }: ChatHeaderProps) 
 					</kbd>
 				</div>
 
-				<button className="text-zinc-400 hover:text-white transition-colors">
+				<button title="User Settings" className="text-zinc-400 hover:text-white transition-colors">
 					<User className="w-5 h-5" />
 				</button>
 			</div>

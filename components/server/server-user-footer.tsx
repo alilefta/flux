@@ -38,7 +38,7 @@ export const ServerUserFooter = () => {
 					/>
 				</div>
 
-				<div className="flex flex-col max-w-[80px]">
+				<div className="flex flex-col max-w-20">
 					<span className="text-xs font-semibold text-white truncate">{user.username || user.firstName || "User"}</span>
 					<span className="text-[10px] text-zinc-400 truncate font-mono">Online</span>
 				</div>

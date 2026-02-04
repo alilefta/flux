@@ -12,3 +12,182 @@ generator client {
 datasource db {
   provider = "postgresql"
 }
+
+// 1. PROFILE: The Master User Record (Synced with Clerk)
+model Profile {
+  id        String    @id @default(uuid())
+  userId    String    @unique // The Clerk ID
+  name      String
+  imageUrl  String    @db.Text
+  email     String    @db.Text
+  
+  // Relations
+  servers   Server[]  // Servers I created (Owned)
+  members   Member[]  // Servers I joined (As a member)
+  channels  Channel[] // Channels I created
+
+   conversationsInitiated Conversation[] @relation("MemberOne")
+  conversationsReceived  Conversation[] @relation("MemberTwo")
+  directMessages         DirectMessage[]
+  
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+}
+
+// 2. SERVER: The Workspace (The "Building")
+model Server {
+  id         String @id @default(uuid())
+  name       String
+  imageUrl   String @db.Text
+  inviteCode String @unique // For inviting others
+
+  profileId  String // Who owns this server?
+  profile    Profile @relation(fields: [profileId], references: [id], onDelete: Cascade)
+
+  // Relations
+  members    Member[]
+  channels   Channel[]
+
+  memberCount Int @default(1) // Owner counts as member
+
+
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  @@index([profileId])
+}
+
+// 3. MEMBER: The "Badge" (Links a Profile to a Server)
+// This stores your ROLE (Admin/Guest) for this specific server
+enum MemberRole {
+  ADMIN
+  MODERATOR
+  GUEST
+}
+
+model Member {
+  id   String     @id @default(uuid())
+  role MemberRole @default(GUEST)
+
+  profileId String
+  profile   Profile @relation(fields: [profileId], references: [id], onDelete: Cascade)
+
+  serverId  String
+  server    Server @relation(fields: [serverId], references: [id], onDelete: Cascade)
+
+  // Relations
+  messages Message[] // Messages this member wrote in this server
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([profileId])
+  @@index([serverId])
+}
+
+// 4. CHANNEL: The "Room" (Inside a Server)
+enum ChannelType {
+  TEXT
+  AUDIO
+  VIDEO
+}
+
+model Channel {
+  id   String      @id @default(uuid())
+  name String
+  type ChannelType @default(TEXT)
+
+  profileId String // Who created the channel
+  profile   Profile @relation(fields: [profileId], references: [id], onDelete: Cascade)
+
+  serverId  String
+  server    Server @relation(fields: [serverId], references: [id], onDelete: Cascade)
+
+  // Relations
+  messages  Message[]
+
+  isDefault Boolean @default(false) // The "general" channel, when u create a server u should have at least 1 channel that cannot be deleted and show first in the list
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([profileId])
+  @@index([serverId])
+}
+
+// 5. MESSAGE: The content
+model Message {
+  id      String  @id @default(uuid())
+  content String  @db.Text
+  fileUrl String? @db.Text // Optional attachment
+
+  memberId String
+  member   Member @relation(fields: [memberId], references: [id], onDelete: Cascade)
+
+  channelId String
+  channel   Channel @relation(fields: [channelId], references: [id], onDelete: Cascade)
+
+  deleted Boolean @default(false) // Soft delete (don't actually remove from DB)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  edited Boolean @default(false) // Flag for UI: "edited" badge
+
+  @@index([channelId])
+  @@index([memberId])
+}
+// Add to your schema:
+
+// 6. CONVERSATION: 1:1 DM between two profiles
+model Conversation {
+  id String @id @default(uuid())
+
+  memberOneId String
+  memberOne   Profile @relation("MemberOne", fields: [memberOneId], references: [id], onDelete: Cascade)
+
+  memberTwoId String
+  memberTwo   Profile @relation("MemberTwo", fields: [memberTwoId], references: [id], onDelete: Cascade)
+
+  directMessages DirectMessage[]
+
+  @@unique([memberOneId, memberTwoId])
+  @@index([memberTwoId])
+}
+
+// 7. DIRECT_MESSAGE: Messages in a DM
+model DirectMessage {
+  id      String  @id @default(uuid())
+  content String  @db.Text
+  fileUrl String? @db.Text
+
+  memberId String
+  member   Profile @relation(fields: [memberId], references: [id], onDelete: Cascade)
+
+  conversationId String
+  conversation   Conversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+
+  deleted Boolean @default(false)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([memberId])
+  @@index([conversationId])
+}
+
+
+// model ChannelReadStatus {
+//   id String @id @default(uuid())
+
+//   memberId  String
+//   member    Member @relation(fields: [memberId], references: [id], onDelete: Cascade)
+
+//   channelId String
+//   channel   Channel @relation(fields: [channelId], references: [id], onDelete: Cascade)
+
+//   lastReadMessageId String? // ID of last message they read
+
+//   @@unique([memberId, channelId])
+//   @@index([memberId])
+//   @@index([channelId])
+// }
