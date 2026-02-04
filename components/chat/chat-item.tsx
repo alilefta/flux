@@ -37,7 +37,7 @@ export const ChatItem = ({ id, content, member, timestamp, fileUrl, deleted, cur
 	const canEditMessage = !deleted && isOwner && !fileUrl;
 
 	return (
-		<div className="relative group flex items-start gap-x-3 py-4 px-6 hover:bg-white/[0.02] transition w-full">
+		<div className="relative group flex items-start gap-x-3 py-4 px-6 hover:bg-white/2 transition w-full">
 			{/* 1. Avatar */}
 			<div className="cursor-pointer hover:drop-shadow-md transition">
 				<div className="relative w-10 h-10 rounded-full overflow-hidden border border-white/10">

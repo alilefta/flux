@@ -16,9 +16,9 @@ datasource db {
 // 1. PROFILE: The Master User Record (Synced with Clerk)
 model Profile {
   id        String    @id @default(uuid())
-  userId    String    @unique // The Clerk ID
+  clerkId    String    @unique // The Clerk ID
   name      String
-  imageUrl  String    @db.Text
+  imageUrl  String?    @db.Text
   email     String    @db.Text
   
   // Relations
@@ -49,7 +49,6 @@ model Server {
   channels   Channel[]
 
   memberCount Int @default(1) // Owner counts as member
-
 
   createdAt  DateTime @default(now())
   updatedAt  DateTime @updatedAt

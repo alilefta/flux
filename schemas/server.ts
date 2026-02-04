@@ -13,3 +13,8 @@ export const ServerSchema = z.object({
 });
 
 export type Server = z.infer<typeof ServerSchema>;
+
+export const CreateServerActionSchema = z.object({
+	name: z.string(),
+	imageUrl: z.string(),
+});
