@@ -4,11 +4,11 @@ import { ServerSidebar } from "@/components/server/server-sidebar";
 
 interface ServerLayoutProps {
 	children: React.ReactNode;
-	params: { serverId: string };
+	params: Promise<{ serverId: string }>;
 }
 
-export default function ServerLayout({ children, params }: ServerLayoutProps) {
-	const serverId = params.serverId;
+export default async function ServerLayout({ children, params }: ServerLayoutProps) {
+	const { serverId } = await params;
 	const server = dummyServers.find((s) => s.id === serverId) || dummyServers[0];
 
 	return (

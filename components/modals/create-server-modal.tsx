@@ -6,13 +6,13 @@ import * as z from "zod";
 import { useRouter } from "next/navigation";
 import { useModal } from "@/hooks/use-modal-store";
 import { useAction } from "next-safe-action/hooks";
-import { createServer } from "@/actions/server";
+import { createServerAction } from "@/actions/server";
 import { toast } from "sonner";
 import { Loader2, ShieldCheck, Terminal } from "lucide-react";
 
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
-import { FluxInput } from "./inputs/flux-input";
+import { FluxInput } from "@/components/custom-ui/inputs/flux-input";
 import { ServerImageUpload } from "./inputs/server-image-upload";
 
 // Re-define schema locally to ensure form types match strict Zod expectations
@@ -41,11 +41,11 @@ export const CreateServerModal = () => {
 		handleSubmit,
 		control,
 		reset,
-		formState: { isValid, isSubmitting: isFormSubmitting }, // RHF submitting state
+		formState: { isValid }, // RHF submitting state
 	} = methods;
 
 	// Next-Safe-Action Hook
-	const { execute, status } = useAction(createServerAction, {
+	const { executeAsync: executeCreateServer, isExecuting: isCreatingServer } = useAction(createServerAction, {
 		onSuccess: ({ data }) => {
 			if (data?.success && data.server) {
 				toast.success("DEPLOYMENT_SUCCESSFUL", {
@@ -66,10 +66,8 @@ export const CreateServerModal = () => {
 		},
 	});
 
-	const isExecuting = status === "executing" || isFormSubmitting;
-
 	const onSubmit = (values: FormData) => {
-		execute(values);
+		executeCreateServer(values);
 	};
 
 	const handleClose = () => {
@@ -79,51 +77,42 @@ export const CreateServerModal = () => {
 
 	return (
 		<Dialog open={isModalOpen} onOpenChange={handleClose}>
-			<DialogContent className="bg-[#09090b]/90 backdrop-blur-2xl border border-white/5 text-white p-0 overflow-hidden shadow-2xl max-w-md gap-0">
+			<DialogContent className="bg-[#09090b] border border-white/10 text-white p-0 overflow-hidden shadow-2xl sm:max-w-110 gap-0 rounded-2xl">
 				{/* HEADER */}
-				<div className="pt-8 px-8 pb-6 border-b border-white/5 bg-white/[0.02]">
-					<DialogTitle className="text-xl text-center font-black uppercase tracking-tight flex items-center justify-center gap-2">
-						<Terminal size={18} className="text-primary" />
-						Initialize_Server
-					</DialogTitle>
-					<DialogDescription className="text-center text-zinc-500 font-mono text-[10px] mt-2 uppercase tracking-widest">Allocate_Resources // Define_Identity</DialogDescription>
-				</div>
+				<DialogHeader className="pt-8 px-6 bg-zinc-900/50 pb-6 border-b border-white/5">
+					<DialogTitle className="text-2xl text-center font-bold">Customize your server</DialogTitle>
+					<DialogDescription className="text-center text-zinc-400">Give your new workspace a personality with a name and an icon.</DialogDescription>
+				</DialogHeader>
 
 				<FormProvider {...methods}>
-					<form onSubmit={handleSubmit(onSubmit)} className="flex flex-col">
-						<div className="p-8 space-y-8">
-							{/* 1. VISUAL INGEST */}
-							<ServerImageUpload control={control} name="imageUrl" />
+					<form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
+						<div className="p-6 space-y-6">
+							{/* 1. IMAGE UPLOAD (Centered) */}
+							<div className="flex justify-center">
+								<ServerImageUpload />
+							</div>
 
-							{/* 2. CORE IDENTITY */}
+							{/* 2. NAME INPUT */}
 							<Controller
 								control={control}
 								name="name"
 								render={({ field, fieldState }) => (
-									<FluxInput field={field} fieldState={fieldState} fieldTitle="Server_Designation" nameInSchema="name" placeholder="e.g. TITAN_ROVER_TEAM" />
+									<FluxInput fieldTitle="SERVER NAME" nameInSchema="name" field={field} fieldState={fieldState} placeholder="e.g. Acme Corp Engineering" className="bg-zinc-900/50" />
 								)}
 							/>
 						</div>
 
 						{/* FOOTER */}
-						<DialogFooter className="bg-black/40 px-8 py-6 border-t border-white/5 flex flex-row items-center justify-between gap-4">
-							<Button type="button" disabled={isExecuting} onClick={handleClose} variant="ghost" className="text-zinc-500 hover:text-white hover:bg-white/5 font-mono text-xs uppercase">
-								Abort
-							</Button>
+						<DialogFooter className="bg-zinc-900/50 px-6 py-4 border-t border-white/5">
+							<div className="flex items-center justify-between w-full">
+								<Button type="button" disabled={isCreatingServer} onClick={handleClose} variant="ghost" className="text-zinc-400 hover:text-white">
+									Back
+								</Button>
 
-							<Button
-								type="submit"
-								disabled={!isValid || isExecuting}
-								className="bg-primary hover:bg-primary/90 text-white shadow-[0_0_20px_rgba(99,102,241,0.3)] font-bold text-xs uppercase tracking-widest px-8 transition-all"
-							>
-								{isExecuting ? (
-									<span className="flex items-center gap-2">
-										<Loader2 className="animate-spin" size={14} /> INITIALIZING...
-									</span>
-								) : (
-									"Deploy_Server"
-								)}
-							</Button>
+								<Button type="submit" disabled={!isValid || isCreatingServer} className="bg-indigo-600 hover:bg-indigo-700 text-white font-semibold min-w-25">
+									{isCreatingServer ? <Loader2 className="animate-spin" size={16} /> : "Create"}
+								</Button>
+							</div>
 						</DialogFooter>
 					</form>
 				</FormProvider>

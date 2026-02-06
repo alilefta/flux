@@ -4,15 +4,16 @@ import { ChatInput } from "@/components/chat/chat-input";
 import { ChatMessages } from "@/components/chat/chat-messages";
 
 interface ServerPageProps {
-	params: {
+	params: Promise<{
 		serverId: string;
-	};
+	}>;
 }
 
-export default function ServerPage({ params }: ServerPageProps) {
+export default async function ServerPage({ params }: ServerPageProps) {
 	// 1. Fetch Server & Channel (Mock Logic)
 	// In real app: await db.server.findUnique(...)
-	const server = dummyServers.find((s) => s.id === params.serverId) || dummyServers[0];
+	const { serverId } = await params;
+	const server = dummyServers.find((s) => s.id === serverId) || dummyServers[0];
 	const channel = server.categories?.[0].channels[0]; // Default to first channel
 
 	if (!channel) return null;

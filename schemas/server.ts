@@ -18,3 +18,7 @@ export const CreateServerActionSchema = z.object({
 	name: z.string(),
 	imageUrl: z.string(),
 });
+
+export const joinServerSchema = z.object({
+	inviteCode: z.string().min(1, { message: "Invite code is required" }),
+});

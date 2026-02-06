@@ -2,41 +2,35 @@
 
 import { useCallback, useState } from "react";
 import { useDropzone, FileRejection } from "react-dropzone";
-import { Control, Controller, useFormContext } from "react-hook-form";
-import { UploadCloud, Trash2, Loader2, Image as ImageIcon } from "lucide-react";
+import { useFormContext } from "react-hook-form";
+import { UploadCloud, Trash2, Loader2 } from "lucide-react";
 import Image from "next/image";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
 import { useUploadThing } from "@/utils/uploadthing"; // Ensure you have this helper
 import { Button } from "@/components/ui/button";
+import { CreateServerActionSchema } from "@/schemas/server";
+import z from "zod";
 
-interface ServerImageUploadProps {
-	control: Control<any>;
-	name: string;
-}
+type CreateServerSchema = z.infer<typeof CreateServerActionSchema>;
 
-export function ServerImageUpload({ control, name }: ServerImageUploadProps) {
-	const { setValue, watch } = useFormContext();
-	const [preview, setPreview] = useState<string | null>(watch(name));
+export function ServerImageUpload() {
+	const { setValue, watch } = useFormContext<CreateServerSchema>();
+	const [preview, setPreview] = useState<string | null>(watch("name"));
 
 	// 1. UPLOADTHING LOGIC
-	const { isUploading, startUpload } = useUploadThing("serverImage", {
+	const { isUploading, startUpload } = useUploadThing("serverPicture", {
 		onClientUploadComplete: (res) => {
-			const url = res[0].url;
-			setValue(name, url, { shouldValidate: true });
-			toast.success("UPLOAD_COMPLETE", {
-				description: "ASSET_SECURED_ON_EDGE",
-			});
+			const url = res[0].ufsUrl;
+			setValue("name", url, { shouldValidate: true });
+			toast.success("Image uploaded");
 		},
 		onUploadError: (error) => {
 			setPreview(null); // Reset on fail
-			toast.error("UPLOAD_FAILED", {
-				description: error.message.toUpperCase(),
-			});
+			toast.error("Upload failed", { description: error.message });
 		},
 	});
 
-	// 2. INGEST LOGIC
 	const onDrop = useCallback(
 		async (acceptedFiles: File[], fileRejections: FileRejection[]) => {
 			if (acceptedFiles?.length) {
@@ -46,18 +40,16 @@ export function ServerImageUpload({ control, name }: ServerImageUploadProps) {
 				const objectUrl = URL.createObjectURL(file);
 				setPreview(objectUrl);
 
-				toast.info("INGESTING_ASSET", {
-					description: "ESTABLISHING_UPLINK...",
-				});
+				// toast.info("INGESTING_ASSET", {
+				// 	description: "ESTABLISHING_UPLINK...",
+				// });
 
 				// Trigger Upload
 				await startUpload([file]);
 			}
 
 			if (fileRejections?.length) {
-				toast.error("INVALID_ASSET", {
-					description: "MAX_SIZE_4MB // PNG_JPG_ONLY",
-				});
+				toast.error("Upload failed", { description: `File rejected due to ${fileRejections[0].errors[0].message}` });
 			}
 		},
 		[startUpload],
@@ -73,29 +65,29 @@ export function ServerImageUpload({ control, name }: ServerImageUploadProps) {
 	const handleRemove = (e: React.MouseEvent) => {
 		e.stopPropagation();
 		setPreview(null);
-		setValue(name, "", { shouldValidate: true });
+		setValue("name", "", { shouldValidate: true });
 	};
 
 	return (
-		<div className="space-y-4">
-			<div className="flex justify-between items-end">
+		<div className="flex flex-col items-center gap-4">
+			{/* <div className="flex justify-between items-end">
 				<label className="text-[10px] font-bold uppercase tracking-[0.2em] text-zinc-500">Server_Icon</label>
 				{isUploading && <span className="text-[10px] font-mono text-primary animate-pulse">SYNCING...</span>}
-			</div>
+			</div> */}
 
 			<div
 				{...getRootProps()}
 				className={cn(
-					"relative group flex flex-col items-center justify-center w-full h-32 rounded-xl border-2 border-dashed transition-all duration-300 cursor-pointer overflow-hidden",
-					isDragActive ? "border-primary bg-primary/5" : "border-white/10 bg-black/20 hover:border-white/20",
-					preview && "border-none",
+					"relative flex flex-col items-center justify-center w-64 h-64 rounded-2xl border-2 border-dashed transition-all duration-300 cursor-pointer overflow-hidden",
+					isDragActive ? "border-indigo-500 bg-indigo-500/10" : "border-zinc-700 bg-zinc-900/50 hover:border-zinc-500 hover:bg-zinc-800",
+					preview && "border-none bg-transparent",
 				)}
 			>
 				<input {...getInputProps()} />
 
 				{preview ? (
 					<>
-						<Image src={preview} alt="Preview" fill className={cn("object-cover", isUploading && "opacity-50 blur-sm grayscale")} />
+						<Image src={preview} alt="Server Icon" fill className="object-cover" />
 
 						{/* Remove Button Overlay */}
 						<div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-2">
@@ -109,7 +101,7 @@ export function ServerImageUpload({ control, name }: ServerImageUploadProps) {
 						<div className="p-3 bg-white/5 rounded-full ring-1 ring-white/10 group-hover:ring-primary/50 transition-all">
 							<UploadCloud size={20} className="group-hover:text-primary transition-colors" />
 						</div>
-						<p className="text-[10px] font-black uppercase tracking-widest">Drop_To_Ingest</p>
+						<span className="text-[10px] font-bold uppercase tracking-widest">Upload</span>
 					</div>
 				)}
 
@@ -120,6 +112,7 @@ export function ServerImageUpload({ control, name }: ServerImageUploadProps) {
 					</div>
 				)}
 			</div>
+			<p className="text-xs text-zinc-500 font-medium">Server Icon (Recommended). 4MB Max image size</p>
 		</div>
 	);
 }
