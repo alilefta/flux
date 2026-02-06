@@ -9,20 +9,20 @@ import { cn } from "@/lib/utils";
 import { toast } from "sonner";
 import { useUploadThing } from "@/utils/uploadthing"; // Ensure you have this helper
 import { Button } from "@/components/ui/button";
-import { CreateServerActionSchema } from "@/schemas/server";
+import { CreateServerInput } from "@/schemas/server";
 import z from "zod";
 
-type CreateServerSchema = z.infer<typeof CreateServerActionSchema>;
+type CreateServerSchema = z.infer<typeof CreateServerInput>;
 
 export function ServerImageUpload() {
 	const { setValue, watch } = useFormContext<CreateServerSchema>();
-	const [preview, setPreview] = useState<string | null>(watch("name"));
+	const [preview, setPreview] = useState<string | null>(watch("imageUrl"));
 
 	// 1. UPLOADTHING LOGIC
 	const { isUploading, startUpload } = useUploadThing("serverPicture", {
 		onClientUploadComplete: (res) => {
 			const url = res[0].ufsUrl;
-			setValue("name", url, { shouldValidate: true });
+			setValue("imageUrl", url, { shouldValidate: true });
 			toast.success("Image uploaded");
 		},
 		onUploadError: (error) => {
@@ -65,7 +65,7 @@ export function ServerImageUpload() {
 	const handleRemove = (e: React.MouseEvent) => {
 		e.stopPropagation();
 		setPreview(null);
-		setValue("name", "", { shouldValidate: true });
+		setValue("imageUrl", "", { shouldValidate: true });
 	};
 
 	return (

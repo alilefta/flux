@@ -1,0 +1,13 @@
+import type { Prisma } from '../../../generated/prisma/client';
+import * as z from 'zod';
+import { DirectMessageWhereInputObjectSchema as DirectMessageWhereInputObjectSchema } from './objects/DirectMessageWhereInput.schema';
+import { DirectMessageOrderByWithAggregationInputObjectSchema as DirectMessageOrderByWithAggregationInputObjectSchema } from './objects/DirectMessageOrderByWithAggregationInput.schema';
+import { DirectMessageScalarWhereWithAggregatesInputObjectSchema as DirectMessageScalarWhereWithAggregatesInputObjectSchema } from './objects/DirectMessageScalarWhereWithAggregatesInput.schema';
+import { DirectMessageScalarFieldEnumSchema } from './enums/DirectMessageScalarFieldEnum.schema';
+import { DirectMessageCountAggregateInputObjectSchema as DirectMessageCountAggregateInputObjectSchema } from './objects/DirectMessageCountAggregateInput.schema';
+import { DirectMessageMinAggregateInputObjectSchema as DirectMessageMinAggregateInputObjectSchema } from './objects/DirectMessageMinAggregateInput.schema';
+import { DirectMessageMaxAggregateInputObjectSchema as DirectMessageMaxAggregateInputObjectSchema } from './objects/DirectMessageMaxAggregateInput.schema';
+
+export const DirectMessageGroupBySchema: z.ZodType<Prisma.DirectMessageGroupByArgs> = z.object({ where: DirectMessageWhereInputObjectSchema.optional(), orderBy: z.union([DirectMessageOrderByWithAggregationInputObjectSchema, DirectMessageOrderByWithAggregationInputObjectSchema.array()]).optional(), having: DirectMessageScalarWhereWithAggregatesInputObjectSchema.optional(), take: z.number().optional(), skip: z.number().optional(), by: z.array(DirectMessageScalarFieldEnumSchema), _count: z.union([ z.literal(true), DirectMessageCountAggregateInputObjectSchema ]).optional(), _min: DirectMessageMinAggregateInputObjectSchema.optional(), _max: DirectMessageMaxAggregateInputObjectSchema.optional() }).strict() as unknown as z.ZodType<Prisma.DirectMessageGroupByArgs>;
+
+export const DirectMessageGroupByZodSchema = z.object({ where: DirectMessageWhereInputObjectSchema.optional(), orderBy: z.union([DirectMessageOrderByWithAggregationInputObjectSchema, DirectMessageOrderByWithAggregationInputObjectSchema.array()]).optional(), having: DirectMessageScalarWhereWithAggregatesInputObjectSchema.optional(), take: z.number().optional(), skip: z.number().optional(), by: z.array(DirectMessageScalarFieldEnumSchema), _count: z.union([ z.literal(true), DirectMessageCountAggregateInputObjectSchema ]).optional(), _min: DirectMessageMinAggregateInputObjectSchema.optional(), _max: DirectMessageMaxAggregateInputObjectSchema.optional() }).strict();

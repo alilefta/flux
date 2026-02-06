@@ -9,6 +9,9 @@ generator client {
   output   = "../generated/prisma"
 }
 
+generator zod {
+  provider = "prisma-zod-generator"
+}
 datasource db {
   provider = "postgresql"
 }
@@ -174,6 +177,7 @@ model DirectMessage {
   @@index([conversationId])
 }
 
+// ============================= After MVP ======================================
 
 // model ChannelReadStatus {
 //   id String @id @default(uuid())
@@ -190,3 +194,80 @@ model DirectMessage {
 //   @@index([memberId])
 //   @@index([channelId])
 // }
+
+// ADD THIS TO YOUR SCHEMA (COMMENTED OUT FOR NOW)
+
+// FUTURE: Channel Categories
+// Uncomment when adding category feature in V2
+/*
+model ChannelCategory {
+  id        String    @id @default(uuid())
+  name      String
+  position  Int       @default(0) // For drag-and-drop ordering
+  
+  serverId  String
+  server    Server    @relation(fields: [serverId], references: [id], onDelete: Cascade)
+  
+  channels  Channel[] // Channels in this category
+  
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  
+  @@index([serverId])
+  @@index([position])
+}
+*/
+
+// UPDATED Channel Model (for V2)
+/*
+model Channel {
+  id   String      @id @default(uuid())
+  name String
+  type ChannelType @default(TEXT)
+  isDefault Boolean @default(false)
+  position  Int     @default(0) // For ordering within category
+  
+  profileId String
+  profile   Profile @relation(fields: [profileId], references: [id], onDelete: Cascade)
+  
+  serverId  String
+  server    Server @relation(fields: [serverId], references: [id], onDelete: Cascade)
+  
+  // FUTURE: Add category relationship
+  categoryId String?
+  category   ChannelCategory? @relation(fields: [categoryId], references: [id], onDelete: SetNull)
+  
+  messages  Message[]
+  
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  
+  @@index([profileId])
+  @@index([serverId])
+  @@index([categoryId])
+  @@index([position])
+}
+*/
+
+// UPDATED Server Model (for V2)
+/*
+model Server {
+  id          String @id @default(uuid())
+  name        String
+  imageUrl    String @db.Text
+  inviteCode  String @unique
+  memberCount Int    @default(1)
+  
+  profileId String
+  profile   Profile @relation(fields: [profileId], references: [id], onDelete: Cascade)
+  
+  members    Member[]
+  channels   Channel[]
+  categories ChannelCategory[] // FUTURE: Add this
+  
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+  
+  @@index([profileId])
+}
+*/

@@ -1,12 +1,12 @@
 "use server";
 import { v4 as uuidv4 } from "uuid";
 import { actionClientWithProfile } from "@/lib/safe-action";
-import { CreateServerActionSchema, joinServerSchema } from "@/schemas/server";
+import { CreateServerInput, joinServerSchema } from "@/schemas/server";
 import { MemberRole } from "@/generated/prisma/enums";
 import { revalidatePath } from "next/cache";
 import prisma from "@/lib/prisma";
 
-export const createServerAction = actionClientWithProfile.inputSchema(CreateServerActionSchema).action(async ({ parsedInput: { name, imageUrl }, ctx: { profile } }) => {
+export const createServerAction = actionClientWithProfile.inputSchema(CreateServerInput).action(async ({ parsedInput: { name, imageUrl }, ctx: { profile } }) => {
 	try {
 		const server = await prisma.server.create({
 			data: {

@@ -1,0 +1,12 @@
+import type { Prisma } from '../../../generated/prisma/client';
+import * as z from 'zod';
+import { ConversationOrderByWithRelationInputObjectSchema as ConversationOrderByWithRelationInputObjectSchema } from './objects/ConversationOrderByWithRelationInput.schema';
+import { ConversationWhereInputObjectSchema as ConversationWhereInputObjectSchema } from './objects/ConversationWhereInput.schema';
+import { ConversationWhereUniqueInputObjectSchema as ConversationWhereUniqueInputObjectSchema } from './objects/ConversationWhereUniqueInput.schema';
+import { ConversationCountAggregateInputObjectSchema as ConversationCountAggregateInputObjectSchema } from './objects/ConversationCountAggregateInput.schema';
+import { ConversationMinAggregateInputObjectSchema as ConversationMinAggregateInputObjectSchema } from './objects/ConversationMinAggregateInput.schema';
+import { ConversationMaxAggregateInputObjectSchema as ConversationMaxAggregateInputObjectSchema } from './objects/ConversationMaxAggregateInput.schema';
+
+export const ConversationAggregateSchema: z.ZodType<Prisma.ConversationAggregateArgs> = z.object({ orderBy: z.union([ConversationOrderByWithRelationInputObjectSchema, ConversationOrderByWithRelationInputObjectSchema.array()]).optional(), where: ConversationWhereInputObjectSchema.optional(), cursor: ConversationWhereUniqueInputObjectSchema.optional(), take: z.number().optional(), skip: z.number().optional(), _count: z.union([ z.literal(true), ConversationCountAggregateInputObjectSchema ]).optional(), _min: ConversationMinAggregateInputObjectSchema.optional(), _max: ConversationMaxAggregateInputObjectSchema.optional() }).strict() as unknown as z.ZodType<Prisma.ConversationAggregateArgs>;
+
+export const ConversationAggregateZodSchema = z.object({ orderBy: z.union([ConversationOrderByWithRelationInputObjectSchema, ConversationOrderByWithRelationInputObjectSchema.array()]).optional(), where: ConversationWhereInputObjectSchema.optional(), cursor: ConversationWhereUniqueInputObjectSchema.optional(), take: z.number().optional(), skip: z.number().optional(), _count: z.union([ z.literal(true), ConversationCountAggregateInputObjectSchema ]).optional(), _min: ConversationMinAggregateInputObjectSchema.optional(), _max: ConversationMaxAggregateInputObjectSchema.optional() }).strict();
