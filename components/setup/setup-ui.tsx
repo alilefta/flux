@@ -50,6 +50,10 @@ export const SetupUI = () => {
 		}
 	};
 
+	const onJoinSubmit = (inviteCode: string) => {
+		router.push(`/invite/${inviteCode}`);
+	};
+
 	const error = result.data?.error;
 
 	return (
@@ -108,7 +112,7 @@ export const SetupUI = () => {
 
 					<Button
 						disabled={isJoining || inviteCode.length < 3}
-						onClick={() => executeJoinServer({ inviteCode })}
+						onClick={() => onJoinSubmit(inviteCode)}
 						variant="outline"
 						className="w-full h-12 border-white/10 bg-transparent hover:bg-white/5 text-zinc-300 hover:text-white rounded-xl transition-all"
 					>

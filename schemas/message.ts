@@ -11,9 +11,9 @@ export const MessageBaseSchema = MessageModelSchema.omit({
 
 export type MessageBase = z.infer<typeof MessageBaseSchema>;
 
-export const ChannelMessageDTO = MessageBaseSchema.merge(
+export const ChannelMessageDTO = MessageBaseSchema.extend(
 	z.object({
-		member: MemberBaseSchema.merge(
+		member: MemberBaseSchema.extend(
 			z.object({
 				profile: ProfileBaseSchema.pick({
 					id: true,

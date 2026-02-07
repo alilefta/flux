@@ -42,7 +42,7 @@ export type CreateProfileInput = z.infer<typeof CreateProfileInput>;
 
 export const UpdateProfileInput = z.object({
 	name: z.string().min(1).optional(),
-	imageUrl: z.string().url().optional(),
+	imageUrl: z.url().optional(),
 });
 
 export type UpdateProfileInput = z.infer<typeof UpdateProfileInput>;

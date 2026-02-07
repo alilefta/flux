@@ -18,7 +18,7 @@ export const ChannelListItemDTO = ChannelBaseSchema.pick({
 
 export type ChannelListItem = z.infer<typeof ChannelListItemDTO>;
 
-export const ChannelWithMessagesDTO = ChannelBaseSchema.merge(
+export const ChannelWithMessagesDTO = ChannelBaseSchema.extend(
 	z.object({
 		messages: z.array(MessageBaseSchema),
 	}),

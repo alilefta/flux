@@ -1,11 +1,7 @@
-import { currentProfile } from "@/lib/dummy-data";
-import { ChatHeader } from "@/components/chat/chat-header";
-import { ChatInput } from "@/components/chat/chat-input";
-import { ChatMessages } from "@/components/chat/chat-messages";
-import { ServerDetails } from "@/schemas/server";
 import { redirect } from "next/navigation";
 import { getFirstServerForProfileId } from "@/data/server";
 import { getFirstChannelByServerId } from "@/data/channel";
+import { currentProfile } from "@/data/current-profile";
 
 interface ServerPageProps {
 	params: Promise<{ serverId: string }>;

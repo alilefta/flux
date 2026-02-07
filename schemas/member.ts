@@ -12,7 +12,7 @@ export const MemberBaseSchema = MemberModelSchema.omit({
 
 export type MemberBase = z.infer<typeof MemberBaseSchema>;
 
-export const ServerMemberDTO = MemberBaseSchema.merge(
+export const ServerMemberDTO = MemberBaseSchema.extend(
 	z.object({
 		profile: ProfileBaseSchema.pick({
 			id: true,

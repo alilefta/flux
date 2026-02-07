@@ -49,3 +49,15 @@ export async function getFirstServerForProfileId(profileId: string) {
 	});
 	return server;
 }
+
+export async function getServerByIniteCode(inviteCode: string) {
+	const server = await prisma.server.findUnique({
+		where: { inviteCode },
+		include: {
+			_count: {
+				select: { members: true },
+			},
+		},
+	});
+	return server;
+}
