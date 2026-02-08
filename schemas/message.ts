@@ -20,9 +20,9 @@ export const ChannelMessageDTO = MessageBaseSchema.extend(
 					name: true,
 					imageUrl: true,
 				}),
-			}),
+			}).shape,
 		),
-	}),
+	}).shape,
 );
 
 export type ChannelMessage = z.infer<typeof ChannelMessageDTO>;
@@ -38,14 +38,21 @@ export type MessagePreview = z.infer<typeof MessagePreviewDTO>;
 
 export const CreateMessageInput = z.object({
 	content: z.string().min(1),
-	fileUrl: z.string().url().optional(),
-	channelId: z.string().uuid(),
+	fileUrl: z.url().optional(),
+	channelId: z.uuid(),
 });
 
-export type CreateMessageInput = z.infer<typeof CreateMessageInput>;
+export type SendMessageInput = z.infer<typeof CreateMessageInput>;
 
 export const UpdateMessageInput = z.object({
 	content: z.string().min(1),
 });
 
 export type UpdateMessageInput = z.infer<typeof UpdateMessageInput>;
+
+export const GetMessageInputSchema = z.object({
+	channelId: z.string(),
+	serverId: z.string(),
+});
+
+export type GetMessageInput = z.infer<typeof GetMessageInputSchema>;

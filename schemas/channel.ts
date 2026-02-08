@@ -21,7 +21,7 @@ export type ChannelListItem = z.infer<typeof ChannelListItemDTO>;
 export const ChannelWithMessagesDTO = ChannelBaseSchema.extend(
 	z.object({
 		messages: z.array(MessageBaseSchema),
-	}),
+	}).shape,
 );
 
 export type ChannelWithMessages = z.infer<typeof ChannelWithMessagesDTO>;

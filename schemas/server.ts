@@ -27,17 +27,17 @@ export type ServerListItem = z.infer<typeof ServerListItemDTO>;
 // 	members: { include: { profile: true } },
 // }
 
-export const ServerDetailsDTO = ServerBaseSchema.merge(
+export const ServerDetailsDTO = ServerBaseSchema.extend(
 	z.object({
 		channels: z.array(ChannelBaseSchema),
 		members: z.array(
 			MemberBaseSchema.extend(
 				z.object({
 					profile: ProfileBaseSchema,
-				}),
+				}).shape,
 			),
 		),
-	}),
+	}).shape,
 );
 
 export type ServerDetails = z.infer<typeof ServerDetailsDTO>;

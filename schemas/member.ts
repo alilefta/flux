@@ -12,6 +12,16 @@ export const MemberBaseSchema = MemberModelSchema.omit({
 
 export type MemberBase = z.infer<typeof MemberBaseSchema>;
 
+export const MemberWithProfileSchema = MemberModelSchema.omit({
+	server: true,
+	messages: true,
+	profile: true,
+}).extend({
+	profile: ProfileBaseSchema,
+});
+
+export type MemberProfile = z.infer<typeof MemberWithProfileSchema>;
+
 export const ServerMemberDTO = MemberBaseSchema.extend(
 	z.object({
 		profile: ProfileBaseSchema.pick({
@@ -19,7 +29,7 @@ export const ServerMemberDTO = MemberBaseSchema.extend(
 			name: true,
 			imageUrl: true,
 		}),
-	}),
+	}).shape,
 );
 
 export type ServerMember = z.infer<typeof ServerMemberDTO>;
