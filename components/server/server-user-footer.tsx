@@ -1,15 +1,15 @@
 "use client";
 
-import { Profile } from "@/schemas/profile";
 import { Mic, MicOff, Headphones, HeadphoneOff, Settings, LucideIcon } from "lucide-react";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import Image from "next/image";
 import { useState } from "react";
 import { cn } from "@/lib/utils";
 import { UserButton, useUser } from "@clerk/nextjs";
+import { ProfileBase } from "@/schemas/profile";
 
 interface ServerUserFooterProps {
-	profile: Profile;
+	profile: ProfileBase;
 }
 
 export const ServerUserFooter = () => {

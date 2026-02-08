@@ -1,7 +1,7 @@
 import { redirect } from "next/navigation";
 import { getFirstServerForProfileId } from "@/data/server";
 import { getFirstChannelByServerId } from "@/data/channel";
-import { currentProfile } from "@/data/current-profile";
+import { getCurrentProfile } from "@/data/profile";
 
 interface ServerPageProps {
 	params: Promise<{ serverId: string }>;
@@ -9,7 +9,7 @@ interface ServerPageProps {
 
 export default async function ServerPage({ params }: ServerPageProps) {
 	const { serverId } = await params;
-	const profile = await currentProfile();
+	const profile = await getCurrentProfile();
 
 	if (!profile) return redirect("/setup");
 

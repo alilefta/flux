@@ -1,5 +1,5 @@
 import { redirect } from "next/navigation";
-import { currentProfile } from "@/data/current-profile";
+import { getCurrentProfile } from "@/data/profile";
 import { ChatHeader } from "@/components/chat/chat-header";
 import { ChatInput } from "@/components/chat/chat-input";
 import { ChatMessages } from "@/components/chat/chat-messages";
@@ -15,7 +15,7 @@ interface ChannelPageProps {
 
 export default async function ChannelPage({ params }: ChannelPageProps) {
 	const { serverId, channelId } = await params;
-	const profile = await currentProfile();
+	const profile = await getCurrentProfile();
 
 	if (!profile) return redirect("/");
 
@@ -34,9 +34,10 @@ export default async function ChannelPage({ params }: ChannelPageProps) {
 
 			{/* 2. Messages */}
 			<ChatMessages
+				serverId={serverId}
 				member={member}
 				name={channel.name}
-				chatId={channel.id}
+				channelId={channel.id}
 				type="channel"
 				apiUrl="/api/messages"
 				socketUrl="/api/socket/messages"
@@ -49,15 +50,7 @@ export default async function ChannelPage({ params }: ChannelPageProps) {
 			/>
 
 			{/* 3. Input */}
-			<ChatInput
-				name={channel.name}
-				type="channel"
-				apiUrl="/api/socket/messages"
-				query={{
-					channelId: channel.id,
-					serverId: serverId,
-				}}
-			/>
+			<ChatInput name={channel.name} channelId={channel.id} placeholder="Type..." serverId={serverId} />
 		</div>
 	);
 }

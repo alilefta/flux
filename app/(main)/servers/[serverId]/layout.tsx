@@ -1,10 +1,11 @@
-import { dummyServers } from "@/lib/dummy-data";
 import { NavigationSidebar } from "@/components/navigation/navigation-sidebar";
 import { ServerSidebar } from "@/components/server/server-sidebar";
 import { getServerById, getServersByProfileId, getServerWithDetails } from "@/data/server";
 import { notFound, redirect } from "next/navigation";
-import { currentProfile } from "@/data/current-profile";
-
+import { getCurrentProfile } from "@/data/profile";
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import { ReactQueryDevtools } from "@tanstack/react-query-devtools";
+import { QueryProvider } from "@/providers/query-provider";
 interface ServerLayoutProps {
 	children: React.ReactNode;
 	params: Promise<{ serverId: string }>;
@@ -12,7 +13,7 @@ interface ServerLayoutProps {
 
 export default async function ServerLayout({ children, params }: ServerLayoutProps) {
 	const { serverId } = await params;
-	const profile = await currentProfile();
+	const profile = await getCurrentProfile();
 
 	if (!profile) {
 		return redirect("/");
@@ -37,7 +38,7 @@ export default async function ServerLayout({ children, params }: ServerLayoutPro
 	const userServers = await getServersByProfileId(profile.id);
 
 	return (
-		<div className="h-screen w-full flex gap-3 p-4 bg-background overflow-hidden relative">
+		<div className="h-screen w-full flex gap-3 py-4 px-2 bg-background overflow-hidden relative">
 			{/* Zone A: Navigation Rail */}
 			<div className="shrink-0 z-20">
 				<NavigationSidebar servers={userServers} activeServerId={server.id} />
@@ -53,7 +54,9 @@ export default async function ServerLayout({ children, params }: ServerLayoutPro
 			</div>
 
 			{/* Zone C: Page Content */}
-			<main className="flex-1 h-full min-w-0">{children}</main>
+			<QueryProvider>
+				<main className="flex-1 h-full min-w-0 overflow-hidden">{children}</main>
+			</QueryProvider>
 		</div>
 	);
 }

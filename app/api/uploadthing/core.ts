@@ -1,4 +1,4 @@
-import { currentProfile } from "@/data/current-profile";
+import { getCurrentProfile } from "@/data/profile";
 import { createUploadthing, type FileRouter } from "uploadthing/next";
 import { UploadedFileData } from "uploadthing/types";
 import { UploadThingError } from "uploadthing/server";
@@ -6,7 +6,7 @@ import { UploadThingError } from "uploadthing/server";
 const f = createUploadthing();
 
 const auth = async (req: Request) => {
-	const profile = await currentProfile();
+	const profile = await getCurrentProfile();
 
 	if (!profile) {
 		throw new UploadThingError("Unauthorized! You must be logged in to upload a server picture");

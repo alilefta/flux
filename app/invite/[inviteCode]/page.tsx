@@ -1,5 +1,5 @@
 import { redirect, notFound } from "next/navigation";
-import { currentProfile } from "@/data/current-profile";
+import { currentProfile } from "@/data/profile";
 import prisma from "@/lib/prisma";
 import { InviteUI } from "@/components/invite/invite-ui";
 

@@ -1,11 +1,11 @@
 import { redirect } from "next/navigation";
-import { currentProfile } from "@/data/current-profile"; // Check your import path
+import { getCurrentProfile } from "@/data/profile"; // Check your import path
 import { SetupUI } from "@/components/setup/setup-ui";
 import { SetupNavbar } from "@/components/setup/setup-navbar";
 import { getFirstServerForProfileId } from "@/data/server";
 
 export default async function SetupPage() {
-	const profile = await currentProfile();
+	const profile = await getCurrentProfile();
 
 	const server = await getFirstServerForProfileId(profile.id);
 
