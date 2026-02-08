@@ -1,0 +1,13 @@
+import type { Prisma } from '../../../generated/prisma/client';
+import * as z from 'zod';
+import { ConversationWhereInputObjectSchema as ConversationWhereInputObjectSchema } from './objects/ConversationWhereInput.schema';
+import { ConversationOrderByWithAggregationInputObjectSchema as ConversationOrderByWithAggregationInputObjectSchema } from './objects/ConversationOrderByWithAggregationInput.schema';
+import { ConversationScalarWhereWithAggregatesInputObjectSchema as ConversationScalarWhereWithAggregatesInputObjectSchema } from './objects/ConversationScalarWhereWithAggregatesInput.schema';
+import { ConversationScalarFieldEnumSchema } from './enums/ConversationScalarFieldEnum.schema';
+import { ConversationCountAggregateInputObjectSchema as ConversationCountAggregateInputObjectSchema } from './objects/ConversationCountAggregateInput.schema';
+import { ConversationMinAggregateInputObjectSchema as ConversationMinAggregateInputObjectSchema } from './objects/ConversationMinAggregateInput.schema';
+import { ConversationMaxAggregateInputObjectSchema as ConversationMaxAggregateInputObjectSchema } from './objects/ConversationMaxAggregateInput.schema';
+
+export const ConversationGroupBySchema: z.ZodType<Prisma.ConversationGroupByArgs> = z.object({ where: ConversationWhereInputObjectSchema.optional(), orderBy: z.union([ConversationOrderByWithAggregationInputObjectSchema, ConversationOrderByWithAggregationInputObjectSchema.array()]).optional(), having: ConversationScalarWhereWithAggregatesInputObjectSchema.optional(), take: z.number().optional(), skip: z.number().optional(), by: z.array(ConversationScalarFieldEnumSchema), _count: z.union([ z.literal(true), ConversationCountAggregateInputObjectSchema ]).optional(), _min: ConversationMinAggregateInputObjectSchema.optional(), _max: ConversationMaxAggregateInputObjectSchema.optional() }).strict() as unknown as z.ZodType<Prisma.ConversationGroupByArgs>;
+
+export const ConversationGroupByZodSchema = z.object({ where: ConversationWhereInputObjectSchema.optional(), orderBy: z.union([ConversationOrderByWithAggregationInputObjectSchema, ConversationOrderByWithAggregationInputObjectSchema.array()]).optional(), having: ConversationScalarWhereWithAggregatesInputObjectSchema.optional(), take: z.number().optional(), skip: z.number().optional(), by: z.array(ConversationScalarFieldEnumSchema), _count: z.union([ z.literal(true), ConversationCountAggregateInputObjectSchema ]).optional(), _min: ConversationMinAggregateInputObjectSchema.optional(), _max: ConversationMaxAggregateInputObjectSchema.optional() }).strict();

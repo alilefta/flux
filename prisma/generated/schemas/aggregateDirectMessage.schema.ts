@@ -1,0 +1,12 @@
+import type { Prisma } from '../../../generated/prisma/client';
+import * as z from 'zod';
+import { DirectMessageOrderByWithRelationInputObjectSchema as DirectMessageOrderByWithRelationInputObjectSchema } from './objects/DirectMessageOrderByWithRelationInput.schema';
+import { DirectMessageWhereInputObjectSchema as DirectMessageWhereInputObjectSchema } from './objects/DirectMessageWhereInput.schema';
+import { DirectMessageWhereUniqueInputObjectSchema as DirectMessageWhereUniqueInputObjectSchema } from './objects/DirectMessageWhereUniqueInput.schema';
+import { DirectMessageCountAggregateInputObjectSchema as DirectMessageCountAggregateInputObjectSchema } from './objects/DirectMessageCountAggregateInput.schema';
+import { DirectMessageMinAggregateInputObjectSchema as DirectMessageMinAggregateInputObjectSchema } from './objects/DirectMessageMinAggregateInput.schema';
+import { DirectMessageMaxAggregateInputObjectSchema as DirectMessageMaxAggregateInputObjectSchema } from './objects/DirectMessageMaxAggregateInput.schema';
+
+export const DirectMessageAggregateSchema: z.ZodType<Prisma.DirectMessageAggregateArgs> = z.object({ orderBy: z.union([DirectMessageOrderByWithRelationInputObjectSchema, DirectMessageOrderByWithRelationInputObjectSchema.array()]).optional(), where: DirectMessageWhereInputObjectSchema.optional(), cursor: DirectMessageWhereUniqueInputObjectSchema.optional(), take: z.number().optional(), skip: z.number().optional(), _count: z.union([ z.literal(true), DirectMessageCountAggregateInputObjectSchema ]).optional(), _min: DirectMessageMinAggregateInputObjectSchema.optional(), _max: DirectMessageMaxAggregateInputObjectSchema.optional() }).strict() as unknown as z.ZodType<Prisma.DirectMessageAggregateArgs>;
+
+export const DirectMessageAggregateZodSchema = z.object({ orderBy: z.union([DirectMessageOrderByWithRelationInputObjectSchema, DirectMessageOrderByWithRelationInputObjectSchema.array()]).optional(), where: DirectMessageWhereInputObjectSchema.optional(), cursor: DirectMessageWhereUniqueInputObjectSchema.optional(), take: z.number().optional(), skip: z.number().optional(), _count: z.union([ z.literal(true), DirectMessageCountAggregateInputObjectSchema ]).optional(), _min: DirectMessageMinAggregateInputObjectSchema.optional(), _max: DirectMessageMaxAggregateInputObjectSchema.optional() }).strict();

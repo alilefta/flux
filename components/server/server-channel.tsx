@@ -1,13 +1,17 @@
 "use client";
 
-import { Channel } from "@/schemas/channel";
+import { ChannelBase } from "@/schemas/channel";
 import { cn } from "@/lib/utils";
-import { Hash, Mic, Video } from "lucide-react";
+import { Hash, Lock, Mic, Video } from "lucide-react";
+import { ServerBase } from "@/schemas/server";
+import { useRouter } from "next/navigation";
+import { ModalType } from "@/hooks/use-modal-store";
 
 interface ServerChannelProps {
-	channel: Channel;
+	channel: ChannelBase;
+	server: ServerBase; // We need this to build the URL
 	isActive?: boolean;
-	onClick?: () => void;
+	role?: string; // For permission checks later
 }
 
 const iconMap = {
@@ -16,8 +20,19 @@ const iconMap = {
 	VIDEO: Video,
 };
 
-export const ServerChannel = ({ channel, isActive, onClick }: ServerChannelProps) => {
+export const ServerChannel = ({ channel, server, isActive, role }: ServerChannelProps) => {
+	const router = useRouter();
 	const Icon = iconMap[channel.type];
+
+	const onClick = () => {
+		router.push(`/servers/${server.id}/channels/${channel.id}`);
+	};
+
+	// Prevent bubbling if we add edit buttons later
+	const onAction = (e: React.MouseEvent, action: ModalType) => {
+		e.stopPropagation();
+		// onOpen(action, { channel, server });
+	};
 
 	return (
 		<button
@@ -28,7 +43,11 @@ export const ServerChannel = ({ channel, isActive, onClick }: ServerChannelProps
 			)}
 		>
 			<Icon className={cn("shrink-0 w-4 h-4 text-zinc-500", isActive && "text-primary")} />
+
 			<p className={cn("line-clamp-1 font-medium text-xs text-zinc-500 group-hover:text-zinc-300 transition-colors", isActive && "text-white")}>{channel.name}</p>
+
+			{/* Lock icon for "general" channel usually, or strictly private channels */}
+			{channel.name === "general" && <Lock className="ml-auto w-3 h-3 text-zinc-600" />}
 		</button>
 	);
 };

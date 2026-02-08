@@ -1,0 +1,13 @@
+import type { Prisma } from '../../../generated/prisma/client';
+import * as z from 'zod';
+import { ChannelWhereInputObjectSchema as ChannelWhereInputObjectSchema } from './objects/ChannelWhereInput.schema';
+import { ChannelOrderByWithAggregationInputObjectSchema as ChannelOrderByWithAggregationInputObjectSchema } from './objects/ChannelOrderByWithAggregationInput.schema';
+import { ChannelScalarWhereWithAggregatesInputObjectSchema as ChannelScalarWhereWithAggregatesInputObjectSchema } from './objects/ChannelScalarWhereWithAggregatesInput.schema';
+import { ChannelScalarFieldEnumSchema } from './enums/ChannelScalarFieldEnum.schema';
+import { ChannelCountAggregateInputObjectSchema as ChannelCountAggregateInputObjectSchema } from './objects/ChannelCountAggregateInput.schema';
+import { ChannelMinAggregateInputObjectSchema as ChannelMinAggregateInputObjectSchema } from './objects/ChannelMinAggregateInput.schema';
+import { ChannelMaxAggregateInputObjectSchema as ChannelMaxAggregateInputObjectSchema } from './objects/ChannelMaxAggregateInput.schema';
+
+export const ChannelGroupBySchema: z.ZodType<Prisma.ChannelGroupByArgs> = z.object({ where: ChannelWhereInputObjectSchema.optional(), orderBy: z.union([ChannelOrderByWithAggregationInputObjectSchema, ChannelOrderByWithAggregationInputObjectSchema.array()]).optional(), having: ChannelScalarWhereWithAggregatesInputObjectSchema.optional(), take: z.number().optional(), skip: z.number().optional(), by: z.array(ChannelScalarFieldEnumSchema), _count: z.union([ z.literal(true), ChannelCountAggregateInputObjectSchema ]).optional(), _min: ChannelMinAggregateInputObjectSchema.optional(), _max: ChannelMaxAggregateInputObjectSchema.optional() }).strict() as unknown as z.ZodType<Prisma.ChannelGroupByArgs>;
+
+export const ChannelGroupByZodSchema = z.object({ where: ChannelWhereInputObjectSchema.optional(), orderBy: z.union([ChannelOrderByWithAggregationInputObjectSchema, ChannelOrderByWithAggregationInputObjectSchema.array()]).optional(), having: ChannelScalarWhereWithAggregatesInputObjectSchema.optional(), take: z.number().optional(), skip: z.number().optional(), by: z.array(ChannelScalarFieldEnumSchema), _count: z.union([ z.literal(true), ChannelCountAggregateInputObjectSchema ]).optional(), _min: ChannelMinAggregateInputObjectSchema.optional(), _max: ChannelMaxAggregateInputObjectSchema.optional() }).strict();

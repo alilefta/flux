@@ -1,0 +1,15 @@
+import type { Prisma } from '../../../generated/prisma/client';
+import * as z from 'zod';
+import { ServerWhereInputObjectSchema as ServerWhereInputObjectSchema } from './objects/ServerWhereInput.schema';
+import { ServerOrderByWithAggregationInputObjectSchema as ServerOrderByWithAggregationInputObjectSchema } from './objects/ServerOrderByWithAggregationInput.schema';
+import { ServerScalarWhereWithAggregatesInputObjectSchema as ServerScalarWhereWithAggregatesInputObjectSchema } from './objects/ServerScalarWhereWithAggregatesInput.schema';
+import { ServerScalarFieldEnumSchema } from './enums/ServerScalarFieldEnum.schema';
+import { ServerCountAggregateInputObjectSchema as ServerCountAggregateInputObjectSchema } from './objects/ServerCountAggregateInput.schema';
+import { ServerMinAggregateInputObjectSchema as ServerMinAggregateInputObjectSchema } from './objects/ServerMinAggregateInput.schema';
+import { ServerMaxAggregateInputObjectSchema as ServerMaxAggregateInputObjectSchema } from './objects/ServerMaxAggregateInput.schema';
+import { ServerAvgAggregateInputObjectSchema as ServerAvgAggregateInputObjectSchema } from './objects/ServerAvgAggregateInput.schema';
+import { ServerSumAggregateInputObjectSchema as ServerSumAggregateInputObjectSchema } from './objects/ServerSumAggregateInput.schema';
+
+export const ServerGroupBySchema: z.ZodType<Prisma.ServerGroupByArgs> = z.object({ where: ServerWhereInputObjectSchema.optional(), orderBy: z.union([ServerOrderByWithAggregationInputObjectSchema, ServerOrderByWithAggregationInputObjectSchema.array()]).optional(), having: ServerScalarWhereWithAggregatesInputObjectSchema.optional(), take: z.number().optional(), skip: z.number().optional(), by: z.array(ServerScalarFieldEnumSchema), _count: z.union([ z.literal(true), ServerCountAggregateInputObjectSchema ]).optional(), _min: ServerMinAggregateInputObjectSchema.optional(), _max: ServerMaxAggregateInputObjectSchema.optional(), _avg: ServerAvgAggregateInputObjectSchema.optional(), _sum: ServerSumAggregateInputObjectSchema.optional() }).strict() as unknown as z.ZodType<Prisma.ServerGroupByArgs>;
+
+export const ServerGroupByZodSchema = z.object({ where: ServerWhereInputObjectSchema.optional(), orderBy: z.union([ServerOrderByWithAggregationInputObjectSchema, ServerOrderByWithAggregationInputObjectSchema.array()]).optional(), having: ServerScalarWhereWithAggregatesInputObjectSchema.optional(), take: z.number().optional(), skip: z.number().optional(), by: z.array(ServerScalarFieldEnumSchema), _count: z.union([ z.literal(true), ServerCountAggregateInputObjectSchema ]).optional(), _min: ServerMinAggregateInputObjectSchema.optional(), _max: ServerMaxAggregateInputObjectSchema.optional(), _avg: ServerAvgAggregateInputObjectSchema.optional(), _sum: ServerSumAggregateInputObjectSchema.optional() }).strict();

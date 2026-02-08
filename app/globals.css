@@ -172,6 +172,37 @@ body {
 	body {
 		@apply bg-background text-foreground antialiased;
 	}
+
+	/* 1. FORCE DARK MODE SCROLLBARS GLOBALLY */
+	* {
+		scrollbar-width: thin; /* Firefox */
+		scrollbar-color: rgba(255, 255, 255, 0.1) transparent; /* Firefox */
+	}
+
+	/* Webkit (Chrome, Edge, Safari) */
+	::-webkit-scrollbar {
+		width: 6px; /* Slim vertical */
+		height: 6px; /* Slim horizontal */
+	}
+
+	::-webkit-scrollbar-track {
+		background: transparent;
+		margin-block: 4px; /* Tiny gap at ends */
+	}
+
+	::-webkit-scrollbar-thumb {
+		background: rgba(255, 255, 255, 0.1); /* Subtle dark grey */
+		border-radius: 10px;
+	}
+
+	::-webkit-scrollbar-thumb:hover {
+		background: rgba(255, 255, 255, 0.2); /* Lighter on hover */
+	}
+
+	/* 2. HIDE HORIZONTAL SCROLLBAR ON BODY */
+	body {
+		overflow-x: hidden;
+	}
 }
 
 /* 6. FLUX CUSTOM UTILITIES */
@@ -189,5 +220,33 @@ body {
 	/* Text glow for active states */
 	.text-glow {
 		text-shadow: 0 0 15px rgba(99, 102, 241, 0.6);
+	}
+
+	/* FLUX SLIM SCROLLBAR */
+	.custom-scrollbar::-webkit-scrollbar {
+		width: 6px;
+		height: 6px;
+	}
+
+	.custom-scrollbar::-webkit-scrollbar-track {
+		background-color: transparent;
+	}
+
+	.custom-scrollbar::-webkit-scrollbar-thumb {
+		background-color: rgba(255, 255, 255, 0.1);
+		border-radius: 9999px;
+	}
+
+	.custom-scrollbar::-webkit-scrollbar-thumb:hover {
+		background-color: rgba(255, 255, 255, 0.2);
+	}
+
+	/* Utility to hide scrollbar but keep functionality */
+	.no-scrollbar::-webkit-scrollbar {
+		display: none;
+	}
+	.no-scrollbar {
+		-ms-overflow-style: none;
+		scrollbar-width: none;
 	}
 }

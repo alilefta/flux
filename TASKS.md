@@ -38,6 +38,102 @@
 - [ ] Create `/api/webhook/clerk` for user sync
 - [ ] Test: User creation syncs to Profile table
 
+# Flux: Complete Auth & Server Creation Flow
+
+## The Correct Order of Operations
+
+---
+
+## 🎯 The Problem You're Solving
+
+**Question**: When does Profile get created?
+**Answer**: IMMEDIATELY after Clerk authentication, BEFORE user sees anything.
+
+---
+
+## 📊 The Complete Flow (Step-by-Step)
+
+### Flow 1: Brand New User (Never Used Flux Before)
+
+```
+1. User visits flux.app
+   ↓
+2. Clicks "Get Started" → Clerk Modal opens
+   ↓
+3. User signs up with Google/Email
+   ↓
+4. Clerk creates auth user
+   ↓
+5. 🔴 CRITICAL: Clerk webhook fires → /api/webhooks/clerk
+   ↓
+6. Webhook creates Profile in YOUR database
+   ↓
+7. User redirected to /setup (now Profile EXISTS)
+   ↓
+8. User clicks "Create Server"
+   ↓
+9. Server created → Member created → User redirected to server
+```
+
+### Flow 2: Existing User (Already Has Profile)
+
+```
+1. User visits flux.app
+   ↓
+2. Clicks "Sign In" → Clerk Modal
+   ↓
+3. User signs in
+   ↓
+4. Check: Does user have servers?
+   - YES → Redirect to /servers/[their-first-server-id]
+   - NO → Redirect to /setup
+```
+
+---
+
+## 🔄 Complete Flow Diagram
+
+```
+┌─────────────────────────────────────────────────┐
+│  1. User Signs Up with Clerk                    │
+└─────────────────┬───────────────────────────────┘
+                  │
+                  ▼
+┌─────────────────────────────────────────────────┐
+│  2. Clerk Webhook Fires                         │
+│     POST /api/webhooks/clerk                    │
+│     ✅ Profile Created                          │
+└─────────────────┬───────────────────────────────┘
+                  │
+                  ▼
+┌─────────────────────────────────────────────────┐
+│  3. User Redirected to /setup                   │
+│     - initialProfile() called                   │
+│     - Profile found ✅                          │
+│     - Check for existing servers                │
+└─────────────────┬───────────────────────────────┘
+                  │
+                  ▼
+┌─────────────────────────────────────────────────┐
+│  4. User Clicks "Create Server"                 │
+│     - Server created                            │
+│     - Channel "general" created (isDefault)     │
+│     - Member created (ADMIN role)               │
+│     - inviteCode generated                      │
+└─────────────────┬───────────────────────────────┘
+                  │
+                  ▼
+┌─────────────────────────────────────────────────┐
+│  5. Redirect to /servers/[serverId]             │
+│     - Server exists ✅                          │
+│     - Channel exists ✅                         │
+│     - Member exists ✅                          │
+│     - User can start chatting!                  │
+└─────────────────────────────────────────────────┘
+```
+
+---
+
 ### Day 3: Initial Server Setup
 
 - [ ] Create `/setup` page (onboarding)
