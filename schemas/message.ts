@@ -44,11 +44,12 @@ export const CreateMessageInput = z.object({
 
 export type SendMessageInput = z.infer<typeof CreateMessageInput>;
 
-export const UpdateMessageInput = z.object({
-	content: z.string().min(1),
+export const UpdateMessageSchema = z.object({
+	messageId: z.string(),
+	content: z.string().min(1, "Message cannot be empty"),
 });
 
-export type UpdateMessageInput = z.infer<typeof UpdateMessageInput>;
+export type UpdateMessageInput = z.infer<typeof UpdateMessageSchema>;
 
 export const GetMessageInputSchema = z.object({
 	channelId: z.string(),
@@ -56,3 +57,9 @@ export const GetMessageInputSchema = z.object({
 });
 
 export type GetMessageInput = z.infer<typeof GetMessageInputSchema>;
+
+export const DeleteMessageSchema = z.object({
+	messageId: z.string(),
+});
+
+export type DeleteMessageInput = z.infer<typeof DeleteMessageSchema>;

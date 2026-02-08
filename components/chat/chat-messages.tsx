@@ -3,13 +3,15 @@
 import { format } from "date-fns";
 import { ChatItem } from "@/components/chat/chat-item";
 import { Activity, Hash, Loader2, Terminal } from "lucide-react";
-import { MemberBase, MemberProfile } from "@/schemas/member";
-import { useQuery } from "@tanstack/react-query";
+import { MemberProfile } from "@/schemas/member";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { getMessagesAction } from "@/actions/message";
 import { useAction } from "next-safe-action/hooks";
 import { InferSafeActionFnResult } from "next-safe-action";
 import { toast } from "sonner";
 import { useEffect, useRef } from "react";
+import { pusherClient } from "@/lib/pusher-client";
+import { ChannelMessage } from "@/schemas/message";
 
 const DATE_FORMAT = "d MMM yyyy, HH:mm";
 
@@ -28,9 +30,10 @@ interface ChatMessagesProps {
 
 type GetMessagesResults = InferSafeActionFnResult<typeof getMessagesAction>;
 
-export const ChatMessages = ({ name, member, apiUrl, socketUrl, socketQuery, paramKey, paramValue, type, channelId, serverId }: ChatMessagesProps) => {
+export const ChatMessages = ({ name, member, channelId, serverId }: ChatMessagesProps) => {
 	const chatRef = useRef<HTMLDivElement>(null);
 	const bottomRef = useRef<HTMLDivElement>(null);
+	const queryClient = useQueryClient();
 
 	const { executeAsync: getMessages } = useAction(getMessagesAction, {
 		onSuccess() {},
@@ -64,8 +67,47 @@ export const ChatMessages = ({ name, member, apiUrl, socketUrl, socketQuery, par
 
 			return result.data.data.messages || [];
 		},
-		refetchInterval: 5000, // Temporary polling until Socket.io is ready
+		// refetchInterval: 5000, // Temporary polling until Socket.io is ready // removed polling, replaced with real-time notification using Pusher
 	});
+
+	// ✅ Pusher Subscription Effect
+	useEffect(() => {
+		// Subscribe to channel
+		const channelName = `channel-${channelId}`;
+		const channel = pusherClient.subscribe(channelName);
+
+		// Listen for new messages
+		channel.bind("message:new", (newMessage: ChannelMessage) => {
+			// Update query cache with new message
+			queryClient.setQueryData(["messages", channelId], (oldMessages: ChannelMessage[] = []) => {
+				// Check if message already exists (prevent duplicates)
+				const exists = oldMessages.some((msg) => msg.id === newMessage.id);
+				if (exists) return oldMessages;
+
+				// Add new message to the end
+				return [...oldMessages, newMessage];
+			});
+		});
+		// Listen for message updates (edits)
+		channel.bind("message:update", (updatedMessage: ChannelMessage) => {
+			queryClient.setQueryData(["messages", channelId], (oldMessages: ChannelMessage[] = []) => {
+				return oldMessages.map((msg) => (msg.id === updatedMessage.id ? updatedMessage : msg));
+			});
+		});
+
+		// Listen for message deletions
+		channel.bind("message:delete", (deletedMessage: ChannelMessage) => {
+			queryClient.setQueryData(["messages", channelId], (oldMessages: ChannelMessage[] = []) => {
+				return oldMessages.map((msg) => (msg.id === deletedMessage.id ? deletedMessage : msg));
+			});
+		});
+
+		// Cleanup on unmount or channel change
+		return () => {
+			channel.unbind_all();
+			channel.unsubscribe();
+		};
+	}, [channelId, queryClient]);
 
 	// Auto-scroll to bottom on load and when data changes
 	useEffect(() => {
@@ -103,7 +145,7 @@ export const ChatMessages = ({ name, member, apiUrl, socketUrl, socketQuery, par
 					This is the start of the <span className="text-indigo-400 font-bold">#{name}</span> channel.
 				</p>
 			</div>
-			<div className="w-full h-[1px] bg-white/5 my-2 mx-6" />
+			<div className="w-full h-px bg-white/5 my-2 mx-6" />
 
 			{/* 2. Message List */}
 			<div className="flex flex-col mt-auto gap-1 min-w-0 w-full">
@@ -120,6 +162,7 @@ export const ChatMessages = ({ name, member, apiUrl, socketUrl, socketQuery, par
 						isUpdated={message.edited}
 						socketUrl=""
 						socketQuery={{}}
+						channelId={channelId} // ✅ Pass this if ChatItem needs it for mutations
 					/>
 				))}
 				{/* Invisible div to scroll to */}

@@ -1,7 +1,8 @@
 import { redirect, notFound } from "next/navigation";
-import { currentProfile } from "@/data/profile";
+import { getCurrentProfile } from "@/data/profile";
 import prisma from "@/lib/prisma";
 import { InviteUI } from "@/components/invite/invite-ui";
+import { requireAuth } from "@/lib/auth";
 
 interface InvitePageProps {
 	params: Promise<{ inviteCode: string }>;
@@ -9,7 +10,9 @@ interface InvitePageProps {
 
 export default async function InvitePage({ params }: InvitePageProps) {
 	const { inviteCode } = await params;
-	const profile = await currentProfile();
+	await requireAuth();
+
+	const profile = await getCurrentProfile();
 
 	if (!profile) {
 		return redirect("/sign-in");
