@@ -1,17 +1,23 @@
 "use client";
 
-import { Message } from "@/schemas/message";
-import { Profile } from "@/schemas/profile";
 import { format } from "date-fns";
 import { ChatItem } from "@/components/chat/chat-item";
-import { Hash } from "lucide-react";
+import { Activity, Hash, Loader2, Terminal } from "lucide-react";
+import { MemberBase, MemberProfile } from "@/schemas/member";
+import { useQuery } from "@tanstack/react-query";
+import { getMessagesAction } from "@/actions/message";
+import { useAction } from "next-safe-action/hooks";
+import { InferSafeActionFnResult } from "next-safe-action";
+import { toast } from "sonner";
+import { useEffect, useRef } from "react";
 
 const DATE_FORMAT = "d MMM yyyy, HH:mm";
 
 interface ChatMessagesProps {
 	name: string;
-	member: Profile;
-	chatId: string;
+	member: MemberProfile;
+	channelId: string;
+	serverId: string;
 	apiUrl: string;
 	socketUrl: string;
 	socketQuery: Record<string, string>;
@@ -20,72 +26,104 @@ interface ChatMessagesProps {
 	type: "channel" | "conversation";
 }
 
-// Dummy Messages Data (Move this to dummy-data.ts later if you want)
-const MOCK_MESSAGES: Message[] = [
-	{
-		id: "msg-1",
-		content: "Has anyone seen the new Figma update? The variables feature is insane.",
-		memberId: "user-2",
-		member: {
-			id: "user-2",
-			name: "Sarah Design",
-			imageUrl: "https://images.unsplash.com/photo-1494790108377-be9c29b29330?q=80&w=1287&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D",
-			email: "sarah@test.com",
-			status: "ONLINE",
-		},
-		createdAt: new Date().toISOString(),
-		updatedAt: new Date().toISOString(),
-		deleted: false,
-	},
-	{
-		id: "msg-2",
-		content: "Yeah, I'm already refactoring our design system to use it. It's going to save us so much time on dark mode tokens.",
-		memberId: "user-1", // This matches current user ID in dummy data
-		member: {
-			id: "user-1",
-			name: "shadcn-fan",
-			imageUrl: "https://images.unsplash.com/photo-1599566150163-29194dcaad36?q=80&w=774&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D",
-			email: "dev@flux.app",
-			status: "ONLINE",
-		},
-		createdAt: new Date().toISOString(),
-		updatedAt: new Date().toISOString(),
-		deleted: false,
-	},
-];
+type GetMessagesResults = InferSafeActionFnResult<typeof getMessagesAction>;
 
-export const ChatMessages = ({ name, member, chatId, apiUrl, socketUrl, socketQuery, paramKey, paramValue, type }: ChatMessagesProps) => {
+export const ChatMessages = ({ name, member, apiUrl, socketUrl, socketQuery, paramKey, paramValue, type, channelId, serverId }: ChatMessagesProps) => {
+	const chatRef = useRef<HTMLDivElement>(null);
+	const bottomRef = useRef<HTMLDivElement>(null);
+
+	const { executeAsync: getMessages } = useAction(getMessagesAction, {
+		onSuccess() {},
+		onError(e) {
+			handleActionError(e.error);
+		},
+	});
+
+	const handleActionError = (error: { serverError?: GetMessagesResults["serverError"]; validationErrors?: GetMessagesResults["validationErrors"] }) => {
+		if (error.validationErrors) {
+			toast.error("PROTOCOL_REJECTED", {
+				description: "INPUT_INTEGRITY_FAILURE // CHECK_REQUIRED_FIELDS",
+				icon: <Activity className="text-red-500" size={16} />,
+			});
+
+			console.log(error.validationErrors);
+		}
+		if (error.serverError) {
+			toast.error("SYSTEM_HALT", {
+				description: error.serverError.toUpperCase(),
+				icon: <Terminal className="text-red-500" size={16} />,
+			});
+		}
+	};
+
+	const { data, isLoading, error } = useQuery({
+		queryKey: ["messages", channelId],
+		queryFn: async () => {
+			const result: GetMessagesResults = await getMessages({ channelId, serverId });
+			if (!result?.data?.success) throw new Error(result?.serverError || "Failed");
+
+			return result.data.data.messages || [];
+		},
+		refetchInterval: 5000, // Temporary polling until Socket.io is ready
+	});
+
+	// Auto-scroll to bottom on load and when data changes
+	useEffect(() => {
+		if (bottomRef.current) {
+			bottomRef.current.scrollIntoView({ behavior: "smooth" });
+		}
+	}, [data]);
+
+	if (isLoading) {
+		return (
+			<div className="flex-1 flex items-center justify-center">
+				<Loader2 className="h-6 w-6 animate-spin text-zinc-500" />
+			</div>
+		);
+	}
+
+	if (error) {
+		return <div className="flex-1 flex items-center justify-center text-zinc-500">Failed to load messages. Please refresh.</div>;
+	}
+
+	const messages = data || [];
+
 	return (
-		<div className="flex-1 flex flex-col py-4 overflow-y-auto custom-scrollbar">
+		<div ref={chatRef} className="flex-1 flex flex-col py-4 overflow-y-auto no-scrollbar">
 			{/* 1. Spacer to push messages to bottom if few */}
 			<div className="flex-1" />
 
 			{/* 2. Welcome Message */}
-			<div className="px-6 pb-8 mb-4 border-b border-white/5">
-				<div className="h-[75px] w-[75px] rounded-full bg-white/10 flex items-center justify-center mb-4">
-					<Hash className="h-12 w-12 text-white" />
+			<div className="px-6 pb-6 pt-10">
+				<div className="h-16 w-16 rounded-3xl bg-white/10 flex items-center justify-center mb-4 shadow-[0_0_20px_rgba(255,255,255,0.05)]">
+					<Hash className="h-8 w-8 text-white" />
 				</div>
-				<h3 className="text-2xl font-bold text-white">Welcome to #{name}</h3>
-				<p className="text-zinc-400 text-sm mt-1">This is the start of the #{name} channel.</p>
+				<h3 className="text-3xl font-bold text-white tracking-tight">Welcome to #{name}</h3>
+				<p className="text-zinc-400 text-base mt-2">
+					This is the start of the <span className="text-indigo-400 font-bold">#{name}</span> channel.
+				</p>
 			</div>
+			<div className="w-full h-[1px] bg-white/5 my-2 mx-6" />
 
-			{/* 3. Message List */}
-			<div className="flex flex-col-reverse mt-auto">
-				{MOCK_MESSAGES.map((message) => (
+			{/* 2. Message List */}
+			<div className="flex flex-col mt-auto gap-1 min-w-0 w-full">
+				{messages.map((message) => (
 					<ChatItem
 						key={message.id}
 						id={message.id}
 						currentMember={member}
 						member={message.member}
 						content={message.content}
-						fileUrl={null}
+						fileUrl={message.fileUrl}
 						deleted={message.deleted}
 						timestamp={format(new Date(message.createdAt), DATE_FORMAT)}
 						isUpdated={message.updatedAt !== message.createdAt}
-						socketUrl={socketUrl}
-						socketQuery={socketQuery}
+						socketUrl=""
+						socketQuery={{}}
 					/>
 				))}
+				{/* Invisible div to scroll to */}
+				<div ref={bottomRef} />
 			</div>
 		</div>
 	);

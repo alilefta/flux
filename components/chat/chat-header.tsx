@@ -1,7 +1,6 @@
 "use client";
 
 import { Hash, Menu, Mic, Search, User, Video, Wifi } from "lucide-react";
-import { Profile } from "@/schemas/profile";
 import { UserAvatar } from "@/components/user/user-avatar"; // You'll create this simple wrapper later
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 
