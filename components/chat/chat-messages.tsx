@@ -4,7 +4,7 @@ import { format } from "date-fns";
 import { ChatItem } from "@/components/chat/chat-item";
 import { Activity, Hash, Loader2, Terminal } from "lucide-react";
 import { MemberProfile } from "@/schemas/member";
-import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { useInfiniteQuery, useQuery, useQueryClient } from "@tanstack/react-query";
 import { getMessagesAction } from "@/actions/message";
 import { useAction } from "next-safe-action/hooks";
 import { InferSafeActionFnResult } from "next-safe-action";
@@ -12,6 +12,9 @@ import { toast } from "sonner";
 import { useEffect, useRef } from "react";
 import { pusherClient } from "@/lib/pusher-client";
 import { ChannelMessage } from "@/schemas/message";
+import { MessageEvent } from "@/lib/events";
+import { useParams, useSearchParams } from "next/navigation";
+import EmojiPicker, { Theme } from "emoji-picker-react";
 
 const DATE_FORMAT = "d MMM yyyy, HH:mm";
 
@@ -33,7 +36,10 @@ type GetMessagesResults = InferSafeActionFnResult<typeof getMessagesAction>;
 export const ChatMessages = ({ name, member, channelId, serverId }: ChatMessagesProps) => {
 	const chatRef = useRef<HTMLDivElement>(null);
 	const bottomRef = useRef<HTMLDivElement>(null);
+	// const loadMoreRef = useRef<HTMLDivElement>(null);
 	const queryClient = useQueryClient();
+	const params = useSearchParams();
+	const cursor = params.get("cursor") ?? undefined;
 
 	const { executeAsync: getMessages } = useAction(getMessagesAction, {
 		onSuccess() {},
@@ -44,31 +50,46 @@ export const ChatMessages = ({ name, member, channelId, serverId }: ChatMessages
 
 	const handleActionError = (error: { serverError?: GetMessagesResults["serverError"]; validationErrors?: GetMessagesResults["validationErrors"] }) => {
 		if (error.validationErrors) {
-			toast.error("PROTOCOL_REJECTED", {
-				description: "INPUT_INTEGRITY_FAILURE // CHECK_REQUIRED_FIELDS",
-				icon: <Activity className="text-red-500" size={16} />,
-			});
+			toast.error("An error occured while processing your input.");
 
 			console.log(error.validationErrors);
 		}
 		if (error.serverError) {
-			toast.error("SYSTEM_HALT", {
-				description: error.serverError.toUpperCase(),
-				icon: <Terminal className="text-red-500" size={16} />,
-			});
+			toast.error("An error occured");
 		}
 	};
 
-	const { data, isLoading, error } = useQuery({
+	// const { data, isLoading, error } = useQuery({
+	// 	queryKey: ["messages", channelId],
+	// 	queryFn: async () => {
+	// 		const result: GetMessagesResults = await getMessages({ channelId, serverId });
+	// 		if (!result?.data?.success) throw new Error(result?.serverError || "Failed");
+
+	// 		return result.data.data.messages || [];
+	// 	},
+	// 	// refetchInterval: 5000, // Temporary polling until Socket.io is ready // removed polling, replaced with real-time notification using Pusher
+	// });
+
+	const { data, isLoading, error, fetchNextPage, isFetchingNextPage } = useInfiniteQuery({
 		queryKey: ["messages", channelId],
-		queryFn: async () => {
-			const result: GetMessagesResults = await getMessages({ channelId, serverId });
+		queryFn: async ({ pageParam }) => {
+			const result: GetMessagesResults = await getMessages({ channelId, serverId, cursor: pageParam });
 			if (!result?.data?.success) throw new Error(result?.serverError || "Failed");
 
-			return result.data.data.messages || [];
+			return result.data.messages;
 		},
-		// refetchInterval: 5000, // Temporary polling until Socket.io is ready // removed polling, replaced with real-time notification using Pusher
+		initialPageParam: undefined as Date | undefined,
+		getNextPageParam: (lastPage) => {
+			if (lastPage.length === 0) return undefined;
+
+			const oldestMessage = lastPage[lastPage.length - 1];
+			return oldestMessage.createdAt;
+		},
 	});
+
+	// useEffect(() => {
+	// 	fetchNextPage();
+	// }, [cursor]);
 
 	// ✅ Pusher Subscription Effect
 	useEffect(() => {
@@ -77,7 +98,7 @@ export const ChatMessages = ({ name, member, channelId, serverId }: ChatMessages
 		const channel = pusherClient.subscribe(channelName);
 
 		// Listen for new messages
-		channel.bind("message:new", (newMessage: ChannelMessage) => {
+		channel.bind(MessageEvent.NEW, (newMessage: ChannelMessage) => {
 			// Update query cache with new message
 			queryClient.setQueryData(["messages", channelId], (oldMessages: ChannelMessage[] = []) => {
 				// Check if message already exists (prevent duplicates)
@@ -89,14 +110,14 @@ export const ChatMessages = ({ name, member, channelId, serverId }: ChatMessages
 			});
 		});
 		// Listen for message updates (edits)
-		channel.bind("message:update", (updatedMessage: ChannelMessage) => {
+		channel.bind(MessageEvent.UPDATE, (updatedMessage: ChannelMessage) => {
 			queryClient.setQueryData(["messages", channelId], (oldMessages: ChannelMessage[] = []) => {
 				return oldMessages.map((msg) => (msg.id === updatedMessage.id ? updatedMessage : msg));
 			});
 		});
 
 		// Listen for message deletions
-		channel.bind("message:delete", (deletedMessage: ChannelMessage) => {
+		channel.bind(MessageEvent.DELETE, (deletedMessage: ChannelMessage) => {
 			queryClient.setQueryData(["messages", channelId], (oldMessages: ChannelMessage[] = []) => {
 				return oldMessages.map((msg) => (msg.id === deletedMessage.id ? deletedMessage : msg));
 			});
@@ -128,10 +149,16 @@ export const ChatMessages = ({ name, member, channelId, serverId }: ChatMessages
 		return <div className="flex-1 flex items-center justify-center text-zinc-500">Failed to load messages. Please refresh.</div>;
 	}
 
-	const messages = data || [];
+	const messages = data?.pages.flat() || [];
+
+	// useEffect(() => {
+	// 	console.log(queryClient.getQueryData(["messages", channelId]));
+	// }, [messages]);
 
 	return (
-		<div ref={chatRef} className="flex-1 flex flex-col py-4 overflow-y-auto no-scrollbar">
+		<div ref={chatRef} className="flex-1 flex flex-col py-4 overflow-y-auto no-scrollbar relative">
+			{isFetchingNextPage ? <Loader2 className="animate-spin w-4 h-4" /> : <button onClick={() => fetchNextPage()}>Load More</button>}
+
 			{/* 1. Spacer to push messages to bottom if few */}
 			<div className="flex-1" />
 

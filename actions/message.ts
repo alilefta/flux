@@ -3,10 +3,11 @@
 import { getChannelById } from "@/data/channel";
 import { getMemberByProfileId } from "@/data/member";
 import { ERRORS } from "@/lib/errors";
+import { MessageEvent } from "@/lib/events";
 import prisma from "@/lib/prisma";
 import { pusherServer } from "@/lib/pusher";
 import { actionClientWithProfile } from "@/lib/safe-action";
-import { CreateMessageInput, DeleteMessageSchema, GetMessageInputSchema, UpdateMessageSchema } from "@/schemas/message";
+import { ChannelMessage, CreateMessageInput, DeleteMessageSchema, GetMessageInputSchema, UpdateMessageSchema } from "@/schemas/message";
 
 export const sendMessageAction = actionClientWithProfile
 	.metadata({ actionName: "send-message-action" })
@@ -44,7 +45,7 @@ export const sendMessageAction = actionClientWithProfile
 
 		// ✅ Broadcast via Pusher
 		const channelName = `channel-${channelId}`;
-		await pusherServer.trigger(channelName, "message:new", message);
+		await pusherServer.trigger(channelName, MessageEvent.NEW, message);
 
 		return { success: true, data: { message } };
 	});
@@ -53,7 +54,11 @@ export const getMessagesAction = actionClientWithProfile
 	.metadata({ actionName: "get-messages-action" })
 	.inputSchema(GetMessageInputSchema)
 	.action(async ({ ctx, parsedInput }) => {
-		const { channelId, serverId } = parsedInput;
+		const { channelId, serverId, cursor } = parsedInput;
+
+		console.log("Current Cursor value:", cursor);
+
+		const pageSize = 2;
 
 		// Verify member
 		const member = await prisma.member.findFirst({
@@ -66,29 +71,53 @@ export const getMessagesAction = actionClientWithProfile
 		if (!member) {
 			throw ERRORS.NOT_MEMBER;
 		}
-
-		// Fetch messages
-		const messages = await prisma.message.findMany({
-			where: {
-				channelId,
-				deleted: false,
-			},
-			include: {
-				member: {
-					include: {
-						profile: true,
+		let messages: ChannelMessage[];
+		if (cursor) {
+			// Fetch messages
+			messages = await prisma.message.findMany({
+				where: {
+					channelId,
+					deleted: false,
+					createdAt: {
+						lt: cursor,
 					},
 				},
-			},
-			orderBy: {
-				createdAt: "asc", // ✅ Oldest first (like Discord)
-			},
-			take: 50, // ✅ Limit to last 50 messages for now
-		});
+				include: {
+					member: {
+						include: {
+							profile: true,
+						},
+					},
+				},
+				orderBy: {
+					createdAt: "desc", // ✅ Oldest first (like Discord)
+				},
+				take: pageSize, // ✅ Limit to last 50 messages for now
+			});
+		} else {
+			// Fetch messages
+			messages = await prisma.message.findMany({
+				where: {
+					channelId,
+					deleted: false,
+				},
+				include: {
+					member: {
+						include: {
+							profile: true,
+						},
+					},
+				},
+				orderBy: {
+					createdAt: "asc", // ✅ Oldest first (like Discord)
+				},
+				take: pageSize, // ✅ Limit to last 50 messages for now
+			});
+		}
 
 		return {
 			success: true,
-			data: { messages },
+			messages,
 		};
 	});
 
@@ -144,7 +173,7 @@ export const editMessageAction = actionClientWithProfile
 		// io.to(`channel:${message.channelId}`).emit("message:update", updatedMessage);
 		// ✅ Broadcast update
 		const channelName = `channel-${updatedMessage.channelId}`;
-		await pusherServer.trigger(channelName, "message:update", updatedMessage);
+		await pusherServer.trigger(channelName, MessageEvent.UPDATE, updatedMessage);
 
 		return {
 			success: true,
@@ -205,7 +234,7 @@ export const markMessageAsDeletedAction = actionClientWithProfile
 		// TODO: Emit Socket.io event
 		// io.to(`channel:${message.channelId}`).emit("message:update", updatedMessage);
 		const channelName = `channel-${markedAsDeletedMessage.channelId}`;
-		await pusherServer.trigger(channelName, "message:delete", markedAsDeletedMessage);
+		await pusherServer.trigger(channelName, MessageEvent.DELETE, markedAsDeletedMessage);
 
 		return {
 			success: true,

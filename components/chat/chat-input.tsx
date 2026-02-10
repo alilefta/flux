@@ -7,17 +7,28 @@ import { useAction } from "next-safe-action/hooks";
 import { useState } from "react";
 import { toast } from "sonner";
 import TextareaAutosize from "react-textarea-autosize";
+import { Channel } from "pusher-js";
+import { ChannelMessage } from "@/schemas/message";
+import EmojiPicker, { Theme } from "emoji-picker-react";
 
 interface ChatInputProps {
 	placeholder?: string;
 	channelId: string;
 	name: string;
 	serverId: string;
+	memberId: string;
+	// handleOptimisticMessageCreation: (
+	// 	data: Partial<ChannelMessage> & {
+	// 		_optimistic: boolean;
+	// 	},
+	// ) => void;
 }
 
-export const ChatInput = ({ placeholder, channelId, name, serverId }: ChatInputProps) => {
+export const ChatInput = ({ placeholder, channelId, name, serverId, memberId }: ChatInputProps) => {
 	const [message, setMessage] = useState("");
 	const queryClient = useQueryClient();
+
+	const [openEmojiPicker, setOpenEmojiPicker] = useState(false);
 
 	const { executeAsync: sendMessage } = useAction(sendMessageAction, {
 		onError: ({ error }) => {
@@ -45,6 +56,26 @@ export const ChatInput = ({ placeholder, channelId, name, serverId }: ChatInputP
 
 			return result?.data;
 		},
+		// // optimistic UI update
+		// onMutate: async (newMessage, context) => {
+		// 	// await context.client.cancelQueries({
+		// 	// 	queryKey: ["messages", channelId],
+		// 	// });
+		// 	// const previousMessages: ChannelMessage[] = context.client.getQueryData(["messages", channelId]);
+		// 	// context.client.setQueryData(["messages", channelId], (old: ChannelMessage[]) => [...old, newMessage]);
+		// 	// handleOptimisticMessageCreation({
+		// 	// 	_optimistic: true,
+		// 	// 	channelId: channelId,
+		// 	// 	content: message,
+		// 	// 	createdAt: new Date(),
+		// 	// 	deleted: false,
+		// 	// 	edited: false,
+		// 	// 	id: `temp_${new Date().toISOString()}`,
+		// 	// 	fileUrl: null,
+		// 	// 	memberId: memberId,
+		// 	// 	updatedAt: new Date(),
+		// 	// });
+		// },
 		onSuccess: () => {
 			// ✅ Clear input
 			setMessage("");
@@ -72,11 +103,14 @@ export const ChatInput = ({ placeholder, channelId, name, serverId }: ChatInputP
 			e.preventDefault();
 			handleSend();
 		}
+		if (openEmojiPicker) {
+			setOpenEmojiPicker(false);
+		}
 	};
 
 	return (
 		<div className="px-4 pb-4">
-			<div className="relative rounded-xl p-1 flex items-end gap-2 border border-white/10 bg-black/40 focus-within:border-primary/50 focus-within:ring-1 focus-within:ring-primary/50 transition-all">
+			<div className=" rounded-xl p-1 flex items-end gap-2 border border-white/10 bg-black/40 focus-within:border-primary/50 focus-within:ring-1 focus-within:ring-primary/50 transition-all">
 				<button
 					title="Attach"
 					disabled={mutation.isPending}
@@ -94,10 +128,19 @@ export const ChatInput = ({ placeholder, channelId, name, serverId }: ChatInputP
 					className="w-full bg-transparent text-sm text-white placeholder-zinc-500 resize-none max-h-32 min-h-[40px] py-2.5 focus:outline-none font-sans disabled:opacity-50"
 					minRows={1}
 					maxRows={4}
+					onFocus={() => {
+						if (openEmojiPicker) {
+							setOpenEmojiPicker(false);
+						}
+					}}
 				/>
 
-				<div className="flex items-center gap-1 pb-1 shrink-0">
-					<button title="Emoji" disabled={mutation.isPending} className="p-2 rounded-lg text-zinc-400 hover:text-yellow-400 hover:bg-white/10 transition-colors disabled:opacity-50">
+				<div className="flex items-center gap-1 pb-1 shrink-0 relative">
+					<button
+						onClick={() => setOpenEmojiPicker((p) => !p)}
+						title="Emoji"
+						className="  top-0 bottom-0 p-2 rounded-lg text-zinc-400 hover:text-yellow-400 hover:bg-white/10 transition-colors disabled:opacity-50"
+					>
 						<Smile className="w-5 h-5" />
 					</button>
 
@@ -111,6 +154,20 @@ export const ChatInput = ({ placeholder, channelId, name, serverId }: ChatInputP
 					</button>
 				</div>
 			</div>
+
+			<EmojiPicker
+				theme={Theme.DARK}
+				onEmojiClick={(emoji) => {
+					setMessage((p) => p + emoji.emoji);
+				}}
+				open={openEmojiPicker}
+				style={{
+					position: "absolute",
+					zIndex: 40,
+					right: 0,
+					bottom: "68px",
+				}}
+			/>
 
 			{/* Character Count (optional) */}
 			{message.length > 1800 && <p className="text-xs text-zinc-500 mt-1 text-right">{message.length}/2000 characters</p>}

@@ -12,7 +12,7 @@ export const createServerAction = actionClientWithProfile
 		actionName: "create-server-action",
 	})
 	.inputSchema(CreateServerInput, {
-		handleValidationErrorsShape: async (ve, utils) => flattenValidationErrors(ve).fieldErrors,
+		handleValidationErrorsShape: async (ve) => flattenValidationErrors(ve).fieldErrors,
 	})
 	.action(async ({ parsedInput: { name, imageUrl }, ctx: { profile } }) => {
 		try {
@@ -47,7 +47,7 @@ export const joinServerAction = actionClientWithProfile
 		actionName: "join-server-action",
 	})
 	.inputSchema(joinServerSchema, {
-		handleValidationErrorsShape: async (ve, utils) => flattenValidationErrors(ve).fieldErrors,
+		handleValidationErrorsShape: async (ve) => flattenValidationErrors(ve).fieldErrors,
 	})
 	.action(async ({ parsedInput: { inviteCode }, ctx: { profile } }) => {
 		try {
@@ -101,7 +101,7 @@ export const leaveServerAction = actionClientWithProfile
 		actionName: "join-server-action",
 	})
 	.inputSchema(joinServerSchema, {
-		handleValidationErrorsShape: async (ve, utils) => flattenValidationErrors(ve).fieldErrors,
+		handleValidationErrorsShape: async (ve) => flattenValidationErrors(ve).fieldErrors,
 	})
 	.action(async ({ parsedInput: { inviteCode }, ctx: { profile } }) => {
 		try {

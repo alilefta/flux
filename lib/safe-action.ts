@@ -3,7 +3,7 @@ import { Prisma } from "@/generated/prisma/client";
 import { createMiddleware, createSafeActionClient, DEFAULT_SERVER_ERROR_MESSAGE } from "next-safe-action";
 import z from "zod";
 import { DATABASE_ERROR_MESSAGE } from "./safe-action-helpers";
-import { ActionError } from "@/lib/errors";
+import { ActionError, ERRORS } from "@/lib/errors";
 import prisma from "./prisma";
 
 // base action
@@ -98,15 +98,17 @@ export const loggingMiddleware = createMiddleware<{
 });
 
 export const requireProfileMiddleWare = createMiddleware<{ metadata: { actionName: string } }>().define(async ({ next }) => {
-	try {
-		const profile = await getCurrentProfile();
+	const profile = await getCurrentProfile();
 
-		return next({
-			ctx: { profile },
-		});
-	} catch (error: unknown) {
-		throw new ActionError("You must be logged in", "UNAUTHORIZED");
+	// ✅ Throw error if no profile
+	if (!profile) {
+		throw ERRORS.UNAUTHORIZED;
 	}
+
+	// ✅ TypeScript now knows profile is NOT null here
+	return next({
+		ctx: { profile }, // profile is guaranteed to be non-null
+	});
 });
 
 // Optional: Add server-specific auth
@@ -115,7 +117,10 @@ export const requireServerMemberMiddleware = createMiddleware<{
 }>().define(async ({ next, clientInput }) => {
 	const profile = await getCurrentProfile();
 
-	// Assuming serverId is in input
+	if (!profile) {
+		throw ERRORS.UNAUTHORIZED;
+	}
+
 	const serverId = (clientInput as any).serverId;
 
 	if (!serverId) {
@@ -130,13 +135,13 @@ export const requireServerMemberMiddleware = createMiddleware<{
 	});
 
 	if (!member) {
-		throw new ActionError("You are not a member of this server", "NOT_MEMBER");
+		throw ERRORS.NOT_MEMBER;
 	}
 
 	return next({
 		ctx: {
-			profile,
-			member,
+			profile, // Non-null
+			member, // Non-null
 			serverId,
 		},
 	});

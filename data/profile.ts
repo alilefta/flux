@@ -10,7 +10,7 @@ export async function getCurrentProfile() {
 	const user = await currentUser();
 
 	if (!user) {
-		throw new Error("Unauthorized");
+		return null;
 	}
 
 	const profile = await getProfileByClerkId(user.id);

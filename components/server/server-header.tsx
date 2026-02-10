@@ -21,10 +21,10 @@ export const ServerHeader = ({ server, role }: ServerHeaderProps) => {
 	return (
 		<DropdownMenu>
 			<DropdownMenuTrigger asChild>
-				<button className="w-full h-12 font-semibold px-4 flex items-center justify-between border-b border-white/5 hover:bg-white/5 transition-colors group focus:outline-none">
+				<span className="w-full h-12 font-semibold px-4 flex items-center justify-between border-b border-white/5 hover:bg-white/5 transition-colors group focus:outline-none">
 					<span className="truncate text-white text-sm font-bold">{server.name}</span>
 					<ChevronDown className="h-4 w-4 text-zinc-500 group-hover:text-zinc-300 transition-transform duration-200 group-data-[state=open]:rotate-180" />
-				</button>
+				</span>
 			</DropdownMenuTrigger>
 
 			<DropdownMenuContent className="w-56 text-xs font-medium text-black dark:text-neutral-400 space-y-[2px] bg-[#141417] border-white/10 shadow-2xl backdrop-blur-xl">

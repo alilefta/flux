@@ -16,7 +16,7 @@ export default async function ServerLayout({ children, params }: ServerLayoutPro
 	const profile = await getCurrentProfile();
 
 	if (!profile) {
-		return redirect("/");
+		return redirect("/sign-in");
 	}
 
 	// 1. Fetch the specific server securely using Data Layer

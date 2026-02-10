@@ -5,6 +5,7 @@ import { ChatInput } from "@/components/chat/chat-input";
 import { ChatMessages } from "@/components/chat/chat-messages";
 import { getChannelById } from "@/data/channel";
 import { getCurrentMemberByServerAndProfileId } from "@/data/member";
+import EmojiPicker, { Theme } from "emoji-picker-react";
 
 interface ChannelPageProps {
 	params: Promise<{
@@ -17,8 +18,9 @@ export default async function ChannelPage({ params }: ChannelPageProps) {
 	const { serverId, channelId } = await params;
 	const profile = await getCurrentProfile();
 
-	if (!profile) return redirect("/");
-
+	if (!profile) {
+		return redirect("/sign-in");
+	}
 	// Fetch Channel
 	const channel = await getChannelById(channelId);
 
@@ -50,7 +52,7 @@ export default async function ChannelPage({ params }: ChannelPageProps) {
 			/>
 
 			{/* 3. Input */}
-			<ChatInput name={channel.name} channelId={channel.id} placeholder="Type..." serverId={serverId} />
+			<ChatInput name={channel.name} channelId={channel.id} placeholder="Type..." memberId={member.id} serverId={serverId} />
 		</div>
 	);
 }

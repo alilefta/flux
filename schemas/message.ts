@@ -19,6 +19,10 @@ export const ChannelMessageDTO = MessageBaseSchema.extend(
 					id: true,
 					name: true,
 					imageUrl: true,
+					clerkId: true,
+					email: true,
+					createdAt: true,
+					updatedAt: true,
 				}),
 			}).shape,
 		),
@@ -54,6 +58,7 @@ export type UpdateMessageInput = z.infer<typeof UpdateMessageSchema>;
 export const GetMessageInputSchema = z.object({
 	channelId: z.string(),
 	serverId: z.string(),
+	cursor: z.date().optional(),
 });
 
 export type GetMessageInput = z.infer<typeof GetMessageInputSchema>;

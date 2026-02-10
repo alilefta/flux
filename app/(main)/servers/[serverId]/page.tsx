@@ -11,7 +11,9 @@ export default async function ServerPage({ params }: ServerPageProps) {
 	const { serverId } = await params;
 	const profile = await getCurrentProfile();
 
-	if (!profile) return redirect("/setup");
+	if (!profile) {
+		return redirect("/sign-in");
+	}
 
 	const server = await getFirstServerForProfileId(profile.id);
 
