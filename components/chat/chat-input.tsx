@@ -2,14 +2,12 @@
 
 import { sendMessageAction } from "@/actions/message";
 import { InfiniteData, useMutation, useQueryClient } from "@tanstack/react-query";
-import { Plus, Smile, Send, Loader2 } from "lucide-react";
+import { Plus, Send, Loader2 } from "lucide-react";
 import { useAction } from "next-safe-action/hooks";
 import { useState } from "react";
 import { toast } from "sonner";
 import TextareaAutosize from "react-textarea-autosize";
-import { Channel } from "pusher-js";
 import { ChannelMessage } from "@/schemas/message";
-import EmojiPicker, { Theme } from "emoji-picker-react";
 import { MemberProfile } from "@/schemas/member";
 import { EmojiPopover } from "./emoji-popover";
 
@@ -47,7 +45,7 @@ export const ChatInput = ({ placeholder, channelId, name, serverId, member }: Ch
 			const result = await sendMessage({
 				content,
 				channelId,
-				fileUrl: undefined,
+				fileUrl: fileURL || undefined,
 			});
 
 			if (result?.serverError) {
@@ -58,74 +56,64 @@ export const ChatInput = ({ placeholder, channelId, name, serverId, member }: Ch
 		},
 		// optimistic UI update
 		onMutate: async (newMessage, context) => {
-			await context.client.cancelQueries({
-				queryKey: ["messages", channelId],
-			});
-			const previousMessages = context.client.getQueryData<QueryDataShape>(["messages", channelId]);
+			// Cancel outgoing queries
+			await queryClient.cancelQueries({ queryKey: ["messages", channelId] });
 
-			queryClient.setQueryData(["messages", channelId], (oldData: QueryDataShape): QueryDataShape => {
-				if (!oldData.pages) return oldData;
+			// Snapshot previous state
+			const previousMessages = queryClient.getQueryData<QueryDataShape>(["messages", channelId]);
 
-				const timestamp = Date.now();
+			const optimisticId = `optimistic-${crypto.randomUUID()}`;
+			const optimisticMessage: ChannelMessage = {
+				channelId,
+				content: newMessage,
+				createdAt: new Date(),
+				updatedAt: new Date(),
+				deleted: false,
+				edited: false,
+				fileUrl: fileURL,
+				id: optimisticId,
+				member: member,
+				memberId: member.id,
+			};
 
-				const optimisticMessage: ChannelMessage = {
-					channelId,
-					content: message,
-					createdAt: new Date(),
-					updatedAt: new Date(),
-					deleted: false,
-					edited: false,
-					fileUrl: fileURL,
-					id: `optimistic-${new Date().toDateString()}`,
-					member: member,
-					memberId: member.id,
-				};
+			// Add optimistic message
+			queryClient.setQueryData<QueryDataShape>(["messages", channelId], (oldData) => {
+				if (!oldData?.pages) return oldData;
 
 				const newPages = [...oldData.pages];
 				newPages[0] = [optimisticMessage, ...newPages[0]];
 
-				// Add new message to the end
 				return { ...oldData, pages: newPages };
 			});
 
-			console.log("============== optimistic update =============");
-			console.log("New Update: ", newMessage);
-			console.log("Previous Messages: ", previousMessages);
-
-			return {
-				previousMessages,
-				optimisticMessageContent: message,
-			};
+			return { previousMessages, optimisticId };
 		},
-		onSettled: (_data, error, _variables, context) => {
-			console.info("On Settle: Syncing with server state");
-			queryClient.invalidateQueries({ queryKey: ["messages", channelId] });
+		// onSettled: (_data, error) => {
+		// 	console.info("On Settle: Syncing with server state");
+		// 	//queryClient.invalidateQueries({ queryKey: ["messages", channelId] });
 
-			if (error) {
-				console.info("Settled after error", error);
-			} else {
-				console.info("Settled after success - server data will be replaced optimistically", _data);
-			}
-		},
-		onSuccess: () => {
-			// ✅ Clear input
-			setMessage("");
+		// 	if (error) {
+		// 		console.info("Settled after error", error);
+		// 	} else {
+		// 		console.info("Settled after success - server data will be replaced optimistically", _data);
+		// 	}
+		// },
+		// onSuccess: (data, variables, context) => {
+		// 	// ✅ Replace optimistic message by ID
+		// 	queryClient.setQueryData(["messages", channelId], (oldData: QueryDataShape) => {
+		// 		if (!oldData?.pages) return oldData;
 
-			// ❌ REMOVE THIS - Pusher handles updates now!
-			// queryClient.invalidateQueries({
-			//   queryKey: ["messages", channelId],
-			// });
+		// 		const newPages = oldData.pages.map((page) => page.map((msg) => (msg.id === context.optimisticId ? data?.data.message : msg)));
 
-			// ❌ REMOVE THIS - Too noisy, only show on error
-			// toast.success("Message sent!");
-		},
+		// 		return { ...oldData, pages: newPages };
+		// 	});
+		// },
 		onError: (error, variables, context) => {
 			toast.error(error.message || "Failed to send message");
 
-			console.error("Mutation failed for:", context?.optimisticMessageContent);
-			// rollback
-			if (!context?.previousMessages) {
-				queryClient.setQueryData(["messages", channelId], context?.previousMessages);
+			// Rollback
+			if (context?.previousMessages) {
+				queryClient.setQueryData(["messages", channelId], context.previousMessages);
 			}
 		},
 	});
@@ -162,7 +150,7 @@ export const ChatInput = ({ placeholder, channelId, name, serverId, member }: Ch
 					onKeyDown={handleKeyDown}
 					placeholder={placeholder || `Message #${name}`}
 					disabled={mutation.isPending}
-					className="w-full bg-transparent text-sm text-white placeholder-zinc-500 resize-none max-h-32 min-h-[40px] py-2.5 focus:outline-none font-sans disabled:opacity-50"
+					className="w-full bg-transparent text-sm text-white placeholder-zinc-500 resize-none max-h-32 min-h-10 py-2.5 focus:outline-none font-sans disabled:opacity-50"
 					minRows={1}
 					maxRows={4}
 					onFocus={() => {

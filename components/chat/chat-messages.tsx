@@ -116,19 +116,17 @@ export const ChatMessages = ({ name, member, channelId, serverId }: ChatMessages
 		channel.bind(MessageEvent.NEW, (newMessage: ChannelMessage) => {
 			// Update query cache with new message
 			queryClient.setQueryData(["messages", channelId], (oldData: QueryDataShape): QueryDataShape => {
-				if (!oldData || !oldData.pages) return oldData;
-				// here i should manage updating the optimistic messages if exists
+				if (!oldData?.pages) return oldData;
+
 				const newPages = [...oldData.pages];
 
-				// 1. Check if we have an optimistic version of this message
-				// We match by content and author because IDs won't match
-				const optimisticIndex = newPages[0].findIndex((m) => m.content === newMessage.content && m.memberId === newMessage.memberId && m.id.startsWith("optimistic-"));
+				// Remove ALL optimistic messages from this member
+				// (Handles edge case of rapid sends)
+				newPages[0] = newPages[0].filter((m) => !(m.id.startsWith("optimistic-") && m.memberId === newMessage.memberId));
 
-				if (optimisticIndex !== -1) {
-					// SWAP: Replace the optimistic placeholder with the real message
-					newPages[0][optimisticIndex] = newMessage;
-				} else {
-					// APPEND: It's a message from someone else, just add it
+				// Check if real message already exists (prevent duplicates)
+				const exists = newPages[0].some((m) => m.id === newMessage.id);
+				if (!exists) {
 					newPages[0] = [newMessage, ...newPages[0]];
 				}
 
@@ -286,16 +284,14 @@ export const ChatMessages = ({ name, member, channelId, serverId }: ChatMessages
 				{messages.map((message, index) => {
 					// Standardize dates
 					const currentDate = new Date(message.createdAt);
-					const prevMessage = messages[index - 1];
-					const prevDate = prevMessage ? new Date(prevMessage.createdAt) : null;
+					const nextMessage = messages[index + 1]; // Message AFTER (older)
+					const nextDate = nextMessage ? new Date(nextMessage.createdAt) : null;
 
-					// Logic: Show separator if it's the first message OR if different day than previous
-					const showSeparator = !prevDate || differenceInCalendarDays(currentDate, prevDate) > 0;
+					// Show separator if next message is older day (or doesn't exist)
+					const showSeparator = !nextDate || differenceInCalendarDays(currentDate, nextDate) > 0;
 
 					return (
 						<Fragment key={message.id}>
-							{showSeparator && <ChatDateSeparator date={currentDate} />}
-
 							<ChatItem
 								id={message.id}
 								currentMember={member}
@@ -309,6 +305,7 @@ export const ChatMessages = ({ name, member, channelId, serverId }: ChatMessages
 								socketQuery={{}}
 								channelId={channelId}
 							/>
+							{showSeparator && <ChatDateSeparator date={currentDate} />}
 						</Fragment>
 					);
 				})}
