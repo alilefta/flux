@@ -2,12 +2,13 @@
 
 import { getChannelById } from "@/data/channel";
 import { getMemberByProfileId } from "@/data/member";
+import { MessageWhereInput } from "@/generated/prisma/models";
 import { ERRORS } from "@/lib/errors";
 import { MessageEvent } from "@/lib/events";
 import prisma from "@/lib/prisma";
 import { pusherServer } from "@/lib/pusher";
 import { actionClientWithProfile } from "@/lib/safe-action";
-import { ChannelMessage, CreateMessageInput, DeleteMessageSchema, GetMessageInputSchema, UpdateMessageSchema } from "@/schemas/message";
+import { CreateMessageInput, DeleteMessageSchema, GetMessageInputSchema, UpdateMessageSchema } from "@/schemas/message";
 
 export const sendMessageAction = actionClientWithProfile
 	.metadata({ actionName: "send-message-action" })
@@ -56,9 +57,7 @@ export const getMessagesAction = actionClientWithProfile
 	.action(async ({ ctx, parsedInput }) => {
 		const { channelId, serverId, cursor } = parsedInput;
 
-		console.log("Current Cursor value:", cursor);
-
-		const pageSize = 2;
+		const pageSize = 50;
 
 		// Verify member
 		const member = await prisma.member.findFirst({
@@ -71,53 +70,44 @@ export const getMessagesAction = actionClientWithProfile
 		if (!member) {
 			throw ERRORS.NOT_MEMBER;
 		}
-		let messages: ChannelMessage[];
-		if (cursor) {
-			// Fetch messages
-			messages = await prisma.message.findMany({
-				where: {
-					channelId,
-					deleted: false,
-					createdAt: {
-						lt: cursor,
+		// ✅ Build where clause
+		const whereClause: MessageWhereInput = {
+			channelId,
+			deleted: false,
+			...(cursor && {
+				createdAt: {
+					lt: cursor, // Messages BEFORE this timestamp
+				},
+			}),
+		};
+
+		// ✅ Single query with conditional where clause
+		const messages = await prisma.message.findMany({
+			where: whereClause,
+			include: {
+				member: {
+					include: {
+						profile: true,
 					},
 				},
-				include: {
-					member: {
-						include: {
-							profile: true,
-						},
-					},
-				},
-				orderBy: {
-					createdAt: "desc", // ✅ Oldest first (like Discord)
-				},
-				take: pageSize, // ✅ Limit to last 50 messages for now
-			});
-		} else {
-			// Fetch messages
-			messages = await prisma.message.findMany({
-				where: {
-					channelId,
-					deleted: false,
-				},
-				include: {
-					member: {
-						include: {
-							profile: true,
-						},
-					},
-				},
-				orderBy: {
-					createdAt: "asc", // ✅ Oldest first (like Discord)
-				},
-				take: pageSize, // ✅ Limit to last 50 messages for now
-			});
+			},
+			orderBy: {
+				createdAt: "desc",
+			},
+			take: pageSize,
+		});
+
+		let nextCursor: Date | undefined = undefined;
+
+		if (messages.length === pageSize) {
+			// If we fetched a full page, the last item is the cursor for the next fetch
+			nextCursor = messages[messages.length - 1].createdAt;
 		}
 
 		return {
 			success: true,
 			messages,
+			nextCursor,
 		};
 	});
 
