@@ -5,7 +5,6 @@ import { ChatInput } from "@/components/chat/chat-input";
 import { ChatMessages } from "@/components/chat/chat-messages";
 import { getChannelById } from "@/data/channel";
 import { getCurrentMemberByServerAndProfileId } from "@/data/member";
-import EmojiPicker, { Theme } from "emoji-picker-react";
 
 interface ChannelPageProps {
 	params: Promise<{
@@ -52,7 +51,7 @@ export default async function ChannelPage({ params }: ChannelPageProps) {
 			/>
 
 			{/* 3. Input */}
-			<ChatInput name={channel.name} channelId={channel.id} placeholder="Type..." memberId={member.id} serverId={serverId} />
+			<ChatInput name={channel.name} channelId={channel.id} placeholder="Type..." member={member} />
 		</div>
 	);
 }
