@@ -15,13 +15,12 @@ interface ChatInputProps {
 	placeholder?: string;
 	channelId: string;
 	name: string;
-	serverId: string;
 	member: MemberProfile;
 }
 
 type QueryDataShape = InfiniteData<ChannelMessage[], (Date | undefined)[]>;
 
-export const ChatInput = ({ placeholder, channelId, name, serverId, member }: ChatInputProps) => {
+export const ChatInput = ({ placeholder, channelId, name, member }: ChatInputProps) => {
 	const [message, setMessage] = useState("");
 	const [fileURL, setFileURL] = useState<string | null>(null);
 	const queryClient = useQueryClient();
@@ -55,7 +54,7 @@ export const ChatInput = ({ placeholder, channelId, name, serverId, member }: Ch
 			return result?.data;
 		},
 		// optimistic UI update
-		onMutate: async (newMessage, context) => {
+		onMutate: async (newMessage) => {
 			// Cancel outgoing queries
 			await queryClient.cancelQueries({ queryKey: ["messages", channelId] });
 
@@ -88,26 +87,13 @@ export const ChatInput = ({ placeholder, channelId, name, serverId, member }: Ch
 
 			return { previousMessages, optimisticId };
 		},
-		// onSettled: (_data, error) => {
-		// 	console.info("On Settle: Syncing with server state");
-		// 	//queryClient.invalidateQueries({ queryKey: ["messages", channelId] });
+		onSuccess: () => {
+			// Clear input
+			setMessage("");
+			setFileURL(null);
 
-		// 	if (error) {
-		// 		console.info("Settled after error", error);
-		// 	} else {
-		// 		console.info("Settled after success - server data will be replaced optimistically", _data);
-		// 	}
-		// },
-		// onSuccess: (data, variables, context) => {
-		// 	// ✅ Replace optimistic message by ID
-		// 	queryClient.setQueryData(["messages", channelId], (oldData: QueryDataShape) => {
-		// 		if (!oldData?.pages) return oldData;
-
-		// 		const newPages = oldData.pages.map((page) => page.map((msg) => (msg.id === context.optimisticId ? data?.data.message : msg)));
-
-		// 		return { ...oldData, pages: newPages };
-		// 	});
-		// },
+			// ✅ That's it! Pusher will handle replacing optimistic message
+		},
 		onError: (error, variables, context) => {
 			toast.error(error.message || "Failed to send message");
 

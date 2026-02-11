@@ -284,14 +284,15 @@ export const ChatMessages = ({ name, member, channelId, serverId }: ChatMessages
 				{messages.map((message, index) => {
 					// Standardize dates
 					const currentDate = new Date(message.createdAt);
-					const nextMessage = messages[index + 1]; // Message AFTER (older)
-					const nextDate = nextMessage ? new Date(nextMessage.createdAt) : null;
+					const prevMessage = messages[index - 1];
+					const prevDate = prevMessage ? new Date(prevMessage.createdAt) : null;
 
-					// Show separator if next message is older day (or doesn't exist)
-					const showSeparator = !nextDate || differenceInCalendarDays(currentDate, nextDate) > 0;
+					const showSeparator = !prevDate || differenceInCalendarDays(currentDate, prevDate) > 0;
 
 					return (
 						<Fragment key={message.id}>
+							{showSeparator && <ChatDateSeparator date={currentDate} />}
+
 							<ChatItem
 								id={message.id}
 								currentMember={member}
@@ -305,7 +306,6 @@ export const ChatMessages = ({ name, member, channelId, serverId }: ChatMessages
 								socketQuery={{}}
 								channelId={channelId}
 							/>
-							{showSeparator && <ChatDateSeparator date={currentDate} />}
 						</Fragment>
 					);
 				})}
