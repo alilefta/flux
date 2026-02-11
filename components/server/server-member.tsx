@@ -6,14 +6,12 @@ import { ShieldAlert, ShieldCheck } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { UserAvatar } from "@/components/user/user-avatar"; // Ensure this exists
 import { ServerBase } from "@/schemas/server";
+import { useModal } from "@/hooks/use-modal-store";
+import { MemberProfile } from "@/schemas/member";
 
 interface ServerMemberProps {
-	member: {
-		id: string;
-		role: MemberRole;
-		profile: ProfileBase;
-	};
-	server: ServerBase;
+	member: MemberProfile;
+	server?: ServerBase;
 }
 
 const roleIconMap = {
@@ -22,11 +20,12 @@ const roleIconMap = {
 	[MemberRole.ADMIN]: <ShieldAlert className="h-3 w-3 text-rose-500" />,
 };
 
-export const ServerMember = ({ member, server }: ServerMemberProps) => {
+export const ServerMember = ({ member }: ServerMemberProps) => {
 	const icon = roleIconMap[member.role];
+	const { onOpen } = useModal();
 
 	return (
-		<button className={cn("group px-2 py-2 rounded-md flex items-center gap-x-2 w-full hover:bg-white/5 transition-all mb-1")}>
+		<button className={cn("group px-2 py-2 rounded-md flex items-center gap-x-2 w-full hover:bg-white/5 transition-all mb-1")} onClick={() => onOpen("userProfile", { member })}>
 			<UserAvatar src={member.profile.imageUrl ?? undefined} className="h-6 w-6 md:h-6 md:w-6" />
 			<p className={cn("font-medium text-xs text-zinc-400 group-hover:text-zinc-300 transition-colors")}>{member.profile.name}</p>
 			{icon}

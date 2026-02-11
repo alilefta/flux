@@ -14,6 +14,7 @@ import { editMessageAction, markMessageAsDeletedAction } from "@/actions/message
 import { toast } from "sonner";
 import TextareaAutoSize from "react-textarea-autosize";
 import { Button } from "../ui/button";
+import { useModal } from "@/hooks/use-modal-store";
 
 interface ChatItemProps {
 	id: string;
@@ -38,6 +39,7 @@ const roleIconMap = {
 export const ChatItem = ({ id, content, member, timestamp, fileUrl, deleted, currentMember, isUpdated, channelId }: ChatItemProps) => {
 	const [isEditing, setIsEditing] = useState(false);
 	const [editedContent, setEditedContent] = useState(content);
+	const { onOpen } = useModal();
 
 	const isAdmin = currentMember.role === "ADMIN";
 	const isOwner = currentMember.profileId === member.profile.id;
@@ -141,7 +143,7 @@ export const ChatItem = ({ id, content, member, timestamp, fileUrl, deleted, cur
 	return (
 		<div className="relative group flex items-start gap-x-4 py-2 px-6 hover:bg-white/3 transition-colors w-full">
 			{/* Avatar */}
-			<div className="cursor-pointer hover:drop-shadow-lg transition shrink-0 mt-0.5">
+			<div className="cursor-pointer hover:drop-shadow-lg transition shrink-0 mt-0.5" onClick={() => onOpen("userProfile", { member })}>
 				<UserAvatar name={member.profile.name} src={member.profile.imageUrl ?? undefined} className="h-8 w-8" />
 			</div>
 
@@ -150,7 +152,9 @@ export const ChatItem = ({ id, content, member, timestamp, fileUrl, deleted, cur
 				{/* Header */}
 				<div className="flex items-center gap-x-2">
 					<div className="flex items-center gap-x-1">
-						<span className="font-bold text-sm text-white hover:underline cursor-pointer">{member.profile.name}</span>
+						<span className="font-bold text-sm text-white hover:underline cursor-pointer" onClick={() => onOpen("userProfile", { member })}>
+							{member.profile.name}
+						</span>
 						<TooltipProvider>
 							<Tooltip>
 								<TooltipTrigger>{roleIconMap[member.role]}</TooltipTrigger>

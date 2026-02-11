@@ -27,7 +27,7 @@ export const ServerHeader = ({ server, role }: ServerHeaderProps) => {
 				</span>
 			</DropdownMenuTrigger>
 
-			<DropdownMenuContent className="w-56 text-xs font-medium text-black dark:text-neutral-400 space-y-[2px] bg-[#141417] border-white/10 shadow-2xl backdrop-blur-xl">
+			<DropdownMenuContent className="w-56 text-xs font-medium text-black dark:text-neutral-400 space-y-0.5 bg-[#141417] border-white/10 shadow-2xl backdrop-blur-xl">
 				{/* INVITE: Everyone can see this */}
 				<DropdownMenuItem
 					onClick={() => onOpen("invite", { server })}
