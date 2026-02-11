@@ -1,7 +1,7 @@
 "use client";
 
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { FieldPath, FieldValues, Controller, Control, PathValue } from "react-hook-form";
+import { FieldPath, FieldValues, Controller, Control } from "react-hook-form";
 import { Field, FieldError, FieldLabel } from "@/components/ui/field";
 import { cx } from "class-variance-authority";
 import { LucideIcon } from "lucide-react";
