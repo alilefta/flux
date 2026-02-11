@@ -3,8 +3,6 @@ import { ServerSidebar } from "@/components/server/server-sidebar";
 import { getServerById, getServersByProfileId, getServerWithDetails } from "@/data/server";
 import { notFound, redirect } from "next/navigation";
 import { getCurrentProfile } from "@/data/profile";
-import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { ReactQueryDevtools } from "@tanstack/react-query-devtools";
 import { QueryProvider } from "@/providers/query-provider";
 interface ServerLayoutProps {
 	children: React.ReactNode;
@@ -48,6 +46,7 @@ export default async function ServerLayout({ children, params }: ServerLayoutPro
 			<div className="shrink-0 z-10 h-full">
 				<ServerSidebar
 					server={server}
+					role="ADMIN" // need to be changed to current member.role
 					// We pass undefined for activeChannelId here because the Layout
 					// doesn't know the channel. The Page will handle channel selection visually.
 				/>

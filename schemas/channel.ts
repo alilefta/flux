@@ -36,6 +36,15 @@ export type CreateChannelInput = z.infer<typeof CreateChannelInput>;
 
 export const UpdateChannelInput = z.object({
 	name: z.string().min(1).max(100).optional(),
+	serverId: z.uuid(),
+	channelId: z.uuid(),
 });
 
 export type UpdateChannelInput = z.infer<typeof UpdateChannelInput>;
+
+export const DeleteChannelSchema = z.object({
+	serverId: z.uuid(),
+	channelId: z.uuid(),
+});
+
+export type DeleteChannelInput = z.infer<typeof DeleteChannelSchema>;

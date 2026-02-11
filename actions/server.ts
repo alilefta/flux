@@ -23,7 +23,7 @@ export const createServerAction = actionClientWithProfile
 					imageUrl,
 					inviteCode: uuidv4(),
 					channels: {
-						create: [{ name: "general", profileId: profile.id }],
+						create: [{ name: "general", profileId: profile.id, isDefault: true, type: "TEXT" }],
 					},
 					members: {
 						create: [{ profileId: profile.id, role: MemberRole.ADMIN }],

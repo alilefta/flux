@@ -50,9 +50,17 @@ export const AddMemberInput = z.object({
 
 export type AddMemberInput = z.infer<typeof AddMemberInput>;
 
-export const UpdateMemberRoleInput = z.object({
+export const UpdateMemberRoleSchema = z.object({
 	memberId: z.uuid(),
+	serverId: z.uuid(),
 	role: memberRoleSchema,
 });
 
-export type UpdateMemberRoleInput = z.infer<typeof UpdateMemberRoleInput>;
+export type UpdateMemberRoleInput = z.infer<typeof UpdateMemberRoleSchema>;
+
+export const KickMemberSchema = z.object({
+	serverId: z.string(),
+	memberId: z.string(),
+});
+
+export type KickMemberInput = z.infer<typeof KickMemberSchema>;
