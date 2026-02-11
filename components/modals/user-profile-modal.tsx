@@ -47,7 +47,7 @@ export const UserProfileModal = () => {
 				{/* Ready for coverImage: style={{ backgroundImage: `url(${member.profile.coverImage})` }} */}
 				<div className="h-32 w-full bg-linear-to-r from-indigo-500/20 via-purple-500/10 to-indigo-500/20 relative group">
 					{/* Technical Grid Pattern Overlay */}
-					<div className="absolute inset-0 bg-[linear-gradient(to_right,#80808012_1px,transparent_1px),linear-gradient(to_bottom,#80808012_1px,transparent_1px)] bg-[size:16px_16px]" />
+					<div className="absolute inset-0 bg-[linear-gradient(to_right,#80808012_1px,transparent_1px),linear-gradient(to_bottom,#80808012_1px,transparent_1px)] bg-size-[16px_16px]" />
 					<div className="absolute inset-0 bg-black/10" />
 
 					{/* Optional: Add a subtle 'shine' effect */}
