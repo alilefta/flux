@@ -2,21 +2,19 @@
 
 import { useCallback, useState } from "react";
 import { useDropzone, FileRejection } from "react-dropzone";
-import { useFormContext } from "react-hook-form";
+import { useFormContext, useWatch } from "react-hook-form";
 import { UploadCloud, Trash2, Loader2 } from "lucide-react";
 import Image from "next/image";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
 import { useUploadThing } from "@/utils/uploadthing"; // Ensure you have this helper
 import { Button } from "@/components/ui/button";
-import { CreateServerInput } from "@/schemas/server";
-import z from "zod";
-
-type CreateServerSchema = z.infer<typeof CreateServerInput>;
+import { CreateServerInput, UpdateServerInput } from "@/schemas/server";
 
 export function ServerImageUpload() {
-	const { setValue, watch } = useFormContext<CreateServerSchema>();
-	const [preview, setPreview] = useState<string | null>(watch("imageUrl"));
+	const { setValue, control } = useFormContext<CreateServerInput | UpdateServerInput>();
+	const imageUrl = useWatch({ control, name: "imageUrl" });
+	const [preview, setPreview] = useState<string | null>(imageUrl);
 
 	// 1. UPLOADTHING LOGIC
 	const { isUploading, startUpload } = useUploadThing("serverPicture", {
