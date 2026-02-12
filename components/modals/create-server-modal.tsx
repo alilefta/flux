@@ -2,26 +2,19 @@
 
 import { useForm, FormProvider, Controller } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import * as z from "zod";
 import { useRouter } from "next/navigation";
 import { useModal } from "@/hooks/use-modal-store";
 import { useAction } from "next-safe-action/hooks";
 import { createServerAction } from "@/actions/server";
 import { toast } from "sonner";
-import { Loader2, ShieldCheck, Terminal } from "lucide-react";
+import { Loader2, ShieldCheck } from "lucide-react";
 
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { FluxInput } from "@/components/custom-ui/inputs/flux-input";
 import { ServerImageUpload } from "./inputs/server-image-upload";
-
-// Re-define schema locally to ensure form types match strict Zod expectations
-const formSchema = z.object({
-	name: z.string().min(1, { message: "Server name is required" }),
-	imageUrl: z.string().min(1, { message: "Server icon is required" }),
-});
-
-type FormData = z.infer<typeof formSchema>;
+import { CreateServerInput, CreateServerSchema } from "@/schemas/server";
+import { handleSafeActionError } from "@/lib/safe-action-helpers";
 
 export const CreateServerModal = () => {
 	const { isOpen, onClose, type } = useModal();
@@ -29,8 +22,8 @@ export const CreateServerModal = () => {
 
 	const isModalOpen = isOpen && type === "createServer";
 
-	const methods = useForm<FormData>({
-		resolver: zodResolver(formSchema),
+	const methods = useForm<CreateServerInput>({
+		resolver: zodResolver(CreateServerSchema),
 		defaultValues: {
 			name: "",
 			imageUrl: "",
@@ -57,16 +50,12 @@ export const CreateServerModal = () => {
 				router.push(`/servers/${data.server.id}`);
 			}
 		},
-		onError: ({ error }) => {
-			toast.error("DEPLOYMENT_FAILED", {
-				description: "SYSTEM_HALT // CHECK_LOGS",
-				icon: <Terminal className="text-red-500" size={16} />,
-			});
-			console.error(error);
+		onError({ error }) {
+			handleSafeActionError<typeof createServerAction>(error);
 		},
 	});
 
-	const onSubmit = (values: FormData) => {
+	const onSubmit = (values: CreateServerInput) => {
 		executeCreateServer(values);
 	};
 
