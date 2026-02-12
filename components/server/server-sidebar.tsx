@@ -10,13 +10,16 @@ import { ChannelType, MemberRole } from "@/generated/prisma/enums"; // Import En
 import { Hash, Mic, Video, ShieldAlert, ShieldCheck } from "lucide-react";
 import { ServerMember } from "@/components/server/server-member";
 import { useParams } from "next/navigation";
+import { MemberProfile } from "@/schemas/member";
+import { ProfileBase } from "@/schemas/profile";
 
 interface ServerSidebarProps {
 	server: ServerDetails;
 	role?: MemberRole; // Pass the current user's role from Layout
+	profile: ProfileBase;
 }
 
-export const ServerSidebar = ({ server, role }: ServerSidebarProps) => {
+export const ServerSidebar = ({ server, role, profile }: ServerSidebarProps) => {
 	const params = useParams();
 	const activeChannelId = params?.channelId as string;
 
@@ -92,7 +95,7 @@ export const ServerSidebar = ({ server, role }: ServerSidebarProps) => {
 				</div>
 			</ScrollArea>
 
-			<ServerUserFooter />
+			<ServerUserFooter profile={profile} />
 		</div>
 	);
 };

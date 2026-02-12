@@ -1,7 +1,6 @@
 "use client";
 
 import { MemberRole } from "@/generated/prisma/enums";
-import { ProfileBase } from "@/schemas/profile"; // Or from prisma types
 import { ShieldAlert, ShieldCheck } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { UserAvatar } from "@/components/user/user-avatar"; // Ensure this exists

@@ -7,16 +7,19 @@ import { useState } from "react";
 import { cn } from "@/lib/utils";
 import { UserButton, useUser } from "@clerk/nextjs";
 import { ProfileBase } from "@/schemas/profile";
+import { useModal } from "@/hooks/use-modal-store";
 
 interface ServerUserFooterProps {
 	profile: ProfileBase;
 }
 
-export const ServerUserFooter = () => {
+export const ServerUserFooter = ({ profile }: ServerUserFooterProps) => {
 	const { user, isLoaded } = useUser(); // 1. Fetch real user
-
+	const { onOpen } = useModal();
 	const [isMuted, setIsMuted] = useState(false);
 	const [isDeafened, setIsDeafened] = useState(false);
+
+	console.log("Current Profile ============ ", profile);
 
 	if (!isLoaded || !user) {
 		// Loading skeleton
@@ -58,7 +61,18 @@ export const ServerUserFooter = () => {
 				<ActionIcon
 					icon={Settings}
 					tooltip="User Settings"
-					onClick={() => {}} // Hook this to Clerk's openUserProfile() later
+					onClick={() =>
+						onOpen("userSettings", {
+							// Construct a mock profile object from Clerk data
+							// OR pass the real Prisma profile down as a prop
+							profile: {
+								id: profile.id, // We need the Real Profile ID for the update action
+								name: profile.name,
+								imageUrl: profile.imageUrl,
+								email: profile.email,
+							},
+						})
+					}
 				/>
 			</div>
 		</div>

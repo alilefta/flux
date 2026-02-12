@@ -1,17 +1,19 @@
 "use client";
 
 import { ChannelBase } from "@/schemas/channel";
-import { cn } from "@/lib/utils";
-import { Hash, Lock, Mic, Video } from "lucide-react";
 import { ServerBase } from "@/schemas/server";
-import { useRouter } from "next/navigation";
-import { ModalType } from "@/hooks/use-modal-store";
+import { MemberRole } from "@/generated/prisma/enums";
+import { cn } from "@/lib/utils";
+import { Hash, Mic, Video, Lock, Edit, Trash } from "lucide-react";
+import { useRouter, useParams } from "next/navigation";
+import { ModalType, useModal } from "@/hooks/use-modal-store";
+import { ActionTooltip } from "@/components/custom-ui/tooltip/action-tooltip"; // Assuming you have this helper or reuse the tooltips
 
 interface ServerChannelProps {
 	channel: ChannelBase;
-	server: ServerBase; // We need this to build the URL
+	server: ServerBase;
 	isActive?: boolean;
-	role?: string; // For permission checks later
+	role?: MemberRole;
 }
 
 const iconMap = {
@@ -21,17 +23,21 @@ const iconMap = {
 };
 
 export const ServerChannel = ({ channel, server, isActive, role }: ServerChannelProps) => {
+	const { onOpen } = useModal();
 	const router = useRouter();
 	const Icon = iconMap[channel.type];
+
+	// Logic for showing "General" vs "Restricted"
+	const isGeneral = channel.name === "general";
+	const isModeratorOrAdmin = role === MemberRole.ADMIN || role === MemberRole.MODERATOR;
 
 	const onClick = () => {
 		router.push(`/servers/${server.id}/channels/${channel.id}`);
 	};
 
-	// Prevent bubbling if we add edit buttons later
 	const onAction = (e: React.MouseEvent, action: ModalType) => {
-		e.stopPropagation();
-		// onOpen(action, { channel, server });
+		e.stopPropagation(); // Don't trigger navigation
+		onOpen(action, { channel, server });
 	};
 
 	return (
@@ -44,10 +50,27 @@ export const ServerChannel = ({ channel, server, isActive, role }: ServerChannel
 		>
 			<Icon className={cn("shrink-0 w-4 h-4 text-zinc-500", isActive && "text-primary")} />
 
-			<p className={cn("line-clamp-1 font-medium text-xs text-zinc-500 group-hover:text-zinc-300 transition-colors", isActive && "text-white")}>{channel.name}</p>
+			<p className={cn("line-clamp-1 font-medium text-xs text-zinc-500 group-hover:text-zinc-300 transition-colors text-left", isActive && "text-white")}>{channel.name}</p>
 
-			{/* Lock icon for "general" channel usually, or strictly private channels */}
-			{channel.name === "general" && <Lock className="ml-auto w-3 h-3 text-zinc-600" />}
+			{/* ICONS AREA */}
+			<div className="ml-auto flex items-center gap-x-2">
+				{/* 1. Edit Action (Mods+ and Not General) */}
+				{!isGeneral && isModeratorOrAdmin && (
+					<ActionTooltip label="Edit">
+						<Edit onClick={(e) => onAction(e, "editChannel")} className="hidden group-hover:block w-3.5 h-3.5 text-zinc-500 hover:text-zinc-300 transition" />
+					</ActionTooltip>
+				)}
+
+				{/* 2. Delete Action (Mods+ and Not General) */}
+				{!isGeneral && isModeratorOrAdmin && (
+					<ActionTooltip label="Delete">
+						<Trash onClick={(e) => onAction(e, "deleteChannel")} className="hidden group-hover:block w-3.5 h-3.5 text-zinc-500 hover:text-rose-500 transition" />
+					</ActionTooltip>
+				)}
+
+				{/* 3. Lock Icon (If General) */}
+				{isGeneral && <Lock className="w-3.5 h-3.5 text-zinc-500" />}
+			</div>
 		</button>
 	);
 };
