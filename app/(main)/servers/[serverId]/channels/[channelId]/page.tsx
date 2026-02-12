@@ -26,12 +26,12 @@ export default async function ChannelPage({ params }: ChannelPageProps) {
 	// Fetch Member (Current User)
 	const member = await getCurrentMemberByServerAndProfileId(serverId, profile.id);
 
-	if (!channel || !member) return redirect("/");
+	if (!channel || !member) return redirect(`/servers/${serverId}`);
 
 	return (
 		<div className="bg-[#141417]/60 backdrop-blur-xl border border-white/5 rounded-3xl shadow-2xl flex flex-col h-full overflow-hidden w-full relative z-0">
 			{/* 1. Header */}
-			<ChatHeader serverId={serverId} name={channel.name} type="channel" />
+			<ChatHeader serverId={serverId} channel={channel} member={member} />
 
 			{/* 2. Messages */}
 			<ChatMessages

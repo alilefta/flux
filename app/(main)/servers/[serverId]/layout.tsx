@@ -1,6 +1,6 @@
 import { NavigationSidebar } from "@/components/navigation/navigation-sidebar";
 import { ServerSidebar } from "@/components/server/server-sidebar";
-import { getServerById, getServersByProfileId, getServerWithDetails } from "@/data/server";
+import { getServersByProfileId, getServerWithDetails } from "@/data/server";
 import { notFound, redirect } from "next/navigation";
 import { getCurrentProfile } from "@/data/profile";
 import { QueryProvider } from "@/providers/query-provider";
@@ -46,6 +46,7 @@ export default async function ServerLayout({ children, params }: ServerLayoutPro
 			<div className="shrink-0 z-10 h-full">
 				<ServerSidebar
 					server={server}
+					profile={profile}
 					role="ADMIN" // need to be changed to current member.role
 					// We pass undefined for activeChannelId here because the Layout
 					// doesn't know the channel. The Page will handle channel selection visually.

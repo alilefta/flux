@@ -9,7 +9,7 @@ const auth = async (req: Request) => {
 	const profile = await getCurrentProfile();
 
 	if (!profile) {
-		throw new UploadThingError("Unauthorized! You must be logged in to upload a server picture");
+		throw new UploadThingError("Unauthorized! You must be logged in to upload a file");
 	}
 
 	return { profileId: profile.id };
@@ -56,6 +56,15 @@ export const fluxUploadRouter = {
 		// Set permissions and file types for this FileRoute
 		.middleware(async ({ req }) => auth(req))
 		.onUploadComplete(async (data) => uploadComplete({ data, fileRouteName: "Profile Picture" })),
+
+	messageFile: f({
+		image: { maxFileSize: "16MB", maxFileCount: 5 },
+		pdf: { maxFileSize: "16MB", maxFileCount: 5 },
+		video: { maxFileSize: "64MB", maxFileCount: 2 },
+		text: { maxFileSize: "64KB", maxFileCount: 5 },
+	})
+		.middleware(({ req }) => auth(req))
+		.onUploadComplete((data) => uploadComplete({ data, fileRouteName: "Message File Attachement" })),
 } satisfies FileRouter;
 
 export type FluxUploadRouter = typeof fluxUploadRouter;

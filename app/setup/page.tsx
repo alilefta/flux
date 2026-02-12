@@ -7,6 +7,8 @@ import { getFirstServerForProfileId } from "@/data/server";
 export default async function SetupPage() {
 	const profile = await getCurrentProfile();
 
+	if (!profile) redirect("/sign-in");
+
 	const server = await getFirstServerForProfileId(profile.id);
 
 	if (server) {
