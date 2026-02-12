@@ -59,14 +59,13 @@ export const UserProfileModal = () => {
 					{/* FLOATING AVATAR + STATUS */}
 					<div className="absolute -top-16 left-6">
 						<div className="relative">
-							<UserAvatar src={member.profile.imageUrl ?? undefined} className="h-48 w-48 border-[6px] border-[#09090b] bg-[#09090b]" />
-
+							<UserAvatar src={member.profile.imageUrl ?? undefined} name={member.profile.name} className="h-32! w-32! border-[6px] border-[#09090b] bg-[#09090b] shadow-2xl" />
 							{/* Status Indicator (Positioned carefully on the ring) */}
 							<TooltipProvider>
 								<Tooltip>
 									<TooltipTrigger asChild>
-										<div className="absolute bottom-2 right-2 w-7 h-7 bg-[#09090b] rounded-full flex items-center justify-center">
-											<div className="w-4 h-4 bg-emerald-500 rounded-full border-2 border-[#09090b] shadow-sm animate-pulse" />
+										<div className="absolute bottom-2 right-2 w-8 h-8 bg-[#09090b] rounded-full flex items-center justify-center z-10">
+											<div className="w-5 h-5 bg-emerald-500 rounded-full border-[3px] border-[#09090b] shadow-sm" />
 										</div>
 									</TooltipTrigger>
 									<TooltipContent side="right" className="bg-black text-xs font-bold border-white/10">
