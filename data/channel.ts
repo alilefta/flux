@@ -13,3 +13,21 @@ export async function getFirstChannelByServerId(serverId: string) {
 		where: { serverId: serverId },
 	});
 }
+
+export async function getDefaultChannelByServerId(serverId: string) {
+	return await prisma.channel.findFirst({
+		where: {
+			serverId: serverId,
+			AND: {
+				OR: [
+					{
+						isDefault: true,
+					},
+				],
+			},
+		},
+		orderBy: {
+			createdAt: "asc",
+		},
+	});
+}
