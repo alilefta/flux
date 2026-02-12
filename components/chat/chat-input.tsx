@@ -10,6 +10,7 @@ import TextareaAutosize from "react-textarea-autosize";
 import { ChannelMessage } from "@/schemas/message";
 import { MemberProfile } from "@/schemas/member";
 import { EmojiPopover } from "./emoji-popover";
+import { useModal } from "@/hooks/use-modal-store";
 
 interface ChatInputProps {
 	placeholder?: string;
@@ -21,6 +22,7 @@ interface ChatInputProps {
 type QueryDataShape = InfiniteData<ChannelMessage[], (Date | undefined)[]>;
 
 export const ChatInput = ({ placeholder, channelId, name, member }: ChatInputProps) => {
+	const { onOpen } = useModal();
 	const [message, setMessage] = useState("");
 	const [fileURL, setFileURL] = useState<string | null>(null);
 	const queryClient = useQueryClient();
@@ -123,9 +125,14 @@ export const ChatInput = ({ placeholder, channelId, name, member }: ChatInputPro
 		<div className="px-4 pb-4">
 			<div className=" rounded-xl p-1 flex items-end gap-2 border border-white/10 bg-black/40 focus-within:border-primary/50 focus-within:ring-1 focus-within:ring-primary/50 transition-all">
 				<button
-					title="Attach"
 					disabled={mutation.isPending}
-					className="p-2 rounded-lg text-zinc-400 hover:text-white hover:bg-white/10 transition-colors shrink-0 disabled:opacity-50 disabled:cursor-not-allowed"
+					onClick={() =>
+						onOpen("messageFile", {
+							query: { channelId }, // Pass context
+						})
+					}
+					title="Attach File"
+					className="p-2 rounded-lg text-zinc-400 hover:text-white hover:bg-white/10 transition-colors shrink-0"
 				>
 					<Plus className="w-5 h-5" />
 				</button>

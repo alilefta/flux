@@ -15,6 +15,7 @@ import { toast } from "sonner";
 import TextareaAutoSize from "react-textarea-autosize";
 import { Button } from "../ui/button";
 import { useModal } from "@/hooks/use-modal-store";
+import { ActionTooltip } from "../custom-ui/tooltip/action-tooltip";
 
 interface ChatItemProps {
 	id: string;
@@ -287,16 +288,3 @@ export const ChatItem = ({ id, content, member, timestamp, fileUrl, deleted, cur
 		</div>
 	);
 };
-
-function ActionTooltip({ label, children }: { label: string; children: React.ReactNode }) {
-	return (
-		<TooltipProvider delayDuration={50}>
-			<Tooltip>
-				<TooltipTrigger asChild>{children}</TooltipTrigger>
-				<TooltipContent side="top" className="bg-black border-white/10 text-xs font-semibold">
-					{label}
-				</TooltipContent>
-			</Tooltip>
-		</TooltipProvider>
-	);
-}

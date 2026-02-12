@@ -2,14 +2,14 @@
 
 import { differenceInCalendarDays, format } from "date-fns";
 import { ChatItem } from "@/components/chat/chat-item";
-import { Hash, Loader2 } from "lucide-react";
+import { ArrowDown, Hash, Loader2 } from "lucide-react";
 import { MemberProfile } from "@/schemas/member";
 import { useInfiniteQuery, useQueryClient, InfiniteData } from "@tanstack/react-query";
 import { getMessagesAction } from "@/actions/message";
 import { useAction } from "next-safe-action/hooks";
 import { InferSafeActionFnResult } from "next-safe-action";
 import { toast } from "sonner";
-import { Fragment, useEffect, useRef, useState } from "react";
+import { Fragment, useEffect, useLayoutEffect, useRef, useState } from "react";
 import { pusherClient } from "@/lib/pusher-client";
 import { ChannelMessage } from "@/schemas/message";
 import { MessageEvent } from "@/lib/events";
@@ -39,9 +39,14 @@ export const ChatMessages = ({ name, member, channelId, serverId }: ChatMessages
 	const topRef = useRef<HTMLDivElement>(null);
 	const queryClient = useQueryClient();
 	const [newMessageCount, setNewMessageCount] = useState(0);
-	const [shouldAutoScroll, setShouldAutoScroll] = useState(true);
 
-	const firstPageCountRef = useRef<number>(0); // to prevent auto-scroll on loading older messages
+	const isAtBottomRef = useRef(true);
+	const [isAtBottom, setIsAtBottom] = useState(true);
+
+	const hasScrolledRef = useRef(false);
+
+	// Debounced Intersection Observer
+	const fetchTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
 	const { executeAsync: getMessages } = useAction(getMessagesAction, {
 		onSuccess() {},
@@ -60,11 +65,14 @@ export const ChatMessages = ({ name, member, channelId, serverId }: ChatMessages
 			toast.error("An error occured");
 		}
 	};
-
 	const { data, isLoading, error, fetchNextPage, hasNextPage, isFetchingNextPage } = useInfiniteQuery({
 		queryKey: ["messages", channelId],
 		queryFn: async ({ pageParam }) => {
-			const result: GetMessagesResults = await getMessages({ channelId, serverId, cursor: pageParam });
+			const result: GetMessagesResults = await getMessages({
+				channelId,
+				serverId,
+				cursor: pageParam,
+			});
 			if (!result?.data?.success) throw new Error(result?.serverError || "Failed");
 
 			return result.data.messages;
@@ -82,26 +90,40 @@ export const ChatMessages = ({ name, member, channelId, serverId }: ChatMessages
 	useEffect(() => {
 		if (!topRef.current || !hasNextPage) return;
 
+		const shadowRef = topRef;
+
 		const observer = new IntersectionObserver(
 			(entries) => {
 				const [entry] = entries;
 
-				// When top div becomes visible, load more
 				if (entry.isIntersecting && hasNextPage && !isFetchingNextPage) {
-					fetchNextPage();
+					// ✅ Clear any pending fetch
+					if (fetchTimeoutRef.current) {
+						clearTimeout(fetchTimeoutRef.current);
+					}
+
+					// we should add a margin or scroll slightly to the bottom so it hide the top ref div
+
+					// ✅ Debounce fetch to prevent rapid triggers
+					fetchTimeoutRef.current = setTimeout(() => {
+						fetchNextPage();
+					}, 100);
 				}
 			},
 			{
-				root: chatRef.current, // Watch within chat container
-				threshold: 1.0, // Trigger when fully visible
+				root: chatRef.current,
+				threshold: 1.0,
 			},
 		);
 
 		observer.observe(topRef.current);
 
 		return () => {
-			if (topRef.current) {
-				observer.unobserve(topRef.current);
+			if (shadowRef.current) {
+				observer.unobserve(shadowRef.current);
+			}
+			if (fetchTimeoutRef.current) {
+				clearTimeout(fetchTimeoutRef.current);
 			}
 		};
 	}, [hasNextPage, isFetchingNextPage, fetchNextPage]);
@@ -115,30 +137,48 @@ export const ChatMessages = ({ name, member, channelId, serverId }: ChatMessages
 		// Listen for new messages
 		channel.bind(MessageEvent.NEW, (newMessage: ChannelMessage) => {
 			// Update query cache with new message
+
+			console.log("New message arrived!!=======================", newMessage);
+
 			queryClient.setQueryData(["messages", channelId], (oldData: QueryDataShape): QueryDataShape => {
-				if (!oldData?.pages) return oldData;
+				if (!oldData || !oldData.pages) return oldData;
 
 				const newPages = [...oldData.pages];
 
-				// Remove ALL optimistic messages from this member
-				// (Handles edge case of rapid sends)
-				newPages[0] = newPages[0].filter((m) => !(m.id.startsWith("optimistic-") && m.memberId === newMessage.memberId));
+				const optimisticIndex = newPages[0].findIndex((m) => m.id.startsWith("optimistic-") && m.memberId === newMessage.memberId);
 
-				// Check if real message already exists (prevent duplicates)
-				const exists = newPages[0].some((m) => m.id === newMessage.id);
-				if (!exists) {
-					newPages[0] = [newMessage, ...newPages[0]];
+				if (optimisticIndex !== -1) {
+					// Own message - swap optimistic
+					newPages[0][optimisticIndex] = newMessage;
+
+					// ✅ Use ref value (always current)
+					if (isAtBottomRef.current && bottomRef.current) {
+						setTimeout(() => {
+							bottomRef.current?.scrollIntoView({ behavior: "smooth" });
+						}, 100);
+					}
+				} else {
+					// Someone else's message
+					const exists = newPages[0].some((m) => m.id === newMessage.id);
+					if (!exists) {
+						newPages[0] = [newMessage, ...newPages[0]];
+
+						// ✅ Use ref value (always current)
+						if (!isAtBottomRef.current) {
+							console.log("User scrolled up - showing badge");
+							setNewMessageCount((prev) => prev + 1);
+						} else {
+							console.log("User at bottom - auto-scrolling");
+							setTimeout(() => {
+								bottomRef.current?.scrollIntoView({ behavior: "smooth" });
+							}, 100);
+						}
+					}
 				}
 
 				return { ...oldData, pages: newPages };
 			});
-
-			// // Increment badge count if we are not at bottom
-			// if (!shouldAutoScroll) {
-			// 	setNewMessageCount((prev) => prev + 1);
-			// }
 		});
-		// Listen for message updates (edits)
 		channel.bind(MessageEvent.UPDATE, (updatedMessage: ChannelMessage) => {
 			queryClient.setQueryData(["messages", channelId], (oldData: QueryDataShape): QueryDataShape => {
 				if (!oldData.pages) return oldData;
@@ -170,63 +210,65 @@ export const ChatMessages = ({ name, member, channelId, serverId }: ChatMessages
 		return () => {
 			channel.unbind_all();
 			channel.unsubscribe();
-			pusherClient.unsubscribe(channelName);
+			// pusherClient.unsubscribe(channelName);
 		};
 	}, [channelId, queryClient]);
 
-	// Detect if user is scrolled to bottom
+	// ✅ Track scroll position
 	useEffect(() => {
 		const chatContainer = chatRef.current;
 		if (!chatContainer) return;
 
 		const handleScroll = () => {
 			const { scrollTop, scrollHeight, clientHeight } = chatContainer;
-			const isAtBottom = scrollHeight - scrollTop - clientHeight < 100; // Within 100px of bottom
+			const distanceFromBottom = scrollHeight - scrollTop - clientHeight;
+			const atBottom = distanceFromBottom < 100;
 
-			setShouldAutoScroll(isAtBottom);
+			setIsAtBottom(atBottom);
+			isAtBottomRef.current = atBottom; // ✅ Update ref too!
+
+			if (atBottom) {
+				setNewMessageCount(0);
+			}
 		};
 
 		chatContainer.addEventListener("scroll", handleScroll);
 		return () => chatContainer.removeEventListener("scroll", handleScroll);
 	}, []);
 
-	// ✅ Smart auto-scroll
-	useEffect(() => {
-		if (!data?.pages?.[0]) return;
-
-		const currentFirstPageCount = data.pages[0].length;
-		const previousFirstPageCount = firstPageCountRef.current;
-
-		// Check if first page grew (new message added)
-		const hasNewMessage = currentFirstPageCount > previousFirstPageCount;
-
-		if (hasNewMessage && shouldAutoScroll && bottomRef.current) {
-			bottomRef.current.scrollIntoView({ behavior: "smooth" });
+	// ✅ Initial scroll to bottom (ONCE)
+	useLayoutEffect(() => {
+		if (!hasScrolledRef.current && data?.pages?.length && bottomRef.current) {
+			bottomRef.current.scrollIntoView({ behavior: "instant" });
+			hasScrolledRef.current = true;
 		}
+	}, [data?.pages]);
 
-		// Update ref
-		firstPageCountRef.current = currentFirstPageCount;
-	}, [data, shouldAutoScroll]);
-
+	// ✅ Preserve scroll position when loading old messages
 	useEffect(() => {
 		if (!chatRef.current || !isFetchingNextPage) return;
 
 		const chatContainer = chatRef.current;
 		const previousScrollHeight = chatContainer.scrollHeight;
+		const previousScrollTop = chatContainer.scrollTop;
 
-		// After new messages load, adjust scroll to maintain position
-		const adjustScroll = () => {
+		const preserveScroll = () => {
 			const newScrollHeight = chatContainer.scrollHeight;
 			const heightDifference = newScrollHeight - previousScrollHeight;
 
 			if (heightDifference > 0) {
-				chatContainer.scrollTop += heightDifference;
+				// ✅ Use scrollTo with smooth: false to prevent triggering scroll event
+				chatContainer.scrollTo({
+					top: previousScrollTop + heightDifference,
+					behavior: "instant", // ✅ Instant - no smooth animation
+				});
 			}
 		};
 
-		// Wait for DOM to update
-		const timer = setTimeout(adjustScroll, 0);
-		return () => clearTimeout(timer);
+		// Wait for messages to render
+		requestAnimationFrame(() => {
+			requestAnimationFrame(preserveScroll);
+		});
 	}, [isFetchingNextPage]);
 
 	if (isLoading) {
@@ -310,18 +352,20 @@ export const ChatMessages = ({ name, member, channelId, serverId }: ChatMessages
 					);
 				})}
 
-				{/* ✅ Floating "New Messages" button */}
+				{/* ✅ New Messages Button */}
 				{newMessageCount > 0 && (
 					<button
 						onClick={() => {
 							bottomRef.current?.scrollIntoView({ behavior: "smooth" });
 							setNewMessageCount(0);
 						}}
-						className="fixed bottom-20 left-1/2 -translate-x-1/2 bg-indigo-600/80 text-white px-4 py-2 rounded-full shadow-lg hover:bg-indigo-700 transition z-50"
+						className="fixed bottom-24 left-1/2 -translate-x-1/2 bg-indigo-600 text-white px-4 py-2 rounded-full shadow-lg hover:bg-indigo-700 transition-all z-50 flex items-center gap-2 animate-in slide-in-from-bottom-4"
 					>
+						<ArrowDown className="w-4 h-4" />
 						{newMessageCount} new message{newMessageCount > 1 ? "s" : ""}
 					</button>
 				)}
+
 				{/* Invisible div to scroll to */}
 				<div ref={bottomRef} />
 			</div>
