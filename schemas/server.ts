@@ -42,23 +42,24 @@ export const ServerDetailsDTO = ServerBaseSchema.extend(
 
 export type ServerDetails = z.infer<typeof ServerDetailsDTO>;
 
-export const CreateServerInput = z.object({
-	name: z.string().min(1).max(100),
+export const CreateServerSchema = z.object({
+	name: z.string(),
 	imageUrl: z.url(),
 });
 
-export type CreateServerInput = z.infer<typeof CreateServerInput>;
+export type CreateServerInput = z.infer<typeof CreateServerSchema>;
 
 export const joinServerSchema = z.object({
 	inviteCode: z.string(),
 });
 
-export const UpdateServerInput = z.object({
+export const UpdateServerSchema = z.object({
 	name: z.string().min(1).max(100).optional(),
-	imageUrl: z.url().optional(),
+	imageUrl: z.url(),
+	serverId: z.uuid(),
 });
 
-export type UpdateServerInput = z.infer<typeof UpdateServerInput>;
+export type UpdateServerInput = z.infer<typeof UpdateServerSchema>;
 
 export const serverInviteSchema = z.object({
 	server: ServerBaseSchema,
@@ -67,3 +68,15 @@ export const serverInviteSchema = z.object({
 	}),
 });
 export type ServerInviteDTO = z.infer<typeof serverInviteSchema>;
+
+export const LeaveServerSchema = z.object({
+	serverId: z.string(),
+});
+
+export type LeaveServerInput = z.infer<typeof LeaveServerSchema>;
+
+export const DeleteServerSchema = z.object({
+	serverId: z.string(),
+});
+
+export type DeleteServerInput = z.infer<typeof DeleteServerSchema>;

@@ -16,6 +16,7 @@ export const PublicProfileDTO = ProfileBaseSchema.pick({
 	id: true,
 	name: true,
 	imageUrl: true,
+	email: true,
 });
 
 export type PublicProfile = z.infer<typeof PublicProfileDTO>;
@@ -40,9 +41,9 @@ export const CreateProfileInput = z.object({
 
 export type CreateProfileInput = z.infer<typeof CreateProfileInput>;
 
-export const UpdateProfileInput = z.object({
+export const UpdateProfileSchema = z.object({
 	name: z.string().min(1).optional(),
 	imageUrl: z.url().optional(),
 });
 
-export type UpdateProfileInput = z.infer<typeof UpdateProfileInput>;
+export type UpdateProfileInput = z.infer<typeof UpdateProfileSchema>;
