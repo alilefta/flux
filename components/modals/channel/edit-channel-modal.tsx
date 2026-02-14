@@ -6,7 +6,7 @@ import { useRouter } from "next/navigation";
 import { useModal } from "@/hooks/use-modal-store";
 import { useAction } from "next-safe-action/hooks";
 import { updateChannelAction } from "@/actions/channel";
-import { UpdateChannelInput } from "@/schemas/channel";
+import { UpdateChannelInput } from "@/schemas/composed/channel.details";
 import { toast } from "sonner";
 import { useEffect } from "react";
 import { Loader2 } from "lucide-react";

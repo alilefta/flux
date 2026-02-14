@@ -1,7 +1,7 @@
 "use client";
 
 import { useModal } from "@/hooks/use-modal-store";
-import { ServerDetails } from "@/schemas/server";
+import { ServerDetails } from "@/schemas/composed/server.details";
 import { MemberRole } from "@/generated/prisma/enums";
 import { Check, Gavel, Loader2, MoreVertical, Shield, ShieldAlert, ShieldCheck, ShieldQuestion, User } from "lucide-react";
 import { useState } from "react";

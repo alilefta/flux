@@ -13,7 +13,7 @@ import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, D
 import { Button } from "@/components/ui/button";
 import { FluxInput } from "@/components/custom-ui/inputs/flux-input";
 import { ServerImageUpload } from "./inputs/server-image-upload";
-import { CreateServerInput, CreateServerSchema } from "@/schemas/server";
+import { CreateServerInput, CreateServerSchema } from "@/schemas/composed/server.details";
 import { handleSafeActionError } from "@/lib/safe-action-helpers";
 
 export const CreateServerModal = () => {

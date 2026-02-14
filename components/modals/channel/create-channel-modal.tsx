@@ -6,7 +6,6 @@ import { useRouter, useParams } from "next/navigation";
 import { useModal } from "@/hooks/use-modal-store";
 import { useAction } from "next-safe-action/hooks";
 import { createChannelAction } from "@/actions/channel";
-import { CreateChannelInput } from "@/schemas/channel"; // Zod schema
 import { ChannelType } from "@/generated/prisma/enums";
 import { toast } from "sonner";
 import { useEffect } from "react";
@@ -16,6 +15,7 @@ import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from "
 import { Button } from "@/components/ui/button";
 import { FluxInput } from "../../custom-ui/inputs/flux-input";
 import { FluxFormSelect } from "../../custom-ui/inputs/flux-form-select";
+import { CreateChannelInput } from "@/schemas/composed/channel.details";
 
 export const CreateChannelModal = () => {
 	const { isOpen, onClose, type, data } = useModal();

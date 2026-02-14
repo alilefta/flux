@@ -9,7 +9,7 @@ import { cn } from "@/lib/utils";
 import { toast } from "sonner";
 import { useUploadThing } from "@/utils/uploadthing"; // Ensure you have this helper
 import { Button } from "@/components/ui/button";
-import { CreateServerInput, UpdateServerInput } from "@/schemas/server";
+import { CreateServerInput, UpdateServerInput } from "@/schemas/composed/server.details";
 
 export function ServerImageUpload() {
 	const { setValue, control } = useFormContext<CreateServerInput | UpdateServerInput>();
