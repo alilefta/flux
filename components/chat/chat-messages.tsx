@@ -338,6 +338,7 @@ export const ChatMessages = ({ name, member, channelId, serverId }: ChatMessages
 							<ChatItem
 								id={message.id}
 								currentMember={member}
+								attachments={message.attachments}
 								member={message.member}
 								content={message.content}
 								fileUrl={message.fileUrl}

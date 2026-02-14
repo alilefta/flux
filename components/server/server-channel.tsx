@@ -1,11 +1,11 @@
 "use client";
 
 import { ChannelBase } from "@/schemas/channel";
-import { ServerBase } from "@/schemas/server";
+import { ServerBase } from "@/schemas/server.base";
 import { MemberRole } from "@/generated/prisma/enums";
 import { cn } from "@/lib/utils";
-import { Hash, Mic, Video, Lock, Edit, Trash } from "lucide-react";
-import { useRouter, useParams } from "next/navigation";
+import { Hash, Mic, Video, Lock, Edit, Trash, Megaphone } from "lucide-react";
+import { useRouter } from "next/navigation";
 import { ModalType, useModal } from "@/hooks/use-modal-store";
 import { ActionTooltip } from "@/components/custom-ui/tooltip/action-tooltip"; // Assuming you have this helper or reuse the tooltips
 
@@ -20,6 +20,7 @@ const iconMap = {
 	TEXT: Hash,
 	AUDIO: Mic,
 	VIDEO: Video,
+	ANNOUNCEMENT: Megaphone,
 };
 
 export const ServerChannel = ({ channel, server, isActive, role }: ServerChannelProps) => {

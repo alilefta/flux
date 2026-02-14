@@ -1,7 +1,7 @@
 "use client";
 
 import { ChannelType, MemberRole } from "@/generated/prisma/enums";
-import { ServerBase } from "@/schemas/server";
+import { ServerBase } from "@/schemas/server.base";
 import { Plus, Settings } from "lucide-react";
 import { useModal } from "@/hooks/use-modal-store"; // Assuming you have this
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";

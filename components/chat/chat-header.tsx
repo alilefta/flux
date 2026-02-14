@@ -7,7 +7,7 @@ import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSepara
 import { useModal } from "@/hooks/use-modal-store";
 import { MemberProfile } from "@/schemas/member";
 import { ChannelBase } from "@/schemas/channel";
-import { ServerBase } from "@/schemas/server";
+import { ServerBase } from "@/schemas/server.base";
 import { MemberRole } from "@/generated/prisma/enums";
 
 type StreamType = "channel" | "conversation";

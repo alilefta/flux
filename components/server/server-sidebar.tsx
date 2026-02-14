@@ -5,12 +5,11 @@ import { ServerHeader } from "./server-header";
 import { ServerSection } from "./server-section";
 import { ServerChannel } from "./server-channel";
 import { ServerUserFooter } from "@/components/server/server-user-footer";
-import { ServerDetails } from "@/schemas/server";
+import { ServerDetails } from "@/schemas/composed/server.details";
 import { ChannelType, MemberRole } from "@/generated/prisma/enums"; // Import Enums
 import { Hash, Mic, Video, ShieldAlert, ShieldCheck } from "lucide-react";
 import { ServerMember } from "@/components/server/server-member";
 import { useParams } from "next/navigation";
-import { MemberProfile } from "@/schemas/member";
 import { ProfileBase } from "@/schemas/profile";
 
 interface ServerSidebarProps {

@@ -1,7 +1,7 @@
 // /components/chat/chat-item.tsx
 "use client";
 
-import { Edit, ShieldAlert, ShieldCheck, Trash, FileIcon } from "lucide-react";
+import { Edit, ShieldAlert, ShieldCheck, Trash, FileIcon, FileText } from "lucide-react";
 import Image from "next/image";
 import { cn } from "@/lib/utils";
 import { useEffect, useState } from "react";
@@ -16,13 +16,16 @@ import TextareaAutoSize from "react-textarea-autosize";
 import { Button } from "../ui/button";
 import { useModal } from "@/hooks/use-modal-store";
 import { ActionTooltip } from "../custom-ui/tooltip/action-tooltip";
+import { FileAttachment } from "@/schemas/message";
+import Link from "next/link";
 
 interface ChatItemProps {
 	id: string;
 	content: string;
 	member: MemberProfile;
 	timestamp: string;
-	fileUrl: string | null;
+	fileUrl: string | null; // deprecated
+	attachments: FileAttachment[];
 	deleted: boolean;
 	currentMember: MemberProfile;
 	isUpdated: boolean;
@@ -37,7 +40,7 @@ const roleIconMap = {
 	ADMIN: <ShieldAlert className="h-3.5 w-3.5 text-rose-500" />,
 };
 
-export const ChatItem = ({ id, content, member, timestamp, fileUrl, deleted, currentMember, isUpdated, channelId }: ChatItemProps) => {
+export const ChatItem = ({ id, content, member, timestamp, fileUrl, deleted, currentMember, isUpdated, attachments = [], channelId }: ChatItemProps) => {
 	const [isEditing, setIsEditing] = useState(false);
 	const [editedContent, setEditedContent] = useState(content);
 	const { onOpen } = useModal();
@@ -45,7 +48,11 @@ export const ChatItem = ({ id, content, member, timestamp, fileUrl, deleted, cur
 	const isAdmin = currentMember.role === "ADMIN";
 	const isOwner = currentMember.profileId === member.profile.id;
 	const canDeleteMessage = !deleted && (isAdmin || isOwner);
+
 	const canEditMessage = !deleted && isOwner && !fileUrl;
+	const hasAttachments = attachments && attachments.length > 0;
+	const hasContent = content && content.trim().length > 0;
+
 	const isPDF = fileUrl?.endsWith(".pdf");
 	const isImage = !isPDF && fileUrl;
 
@@ -174,38 +181,106 @@ export const ChatItem = ({ id, content, member, timestamp, fileUrl, deleted, cur
 					</p>
 				)}
 
-				{/* Image Attachment */}
-				{isImage && !deleted && (
-					<a
-						href={fileUrl}
-						target="_blank"
-						rel="noopener noreferrer"
-						className="relative aspect-square rounded-2xl mt-2 overflow-hidden border border-white/10 flex items-center bg-black/20 h-48 w-48 hover:scale-[1.02] transition-transform shadow-md"
-					>
-						<Image src={fileUrl} alt={content} fill className="object-cover" />
-					</a>
-				)}
+				{/* ✅ File Attachments */}
+				{!deleted && hasAttachments && (
+					<div className="mt-2 flex flex-wrap gap-2">
+						{attachments.map((file) => {
+							// Images
+							if (file.type === "image") {
+								return (
+									<Link
+										key={file.id}
+										href={file.url}
+										target="_blank"
+										rel="noopener noreferrer"
+										className="relative w-48 h-48 rounded-xl overflow-hidden border border-white/10 hover:border-white/20 transition group"
+									>
+										<Image src={file.url} alt={file.name} fill className="object-cover group-hover:scale-105 transition" sizes="(max-width: 768px) 100vw, 192px" />
+										<div className="absolute bottom-0 left-0 right-0 bg-linear-to-t from-black/80 to-transparent p-2">
+											<p className="text-[10px] text-white truncate">{file.name}</p>
+										</div>
+									</Link>
+								);
+							}
 
-				{/* PDF Attachment */}
-				{isPDF && !deleted && (
-					<div className="relative flex items-center p-4 mt-2 rounded-xl bg-white/5 border border-white/10 w-fit gap-x-3 hover:bg-white/10 transition-colors">
-						<FileIcon className="h-8 w-8 text-indigo-400" />
-						<a href={fileUrl ?? undefined} target="_blank" rel="noopener noreferrer" className="text-sm text-indigo-300 hover:text-indigo-200 hover:underline font-semibold">
-							PDF Document
-						</a>
+							// PDFs
+							if (file.type === "pdf") {
+								return (
+									<Link
+										key={file.id}
+										href={file.url}
+										target="_blank"
+										rel="noopener noreferrer"
+										className="flex items-center gap-3 p-4 rounded-xl bg-white/5 border border-white/10 hover:bg-white/10 transition min-w-[240px]"
+									>
+										<FileIcon className="h-8 w-8 text-rose-400 shrink-0" />
+										<div className="flex-1 min-w-0">
+											<p className="text-sm font-semibold text-white truncate">{file.name}</p>
+											<p className="text-xs text-zinc-500">PDF Document</p>
+										</div>
+									</Link>
+								);
+							}
+
+							// Videos
+							if (file.type === "video") {
+								return (
+									<div key={file.id} className="relative">
+										<video src={file.url} controls className="max-w-md rounded-xl border border-white/10" style={{ maxHeight: "400px" }} />
+										<p className="text-[10px] text-zinc-500 mt-1 truncate max-w-md">{file.name}</p>
+									</div>
+								);
+							}
+
+							// Text files
+							if (file.type === "text" || file.type === "code") {
+								return (
+									<Link
+										key={file.id}
+										href={file.url}
+										target="_blank"
+										rel="noopener noreferrer"
+										className="flex items-center gap-3 p-4 rounded-xl bg-white/5 border border-white/10 hover:bg-white/10 transition min-w-[240px]"
+									>
+										<FileText className="h-8 w-8 text-emerald-400 shrink-0" />
+										<div className="flex-1 min-w-0">
+											<p className="text-sm font-semibold text-white truncate">{file.name}</p>
+											<p className="text-xs text-zinc-500 uppercase">{file.type}</p>
+										</div>
+									</Link>
+								);
+							}
+
+							// Generic files
+							return (
+								<Link
+									key={file.id}
+									href={file.url}
+									target="_blank"
+									rel="noopener noreferrer"
+									className="flex items-center gap-3 p-4 rounded-xl bg-white/5 border border-white/10 hover:bg-white/10 transition min-w-[240px]"
+								>
+									<FileIcon className="h-8 w-8 text-zinc-400 shrink-0" />
+									<div className="flex-1 min-w-0">
+										<p className="text-sm font-semibold text-white truncate">{file.name}</p>
+										<p className="text-xs text-zinc-500 uppercase">{file.type}</p>
+									</div>
+								</Link>
+							);
+						})}
 					</div>
 				)}
 
-				{/* View Mode */}
-				{!fileUrl && !isEditing && !deleted && (
+				{/* Text Content - View Mode */}
+				{!deleted && hasContent && !isEditing && (
 					<p className={cn("text-[15px] text-zinc-300 mt-1 leading-relaxed font-normal", "wrap-break-word whitespace-pre-wrap")}>
 						{content}
 						{isUpdated && <span className="text-[10px] mx-2 text-zinc-500 select-none">(edited)</span>}
 					</p>
 				)}
 
-				{/* Edit Mode */}
-				{!fileUrl && isEditing && !deleted && (
+				{/* Text Content - Edit Mode */}
+				{!deleted && isEditing && (
 					<div className="mt-2 w-full">
 						<div className="relative w-full rounded-xl bg-[#09090b] border border-indigo-500/30 ring-1 ring-indigo-500/20 overflow-hidden shadow-sm">
 							<TextareaAutoSize

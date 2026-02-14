@@ -19,8 +19,6 @@ export const ServerUserFooter = ({ profile }: ServerUserFooterProps) => {
 	const [isMuted, setIsMuted] = useState(false);
 	const [isDeafened, setIsDeafened] = useState(false);
 
-	console.log("Current Profile ============ ", profile);
-
 	if (!isLoaded || !user) {
 		// Loading skeleton
 		return <div className="h-14 bg-black/20 px-3 flex items-center gap-x-2 border-t border-white/5 mt-auto animate-pulse" />;

@@ -24,7 +24,6 @@ type QueryDataShape = InfiniteData<ChannelMessage[], (Date | undefined)[]>;
 export const ChatInput = ({ placeholder, channelId, name, member }: ChatInputProps) => {
 	const { onOpen } = useModal();
 	const [message, setMessage] = useState("");
-	const [fileURL, setFileURL] = useState<string | null>(null);
 	const queryClient = useQueryClient();
 
 	const [openEmojiPicker, setOpenEmojiPicker] = useState(false);
@@ -46,7 +45,6 @@ export const ChatInput = ({ placeholder, channelId, name, member }: ChatInputPro
 			const result = await sendMessage({
 				content,
 				channelId,
-				fileUrl: fileURL || undefined,
 			});
 
 			if (result?.serverError) {
@@ -56,7 +54,7 @@ export const ChatInput = ({ placeholder, channelId, name, member }: ChatInputPro
 			return result?.data;
 		},
 		// optimistic UI update
-		onMutate: async (newMessage) => {
+		onMutate: async (content) => {
 			// Cancel outgoing queries
 			await queryClient.cancelQueries({ queryKey: ["messages", channelId] });
 
@@ -65,15 +63,18 @@ export const ChatInput = ({ placeholder, channelId, name, member }: ChatInputPro
 
 			const optimisticId = `optimistic-${crypto.randomUUID()}`;
 			const optimisticMessage: ChannelMessage = {
+				id: optimisticId,
 				channelId,
-				content: newMessage,
+				content: content,
 				createdAt: new Date(),
 				updatedAt: new Date(),
 				deleted: false,
 				edited: false,
-				fileUrl: fileURL,
-				id: optimisticId,
-				member: member,
+				pinned: false,
+				replyToId: null,
+				fileUrl: null, // Deprecated
+				attachments: [], // ✅ Empty array for text-only messages
+				member,
 				memberId: member.id,
 			};
 
@@ -87,12 +88,13 @@ export const ChatInput = ({ placeholder, channelId, name, member }: ChatInputPro
 				return { ...oldData, pages: newPages };
 			});
 
+			console.log("✨ Optimistic message added:", optimisticId);
+
 			return { previousMessages, optimisticId };
 		},
 		onSuccess: () => {
 			// Clear input
 			setMessage("");
-			setFileURL(null);
 
 			// ✅ That's it! Pusher will handle replacing optimistic message
 		},
@@ -128,11 +130,11 @@ export const ChatInput = ({ placeholder, channelId, name, member }: ChatInputPro
 					disabled={mutation.isPending}
 					onClick={() =>
 						onOpen("messageFile", {
-							query: { channelId }, // Pass context
+							query: { channelId, member }, // Pass context
 						})
 					}
 					title="Attach File"
-					className="p-2 rounded-lg text-zinc-400 hover:text-white hover:bg-white/10 transition-colors shrink-0"
+					className="p-2 rounded-lg  text-zinc-400 hover:text-white hover:bg-white/10 transition-colors shrink-0"
 				>
 					<Plus className="w-5 h-5" />
 				</button>
@@ -143,7 +145,7 @@ export const ChatInput = ({ placeholder, channelId, name, member }: ChatInputPro
 					onKeyDown={handleKeyDown}
 					placeholder={placeholder || `Message #${name}`}
 					disabled={mutation.isPending}
-					className="w-full bg-transparent text-sm text-white placeholder-zinc-500 resize-none max-h-32 min-h-10 py-2.5 focus:outline-none font-sans disabled:opacity-50"
+					className="w-full pb-1  bg-transparent text-sm text-white placeholder-zinc-500 resize-none max-h-32 min-h-10 py-2.5 focus:outline-none font-sans disabled:opacity-50"
 					minRows={1}
 					maxRows={4}
 					onFocus={() => {

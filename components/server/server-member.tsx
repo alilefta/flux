@@ -4,7 +4,7 @@ import { MemberRole } from "@/generated/prisma/enums";
 import { ShieldAlert, ShieldCheck } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { UserAvatar } from "@/components/user/user-avatar"; // Ensure this exists
-import { ServerBase } from "@/schemas/server";
+import { ServerBase } from "@/schemas/server.base";
 import { useModal } from "@/hooks/use-modal-store";
 import { MemberProfile } from "@/schemas/member";
 

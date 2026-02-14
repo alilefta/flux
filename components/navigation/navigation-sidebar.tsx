@@ -3,9 +3,9 @@
 import { Plus, Zap } from "lucide-react";
 import { NavigationItem } from "./navigation-item";
 import { NavigationAction } from "./navigation-action"; // See below
-import { ServerBase, ServerDetails } from "@/schemas/server";
 import { Separator } from "../ui/separator";
 import { ScrollArea } from "../ui/scroll-area";
+import { ServerBase } from "@/schemas/server.base";
 
 interface NavigationSidebarProps {
 	servers: ServerBase[];

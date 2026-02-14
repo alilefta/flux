@@ -51,7 +51,11 @@ export const SetupUI = () => {
 	};
 
 	const onJoinSubmit = (inviteCode: string) => {
-		router.push(`/invite/${inviteCode}`);
+		//router.push(`/invite/${inviteCode}`);
+
+		executeJoinServer({
+			inviteCode,
+		});
 	};
 
 	const error = result.data?.error;
