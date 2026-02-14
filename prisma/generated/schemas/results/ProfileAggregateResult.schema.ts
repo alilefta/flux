@@ -5,6 +5,7 @@ export const ProfileAggregateResultSchema = z.object({  _count: z.object({
     name: z.number(),
     imageUrl: z.number(),
     email: z.number(),
+    bio: z.number(),
     servers: z.number(),
     members: z.number(),
     channels: z.number(),
@@ -20,6 +21,7 @@ export const ProfileAggregateResultSchema = z.object({  _count: z.object({
     name: z.string().nullable(),
     imageUrl: z.string().nullable(),
     email: z.string().nullable(),
+    bio: z.string().nullable(),
     createdAt: z.date().nullable(),
     updatedAt: z.date().nullable()
   }).nullable().optional(),
@@ -29,6 +31,7 @@ export const ProfileAggregateResultSchema = z.object({  _count: z.object({
     name: z.string().nullable(),
     imageUrl: z.string().nullable(),
     email: z.string().nullable(),
+    bio: z.string().nullable(),
     createdAt: z.date().nullable(),
     updatedAt: z.date().nullable()
   }).nullable().optional()});

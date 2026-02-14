@@ -9,6 +9,7 @@ const makeSchema = () => z.object({
   memberId: z.literal(true).optional(),
   conversationId: z.literal(true).optional(),
   deleted: z.literal(true).optional(),
+  edited: z.literal(true).optional(),
   createdAt: z.literal(true).optional(),
   updatedAt: z.literal(true).optional(),
   _all: z.literal(true).optional()

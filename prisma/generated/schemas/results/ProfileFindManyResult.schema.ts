@@ -6,6 +6,7 @@ export const ProfileFindManyResultSchema = z.object({
   name: z.string(),
   imageUrl: z.string().optional(),
   email: z.string(),
+  bio: z.string().optional(),
   servers: z.array(z.unknown()),
   members: z.array(z.unknown()),
   channels: z.array(z.unknown()),

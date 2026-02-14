@@ -1,0 +1,10 @@
+import type { Prisma } from '../../../generated/prisma/client';
+import * as z from 'zod';
+import { MessageReactionOrderByWithRelationInputObjectSchema as MessageReactionOrderByWithRelationInputObjectSchema } from './objects/MessageReactionOrderByWithRelationInput.schema';
+import { MessageReactionWhereInputObjectSchema as MessageReactionWhereInputObjectSchema } from './objects/MessageReactionWhereInput.schema';
+import { MessageReactionWhereUniqueInputObjectSchema as MessageReactionWhereUniqueInputObjectSchema } from './objects/MessageReactionWhereUniqueInput.schema';
+import { MessageReactionCountAggregateInputObjectSchema as MessageReactionCountAggregateInputObjectSchema } from './objects/MessageReactionCountAggregateInput.schema';
+
+export const MessageReactionCountSchema: z.ZodType<Prisma.MessageReactionCountArgs> = z.object({ orderBy: z.union([MessageReactionOrderByWithRelationInputObjectSchema, MessageReactionOrderByWithRelationInputObjectSchema.array()]).optional(), where: MessageReactionWhereInputObjectSchema.optional(), cursor: MessageReactionWhereUniqueInputObjectSchema.optional(), take: z.number().optional(), skip: z.number().optional(), select: z.union([ z.literal(true), MessageReactionCountAggregateInputObjectSchema ]).optional() }).strict() as unknown as z.ZodType<Prisma.MessageReactionCountArgs>;
+
+export const MessageReactionCountZodSchema = z.object({ orderBy: z.union([MessageReactionOrderByWithRelationInputObjectSchema, MessageReactionOrderByWithRelationInputObjectSchema.array()]).optional(), where: MessageReactionWhereInputObjectSchema.optional(), cursor: MessageReactionWhereUniqueInputObjectSchema.optional(), take: z.number().optional(), skip: z.number().optional(), select: z.union([ z.literal(true), MessageReactionCountAggregateInputObjectSchema ]).optional() }).strict();

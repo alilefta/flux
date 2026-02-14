@@ -6,9 +6,14 @@ const makeSchema = () => z.object({
   id: SortOrderSchema.optional(),
   name: SortOrderSchema.optional(),
   type: SortOrderSchema.optional(),
+  topic: SortOrderSchema.optional(),
+  position: SortOrderSchema.optional(),
   profileId: SortOrderSchema.optional(),
   serverId: SortOrderSchema.optional(),
+  categoryId: SortOrderSchema.optional(),
   isDefault: SortOrderSchema.optional(),
+  isLocked: SortOrderSchema.optional(),
+  slowModeRate: SortOrderSchema.optional(),
   createdAt: SortOrderSchema.optional(),
   updatedAt: SortOrderSchema.optional()
 }).strict();

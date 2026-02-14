@@ -8,6 +8,7 @@ const makeSchema = () => z.object({
   fileUrl: z.string().optional().nullable(),
   conversationId: z.string(),
   deleted: z.boolean().optional(),
+  edited: z.boolean().optional(),
   createdAt: z.coerce.date().optional(),
   updatedAt: z.coerce.date().optional()
 }).strict();

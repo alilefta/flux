@@ -9,6 +9,7 @@ const makeSchema = () => z.object({
   memberId: SortOrderSchema.optional(),
   conversationId: SortOrderSchema.optional(),
   deleted: SortOrderSchema.optional(),
+  edited: SortOrderSchema.optional(),
   createdAt: SortOrderSchema.optional(),
   updatedAt: SortOrderSchema.optional()
 }).strict();

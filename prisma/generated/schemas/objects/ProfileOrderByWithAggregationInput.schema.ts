@@ -12,6 +12,7 @@ const makeSchema = () => z.object({
   name: SortOrderSchema.optional(),
   imageUrl: z.union([SortOrderSchema, z.lazy(() => SortOrderInputObjectSchema)]).optional(),
   email: SortOrderSchema.optional(),
+  bio: z.union([SortOrderSchema, z.lazy(() => SortOrderInputObjectSchema)]).optional(),
   createdAt: SortOrderSchema.optional(),
   updatedAt: SortOrderSchema.optional(),
   _count: z.lazy(() => ProfileCountOrderByAggregateInputObjectSchema).optional(),

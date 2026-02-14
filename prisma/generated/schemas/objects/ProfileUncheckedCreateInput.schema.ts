@@ -13,6 +13,7 @@ const makeSchema = () => z.object({
   name: z.string(),
   imageUrl: z.string().optional().nullable(),
   email: z.string(),
+  bio: z.string().optional().nullable(),
   createdAt: z.coerce.date().optional(),
   servers: z.lazy(() => ServerUncheckedCreateNestedManyWithoutProfileInputObjectSchema).optional(),
   members: z.lazy(() => MemberUncheckedCreateNestedManyWithoutProfileInputObjectSchema).optional(),

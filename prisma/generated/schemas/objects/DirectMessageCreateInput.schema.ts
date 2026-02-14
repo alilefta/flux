@@ -8,6 +8,7 @@ const makeSchema = () => z.object({
   content: z.string(),
   fileUrl: z.string().optional().nullable(),
   deleted: z.boolean().optional(),
+  edited: z.boolean().optional(),
   createdAt: z.coerce.date().optional(),
   member: z.lazy(() => ProfileCreateNestedOneWithoutDirectMessagesInputObjectSchema),
   conversation: z.lazy(() => ConversationCreateNestedOneWithoutDirectMessagesInputObjectSchema)

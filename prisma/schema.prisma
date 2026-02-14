@@ -9,54 +9,79 @@ generator zod {
 }
 datasource db {
   provider = "postgresql"
-  
 }
+
+// ============================= Updates ==========================================
+// Key Enhancements
+// Implemented (Backwards Compatible)
+
+// ChannelCategory - Organize channels into sections
+// ChannelType.ANNOUNCEMENT - Read-only news channels
+// FileAttachment - Separate table for multiple files
+// MessageReaction - Emoji reactions (like Discord)
+// Channel settings - isLocked, slowModeRate, topic, position
+// Message threading - replyTo for threaded replies
+// Pinned messages - pinned flag
+// Bio field - User profiles
+// AuditLog - Action logging for moderation
+
+
+// ⏳ Commented (Post-MVP)
+
+// ChannelReadStatus - Unread message tracking
+// ServerRole - Custom roles with permissions
+// Invite - Invite tracking and management
+
+// ============================= CORE MODELS ======================================
 
 // 1. PROFILE: The Master User Record (Synced with Clerk)
 model Profile {
-  id        String    @id @default(uuid())
-  clerkId    String    @unique // The Clerk ID
-  name      String
-  imageUrl  String?    @db.Text
-  email     String    @db.Text
+  id       String  @id @default(uuid())
+  clerkId  String  @unique
+  name     String
+  imageUrl String? @db.Text
+  email    String  @db.Text
+  bio      String? @db.Text // ✅ User bio/status
   
   // Relations
-  servers   Server[]  // Servers I created (Owned)
-  members   Member[]  // Servers I joined (As a member)
-  channels  Channel[] // Channels I created
+  servers  Server[]  // Servers I created (Owned)
+  members  Member[]  // Servers I joined (As a member)
+  channels Channel[] // Channels I created
 
-   conversationsInitiated Conversation[] @relation("MemberOne")
+  conversationsInitiated Conversation[] @relation("MemberOne")
   conversationsReceived  Conversation[] @relation("MemberTwo")
   directMessages         DirectMessage[]
   
-  createdAt DateTime  @default(now())
-  updatedAt DateTime  @updatedAt
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 }
 
-// 2. SERVER: The Workspace (The "Building")
+// 2. SERVER: The Workspace
 model Server {
-  id         String @id @default(uuid())
-  name       String
-  imageUrl   String @db.Text
-  inviteCode String @unique // For inviting others
+  id          String  @id @default(uuid())
+  name        String
+  imageUrl    String  @db.Text
+  inviteCode  String  @unique
+  description String? @db.Text // ✅ Server description
+  memberCount Int     @default(1)
 
-  profileId  String // Who owns this server?
-  profile    Profile @relation(fields: [profileId], references: [id], onDelete: Cascade)
+  profileId String
+  profile   Profile @relation(fields: [profileId], references: [id], onDelete: Cascade)
 
   // Relations
   members    Member[]
   channels   Channel[]
+  categories ChannelCategory[] // ✅ Channel organization
 
-  memberCount Int @default(1) // Owner counts as member
+  auditLog   AuditLog[]     // many audit records per server
 
-  createdAt  DateTime @default(now())
-  updatedAt  DateTime @updatedAt
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
   @@index([profileId])
 }
 
-// 3. MEMBER: The "Badge" (Links a Profile to a Server)
-// This stores your ROLE (Admin/Guest) for this specific server
+// 3. MEMBER: Links Profile to Server with Role
 enum MemberRole {
   ADMIN
   MODERATOR
@@ -70,54 +95,90 @@ model Member {
   profileId String
   profile   Profile @relation(fields: [profileId], references: [id], onDelete: Cascade)
 
-  serverId  String
-  server    Server @relation(fields: [serverId], references: [id], onDelete: Cascade)
+  serverId String
+  server   Server @relation(fields: [serverId], references: [id], onDelete: Cascade)
 
   // Relations
-  messages Message[] // Messages this member wrote in this server
+  messages Message[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
+  @@unique([profileId, serverId]) // ✅ One membership per server
   @@index([profileId])
   @@index([serverId])
 }
 
-// 4. CHANNEL: The "Room" (Inside a Server)
+// ============================= CHANNELS ======================================
+
+// 4. CHANNEL CATEGORY: Organize channels (Discord-style)
+model ChannelCategory {
+  id       String @id @default(uuid())
+  name     String
+  position Int    @default(0) // For drag-and-drop ordering
+
+  serverId String
+  server   Server @relation(fields: [serverId], references: [id], onDelete: Cascade)
+
+  channels Channel[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([serverId])
+  @@index([position])
+}
+
+// 5. CHANNEL: The "Room"
 enum ChannelType {
   TEXT
   AUDIO
   VIDEO
+  ANNOUNCEMENT // ✅ Read-only news/updates channel
 }
 
 model Channel {
-  id   String      @id @default(uuid())
-  name String
-  type ChannelType @default(TEXT)
+  id       String      @id @default(uuid())
+  name     String
+  type     ChannelType @default(TEXT)
+  topic    String?     @db.Text // ✅ Channel description/topic
+  position Int         @default(0) // ✅ Order within category
 
-  profileId String // Who created the channel
+  profileId String
   profile   Profile @relation(fields: [profileId], references: [id], onDelete: Cascade)
 
-  serverId  String
-  server    Server @relation(fields: [serverId], references: [id], onDelete: Cascade)
+  serverId String
+  server   Server @relation(fields: [serverId], references: [id], onDelete: Cascade)
+
+  // ✅ Category (optional - uncategorized channels allowed)
+  categoryId String?
+  category   ChannelCategory? @relation(fields: [categoryId], references: [id], onDelete: SetNull)
 
   // Relations
-  messages  Message[]
+  messages Message[]
 
-  isDefault Boolean @default(false) // The "general" channel, when u create a server u should have at least 1 channel that cannot be deleted and show first in the list
+  // ✅ Channel settings
+  isDefault    Boolean @default(false) // "general" channel (cannot delete)
+  isLocked     Boolean @default(false) // Read-only (ANNOUNCEMENT type)
+  slowModeRate Int?    // ✅ Seconds between messages (optional rate limit)
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
   @@index([profileId])
   @@index([serverId])
+  @@index([categoryId])
+  @@index([position])
 }
 
-// 5. MESSAGE: The content
+// ============================= MESSAGES ======================================
+
+// 6. MESSAGE: Channel messages
 model Message {
-  id      String  @id @default(uuid())
-  content String  @db.Text
-  fileUrl String? @db.Text // Optional attachment
+  id      String @id @default(uuid())
+  content String @db.Text
+
+  fileUrl String? @db.Text // ❌ Deprecated (backwards compat only)
 
   memberId String
   member   Member @relation(fields: [memberId], references: [id], onDelete: Cascade)
@@ -125,18 +186,66 @@ model Message {
   channelId String
   channel   Channel @relation(fields: [channelId], references: [id], onDelete: Cascade)
 
-  deleted Boolean @default(false) // Soft delete (don't actually remove from DB)
+  // ✅ Message metadata
+  deleted Boolean @default(false) // Soft delete
+  edited  Boolean @default(false) // Show "edited" badge
+  pinned  Boolean @default(false) // ✅ Pin important messages
+
+  // ✅ Relationships
+  attachments FileAttachment[] // Multiple files
+  reactions   MessageReaction[] // ✅ Emoji reactions
+
+  // ✅ Reply threading (optional - for V2)
+  replyToId String?
+  replyTo   Message?  @relation("MessageReplies", fields: [replyToId], references: [id], onDelete: SetNull)
+  replies   Message[] @relation("MessageReplies")
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
-  edited Boolean @default(false) // Flag for UI: "edited" badge
 
   @@index([channelId])
   @@index([memberId])
+  @@index([replyToId])
 }
-// Add to your schema:
 
-// 6. CONVERSATION: 1:1 DM between two profiles
+// 7. FILE ATTACHMENT: Multiple files per message
+model FileAttachment {
+  id   String @id @default(uuid())
+  url  String @db.Text
+  name String
+  type String // image, pdf, video, text, code, etc.
+  size Int?
+
+  messageId String
+  message   Message @relation(fields: [messageId], references: [id], onDelete: Cascade)
+
+  createdAt DateTime @default(now())
+
+  @@index([messageId])
+}
+
+// 8. MESSAGE REACTION: Emoji reactions (Discord-style)
+model MessageReaction {
+  id    String @id @default(uuid())
+  emoji String // Emoji unicode or custom emoji ID
+
+  messageId String
+  message   Message @relation(fields: [messageId], references: [id], onDelete: Cascade)
+
+  memberId String
+  // Note: Not using Member relation to allow reactions from any profile
+  profileId String // Who reacted
+
+  createdAt DateTime @default(now())
+
+  @@unique([messageId, profileId, emoji]) // One reaction per emoji per user
+  @@index([messageId])
+  @@index([profileId])
+}
+
+// ============================= DIRECT MESSAGES ======================================
+
+// 9. CONVERSATION: 1:1 DMs
 model Conversation {
   id String @id @default(uuid())
 
@@ -148,15 +257,18 @@ model Conversation {
 
   directMessages DirectMessage[]
 
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
   @@unique([memberOneId, memberTwoId])
   @@index([memberTwoId])
 }
 
-// 7. DIRECT_MESSAGE: Messages in a DM
+// 10. DIRECT MESSAGE: DM content
 model DirectMessage {
   id      String  @id @default(uuid())
   content String  @db.Text
-  fileUrl String? @db.Text
+  fileUrl String? @db.Text // ❌ Deprecated (backwards compat)
 
   memberId String
   member   Profile @relation(fields: [memberId], references: [id], onDelete: Cascade)
@@ -164,7 +276,12 @@ model DirectMessage {
   conversationId String
   conversation   Conversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
 
+  // ✅ Message metadata
   deleted Boolean @default(false)
+  edited  Boolean @default(false)
+
+  // ✅ Future: Add attachments for DMs too
+  // dmAttachments DMAttachment[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -173,97 +290,102 @@ model DirectMessage {
   @@index([conversationId])
 }
 
-// ============================= After MVP ======================================
+// ============================= OPTIONAL ENHANCEMENTS ======================================
 
-// model ChannelReadStatus {
-//   id String @id @default(uuid())
-
-//   memberId  String
-//   member    Member @relation(fields: [memberId], references: [id], onDelete: Cascade)
-
-//   channelId String
-//   channel   Channel @relation(fields: [channelId], references: [id], onDelete: Cascade)
-
-//   lastReadMessageId String? // ID of last message they read
-
-//   @@unique([memberId, channelId])
-//   @@index([memberId])
-//   @@index([channelId])
-// }
-
-// ADD THIS TO YOUR SCHEMA (COMMENTED OUT FOR NOW)
-
-// FUTURE: Channel Categories
-// Uncomment when adding category feature in V2
+// 11. CHANNEL READ STATUS: Track unread messages (Post-MVP)
+// Uncomment when needed
 /*
-model ChannelCategory {
-  id        String    @id @default(uuid())
-  name      String
-  position  Int       @default(0) // For drag-and-drop ordering
-  
-  serverId  String
-  server    Server    @relation(fields: [serverId], references: [id], onDelete: Cascade)
-  
-  channels  Channel[] // Channels in this category
-  
-  createdAt DateTime  @default(now())
-  updatedAt DateTime  @updatedAt
-  
-  @@index([serverId])
-  @@index([position])
+model ChannelReadStatus {
+  id String @id @default(uuid())
+
+  memberId String
+  member   Member @relation(fields: [memberId], references: [id], onDelete: Cascade)
+
+  channelId String
+  channel   Channel @relation(fields: [channelId], references: [id], onDelete: Cascade)
+
+  lastReadMessageId String? // Last message they saw
+  lastReadAt        DateTime @default(now())
+
+  @@unique([memberId, channelId])
+  @@index([memberId])
+  @@index([channelId])
 }
 */
 
-// UPDATED Channel Model (for V2)
+// 12. SERVER ROLES: Custom roles with permissions (Post-MVP)
+// More granular than ADMIN/MODERATOR/GUEST
 /*
-model Channel {
-  id   String      @id @default(uuid())
-  name String
-  type ChannelType @default(TEXT)
-  isDefault Boolean @default(false)
-  position  Int     @default(0) // For ordering within category
-  
-  profileId String
-  profile   Profile @relation(fields: [profileId], references: [id], onDelete: Cascade)
-  
-  serverId  String
-  server    Server @relation(fields: [serverId], references: [id], onDelete: Cascade)
-  
-  // FUTURE: Add category relationship
-  categoryId String?
-  category   ChannelCategory? @relation(fields: [categoryId], references: [id], onDelete: SetNull)
-  
-  messages  Message[]
-  
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-  
-  @@index([profileId])
-  @@index([serverId])
-  @@index([categoryId])
-  @@index([position])
-}
-*/
-
-// UPDATED Server Model (for V2)
-/*
-model Server {
+model ServerRole {
   id          String @id @default(uuid())
   name        String
-  imageUrl    String @db.Text
-  inviteCode  String @unique
-  memberCount Int    @default(1)
-  
-  profileId String
-  profile   Profile @relation(fields: [profileId], references: [id], onDelete: Cascade)
-  
-  members    Member[]
-  channels   Channel[]
-  categories ChannelCategory[] // FUTURE: Add this
-  
-  createdAt  DateTime @default(now())
-  updatedAt  DateTime @updatedAt
-  
-  @@index([profileId])
+  color       String? // Hex color for role
+  position    Int     @default(0) // Role hierarchy
+  permissions Json    // Bitfield of permissions
+
+  serverId String
+  server   Server @relation(fields: [serverId], references: [id], onDelete: Cascade)
+
+  members Member[] // Members with this role
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([serverId])
+  @@index([position])
 }
 */
+
+// 13. INVITE: Track server invites (Post-MVP)
+/*
+model Invite {
+  id         String   @id @default(uuid())
+  code       String   @unique
+  uses       Int      @default(0)
+  maxUses    Int?     // Null = unlimited
+  expiresAt  DateTime?
+
+  serverId String
+  server   Server @relation(fields: [serverId], references: [id], onDelete: Cascade)
+
+  createdById String
+  createdBy   Profile @relation(fields: [createdById], references: [id], onDelete: Cascade)
+
+  createdAt DateTime @default(now())
+
+  @@index([serverId])
+  @@index([code])
+}
+*/
+
+// 14. AUDIT LOG: Track server actions (Post-MVP)
+
+enum AuditLogAction {
+  CHANNEL_CREATE
+  CHANNEL_DELETE
+  CHANNEL_UPDATE
+  MEMBER_KICK
+  MEMBER_BAN
+  MEMBER_ROLE_UPDATE
+  MESSAGE_DELETE
+  SERVER_UPDATE
+}
+
+model AuditLog {
+  id     String         @id @default(uuid())
+  action AuditLogAction
+
+  serverId String   
+  server   Server @relation(fields: [serverId], references: [id], onDelete: Cascade)
+
+  userId String // Who performed the action
+  targetId String? // Who/what was affected
+  metadata Json? // Additional context
+
+  createdAt DateTime @default(now())
+
+  @@index([serverId])
+  @@index([createdAt])
+}
+
+

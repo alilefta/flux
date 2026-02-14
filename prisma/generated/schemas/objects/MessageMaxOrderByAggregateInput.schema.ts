@@ -9,9 +9,11 @@ const makeSchema = () => z.object({
   memberId: SortOrderSchema.optional(),
   channelId: SortOrderSchema.optional(),
   deleted: SortOrderSchema.optional(),
+  edited: SortOrderSchema.optional(),
+  pinned: SortOrderSchema.optional(),
+  replyToId: SortOrderSchema.optional(),
   createdAt: SortOrderSchema.optional(),
-  updatedAt: SortOrderSchema.optional(),
-  edited: SortOrderSchema.optional()
+  updatedAt: SortOrderSchema.optional()
 }).strict();
 export const MessageMaxOrderByAggregateInputObjectSchema: z.ZodType<Prisma.MessageMaxOrderByAggregateInput> = makeSchema() as unknown as z.ZodType<Prisma.MessageMaxOrderByAggregateInput>;
 export const MessageMaxOrderByAggregateInputObjectZodSchema = makeSchema();

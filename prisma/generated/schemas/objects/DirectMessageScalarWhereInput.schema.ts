@@ -15,6 +15,7 @@ const directmessagescalarwhereinputSchema = z.object({
   memberId: z.union([z.lazy(() => StringFilterObjectSchema), z.string()]).optional(),
   conversationId: z.union([z.lazy(() => StringFilterObjectSchema), z.string()]).optional(),
   deleted: z.union([z.lazy(() => BoolFilterObjectSchema), z.boolean()]).optional(),
+  edited: z.union([z.lazy(() => BoolFilterObjectSchema), z.boolean()]).optional(),
   createdAt: z.union([z.lazy(() => DateTimeFilterObjectSchema), z.coerce.date()]).optional(),
   updatedAt: z.union([z.lazy(() => DateTimeFilterObjectSchema), z.coerce.date()]).optional()
 }).strict();

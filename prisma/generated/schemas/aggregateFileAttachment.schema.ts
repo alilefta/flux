@@ -1,0 +1,14 @@
+import type { Prisma } from '../../../generated/prisma/client';
+import * as z from 'zod';
+import { FileAttachmentOrderByWithRelationInputObjectSchema as FileAttachmentOrderByWithRelationInputObjectSchema } from './objects/FileAttachmentOrderByWithRelationInput.schema';
+import { FileAttachmentWhereInputObjectSchema as FileAttachmentWhereInputObjectSchema } from './objects/FileAttachmentWhereInput.schema';
+import { FileAttachmentWhereUniqueInputObjectSchema as FileAttachmentWhereUniqueInputObjectSchema } from './objects/FileAttachmentWhereUniqueInput.schema';
+import { FileAttachmentCountAggregateInputObjectSchema as FileAttachmentCountAggregateInputObjectSchema } from './objects/FileAttachmentCountAggregateInput.schema';
+import { FileAttachmentMinAggregateInputObjectSchema as FileAttachmentMinAggregateInputObjectSchema } from './objects/FileAttachmentMinAggregateInput.schema';
+import { FileAttachmentMaxAggregateInputObjectSchema as FileAttachmentMaxAggregateInputObjectSchema } from './objects/FileAttachmentMaxAggregateInput.schema';
+import { FileAttachmentAvgAggregateInputObjectSchema as FileAttachmentAvgAggregateInputObjectSchema } from './objects/FileAttachmentAvgAggregateInput.schema';
+import { FileAttachmentSumAggregateInputObjectSchema as FileAttachmentSumAggregateInputObjectSchema } from './objects/FileAttachmentSumAggregateInput.schema';
+
+export const FileAttachmentAggregateSchema: z.ZodType<Prisma.FileAttachmentAggregateArgs> = z.object({ orderBy: z.union([FileAttachmentOrderByWithRelationInputObjectSchema, FileAttachmentOrderByWithRelationInputObjectSchema.array()]).optional(), where: FileAttachmentWhereInputObjectSchema.optional(), cursor: FileAttachmentWhereUniqueInputObjectSchema.optional(), take: z.number().optional(), skip: z.number().optional(), _count: z.union([ z.literal(true), FileAttachmentCountAggregateInputObjectSchema ]).optional(), _min: FileAttachmentMinAggregateInputObjectSchema.optional(), _max: FileAttachmentMaxAggregateInputObjectSchema.optional(), _avg: FileAttachmentAvgAggregateInputObjectSchema.optional(), _sum: FileAttachmentSumAggregateInputObjectSchema.optional() }).strict() as unknown as z.ZodType<Prisma.FileAttachmentAggregateArgs>;
+
+export const FileAttachmentAggregateZodSchema = z.object({ orderBy: z.union([FileAttachmentOrderByWithRelationInputObjectSchema, FileAttachmentOrderByWithRelationInputObjectSchema.array()]).optional(), where: FileAttachmentWhereInputObjectSchema.optional(), cursor: FileAttachmentWhereUniqueInputObjectSchema.optional(), take: z.number().optional(), skip: z.number().optional(), _count: z.union([ z.literal(true), FileAttachmentCountAggregateInputObjectSchema ]).optional(), _min: FileAttachmentMinAggregateInputObjectSchema.optional(), _max: FileAttachmentMaxAggregateInputObjectSchema.optional(), _avg: FileAttachmentAvgAggregateInputObjectSchema.optional(), _sum: FileAttachmentSumAggregateInputObjectSchema.optional() }).strict();

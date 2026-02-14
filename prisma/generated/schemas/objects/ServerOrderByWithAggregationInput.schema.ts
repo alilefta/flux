@@ -1,6 +1,7 @@
 import * as z from 'zod';
 import type { Prisma } from '../../../../generated/prisma/client';
 import { SortOrderSchema } from '../enums/SortOrder.schema';
+import { SortOrderInputObjectSchema as SortOrderInputObjectSchema } from './SortOrderInput.schema';
 import { ServerCountOrderByAggregateInputObjectSchema as ServerCountOrderByAggregateInputObjectSchema } from './ServerCountOrderByAggregateInput.schema';
 import { ServerAvgOrderByAggregateInputObjectSchema as ServerAvgOrderByAggregateInputObjectSchema } from './ServerAvgOrderByAggregateInput.schema';
 import { ServerMaxOrderByAggregateInputObjectSchema as ServerMaxOrderByAggregateInputObjectSchema } from './ServerMaxOrderByAggregateInput.schema';
@@ -12,8 +13,9 @@ const makeSchema = () => z.object({
   name: SortOrderSchema.optional(),
   imageUrl: SortOrderSchema.optional(),
   inviteCode: SortOrderSchema.optional(),
-  profileId: SortOrderSchema.optional(),
+  description: z.union([SortOrderSchema, z.lazy(() => SortOrderInputObjectSchema)]).optional(),
   memberCount: SortOrderSchema.optional(),
+  profileId: SortOrderSchema.optional(),
   createdAt: SortOrderSchema.optional(),
   updatedAt: SortOrderSchema.optional(),
   _count: z.lazy(() => ServerCountOrderByAggregateInputObjectSchema).optional(),

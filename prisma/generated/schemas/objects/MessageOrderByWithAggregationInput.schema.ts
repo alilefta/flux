@@ -13,9 +13,11 @@ const makeSchema = () => z.object({
   memberId: SortOrderSchema.optional(),
   channelId: SortOrderSchema.optional(),
   deleted: SortOrderSchema.optional(),
+  edited: SortOrderSchema.optional(),
+  pinned: SortOrderSchema.optional(),
+  replyToId: z.union([SortOrderSchema, z.lazy(() => SortOrderInputObjectSchema)]).optional(),
   createdAt: SortOrderSchema.optional(),
   updatedAt: SortOrderSchema.optional(),
-  edited: SortOrderSchema.optional(),
   _count: z.lazy(() => MessageCountOrderByAggregateInputObjectSchema).optional(),
   _max: z.lazy(() => MessageMaxOrderByAggregateInputObjectSchema).optional(),
   _min: z.lazy(() => MessageMinOrderByAggregateInputObjectSchema).optional()

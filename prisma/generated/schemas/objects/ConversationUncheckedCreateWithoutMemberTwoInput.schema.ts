@@ -5,6 +5,8 @@ import { DirectMessageUncheckedCreateNestedManyWithoutConversationInputObjectSch
 const makeSchema = () => z.object({
   id: z.string().optional(),
   memberOneId: z.string(),
+  createdAt: z.coerce.date().optional(),
+  updatedAt: z.coerce.date().optional(),
   directMessages: z.lazy(() => DirectMessageUncheckedCreateNestedManyWithoutConversationInputObjectSchema).optional()
 }).strict();
 export const ConversationUncheckedCreateWithoutMemberTwoInputObjectSchema: z.ZodType<Prisma.ConversationUncheckedCreateWithoutMemberTwoInput> = makeSchema() as unknown as z.ZodType<Prisma.ConversationUncheckedCreateWithoutMemberTwoInput>;

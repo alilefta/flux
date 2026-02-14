@@ -12,6 +12,7 @@ const makeSchema = () => z.object({
   conversationId: z.boolean().optional(),
   conversation: z.union([z.boolean(), z.lazy(() => ConversationArgsObjectSchema)]).optional(),
   deleted: z.boolean().optional(),
+  edited: z.boolean().optional(),
   createdAt: z.boolean().optional(),
   updatedAt: z.boolean().optional()
 }).strict();

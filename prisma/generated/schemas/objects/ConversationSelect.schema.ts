@@ -11,6 +11,8 @@ const makeSchema = () => z.object({
   memberTwoId: z.boolean().optional(),
   memberTwo: z.union([z.boolean(), z.lazy(() => ProfileArgsObjectSchema)]).optional(),
   directMessages: z.union([z.boolean(), z.lazy(() => DirectMessageFindManySchema)]).optional(),
+  createdAt: z.boolean().optional(),
+  updatedAt: z.boolean().optional(),
   _count: z.union([z.boolean(), z.lazy(() => ConversationCountOutputTypeArgsObjectSchema)]).optional()
 }).strict();
 export const ConversationSelectObjectSchema: z.ZodType<Prisma.ConversationSelect> = makeSchema() as unknown as z.ZodType<Prisma.ConversationSelect>;

@@ -13,6 +13,7 @@ const makeSchema = () => z.object({
   name: z.boolean().optional(),
   imageUrl: z.boolean().optional(),
   email: z.boolean().optional(),
+  bio: z.boolean().optional(),
   servers: z.union([z.boolean(), z.lazy(() => ServerFindManySchema)]).optional(),
   members: z.union([z.boolean(), z.lazy(() => MemberFindManySchema)]).optional(),
   channels: z.union([z.boolean(), z.lazy(() => ChannelFindManySchema)]).optional(),

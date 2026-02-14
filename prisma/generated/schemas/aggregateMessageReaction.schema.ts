@@ -1,0 +1,12 @@
+import type { Prisma } from '../../../generated/prisma/client';
+import * as z from 'zod';
+import { MessageReactionOrderByWithRelationInputObjectSchema as MessageReactionOrderByWithRelationInputObjectSchema } from './objects/MessageReactionOrderByWithRelationInput.schema';
+import { MessageReactionWhereInputObjectSchema as MessageReactionWhereInputObjectSchema } from './objects/MessageReactionWhereInput.schema';
+import { MessageReactionWhereUniqueInputObjectSchema as MessageReactionWhereUniqueInputObjectSchema } from './objects/MessageReactionWhereUniqueInput.schema';
+import { MessageReactionCountAggregateInputObjectSchema as MessageReactionCountAggregateInputObjectSchema } from './objects/MessageReactionCountAggregateInput.schema';
+import { MessageReactionMinAggregateInputObjectSchema as MessageReactionMinAggregateInputObjectSchema } from './objects/MessageReactionMinAggregateInput.schema';
+import { MessageReactionMaxAggregateInputObjectSchema as MessageReactionMaxAggregateInputObjectSchema } from './objects/MessageReactionMaxAggregateInput.schema';
+
+export const MessageReactionAggregateSchema: z.ZodType<Prisma.MessageReactionAggregateArgs> = z.object({ orderBy: z.union([MessageReactionOrderByWithRelationInputObjectSchema, MessageReactionOrderByWithRelationInputObjectSchema.array()]).optional(), where: MessageReactionWhereInputObjectSchema.optional(), cursor: MessageReactionWhereUniqueInputObjectSchema.optional(), take: z.number().optional(), skip: z.number().optional(), _count: z.union([ z.literal(true), MessageReactionCountAggregateInputObjectSchema ]).optional(), _min: MessageReactionMinAggregateInputObjectSchema.optional(), _max: MessageReactionMaxAggregateInputObjectSchema.optional() }).strict() as unknown as z.ZodType<Prisma.MessageReactionAggregateArgs>;
+
+export const MessageReactionAggregateZodSchema = z.object({ orderBy: z.union([MessageReactionOrderByWithRelationInputObjectSchema, MessageReactionOrderByWithRelationInputObjectSchema.array()]).optional(), where: MessageReactionWhereInputObjectSchema.optional(), cursor: MessageReactionWhereUniqueInputObjectSchema.optional(), take: z.number().optional(), skip: z.number().optional(), _count: z.union([ z.literal(true), MessageReactionCountAggregateInputObjectSchema ]).optional(), _min: MessageReactionMinAggregateInputObjectSchema.optional(), _max: MessageReactionMaxAggregateInputObjectSchema.optional() }).strict();

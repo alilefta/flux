@@ -4,11 +4,14 @@ export const ServerUpsertResultSchema = z.object({
   name: z.string(),
   imageUrl: z.string(),
   inviteCode: z.string(),
+  description: z.string().optional(),
+  memberCount: z.number().int(),
   profileId: z.string(),
   profile: z.unknown(),
   members: z.array(z.unknown()),
   channels: z.array(z.unknown()),
-  memberCount: z.number().int(),
+  categories: z.array(z.unknown()),
+  auditLog: z.array(z.unknown()),
   createdAt: z.date(),
   updatedAt: z.date()
 });

@@ -6,7 +6,9 @@ export const ConversationInputSchema = z.object({
     memberOne: z.unknown(),
     memberTwoId: z.string(),
     memberTwo: z.unknown(),
-    directMessages: z.array(z.unknown())
+    directMessages: z.array(z.unknown()),
+    createdAt: z.date(),
+    updatedAt: z.date()
 }).strict();
 
 export type ConversationInputType = z.infer<typeof ConversationInputSchema>;

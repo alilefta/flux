@@ -1,0 +1,13 @@
+import type { Prisma } from '../../../generated/prisma/client';
+import * as z from 'zod';
+import { MessageReactionWhereInputObjectSchema as MessageReactionWhereInputObjectSchema } from './objects/MessageReactionWhereInput.schema';
+import { MessageReactionOrderByWithAggregationInputObjectSchema as MessageReactionOrderByWithAggregationInputObjectSchema } from './objects/MessageReactionOrderByWithAggregationInput.schema';
+import { MessageReactionScalarWhereWithAggregatesInputObjectSchema as MessageReactionScalarWhereWithAggregatesInputObjectSchema } from './objects/MessageReactionScalarWhereWithAggregatesInput.schema';
+import { MessageReactionScalarFieldEnumSchema } from './enums/MessageReactionScalarFieldEnum.schema';
+import { MessageReactionCountAggregateInputObjectSchema as MessageReactionCountAggregateInputObjectSchema } from './objects/MessageReactionCountAggregateInput.schema';
+import { MessageReactionMinAggregateInputObjectSchema as MessageReactionMinAggregateInputObjectSchema } from './objects/MessageReactionMinAggregateInput.schema';
+import { MessageReactionMaxAggregateInputObjectSchema as MessageReactionMaxAggregateInputObjectSchema } from './objects/MessageReactionMaxAggregateInput.schema';
+
+export const MessageReactionGroupBySchema: z.ZodType<Prisma.MessageReactionGroupByArgs> = z.object({ where: MessageReactionWhereInputObjectSchema.optional(), orderBy: z.union([MessageReactionOrderByWithAggregationInputObjectSchema, MessageReactionOrderByWithAggregationInputObjectSchema.array()]).optional(), having: MessageReactionScalarWhereWithAggregatesInputObjectSchema.optional(), take: z.number().optional(), skip: z.number().optional(), by: z.array(MessageReactionScalarFieldEnumSchema), _count: z.union([ z.literal(true), MessageReactionCountAggregateInputObjectSchema ]).optional(), _min: MessageReactionMinAggregateInputObjectSchema.optional(), _max: MessageReactionMaxAggregateInputObjectSchema.optional() }).strict() as unknown as z.ZodType<Prisma.MessageReactionGroupByArgs>;
+
+export const MessageReactionGroupByZodSchema = z.object({ where: MessageReactionWhereInputObjectSchema.optional(), orderBy: z.union([MessageReactionOrderByWithAggregationInputObjectSchema, MessageReactionOrderByWithAggregationInputObjectSchema.array()]).optional(), having: MessageReactionScalarWhereWithAggregatesInputObjectSchema.optional(), take: z.number().optional(), skip: z.number().optional(), by: z.array(MessageReactionScalarFieldEnumSchema), _count: z.union([ z.literal(true), MessageReactionCountAggregateInputObjectSchema ]).optional(), _min: MessageReactionMinAggregateInputObjectSchema.optional(), _max: MessageReactionMaxAggregateInputObjectSchema.optional() }).strict();

@@ -6,6 +6,7 @@ export const ProfileResultSchema = z.object({
     name: z.string(),
     imageUrl: z.string().nullable(),
     email: z.string(),
+    bio: z.string().nullable(),
     servers: z.array(z.unknown()),
     members: z.array(z.unknown()),
     channels: z.array(z.unknown()),

@@ -8,9 +8,15 @@ export const MessageAggregateResultSchema = z.object({  _count: z.object({
     channelId: z.number(),
     channel: z.number(),
     deleted: z.number(),
+    edited: z.number(),
+    pinned: z.number(),
+    attachments: z.number(),
+    reactions: z.number(),
+    replyToId: z.number(),
+    replyTo: z.number(),
+    replies: z.number(),
     createdAt: z.number(),
-    updatedAt: z.number(),
-    edited: z.number()
+    updatedAt: z.number()
   }).optional(),
   _min: z.object({
     id: z.string().nullable(),
@@ -18,6 +24,7 @@ export const MessageAggregateResultSchema = z.object({  _count: z.object({
     fileUrl: z.string().nullable(),
     memberId: z.string().nullable(),
     channelId: z.string().nullable(),
+    replyToId: z.string().nullable(),
     createdAt: z.date().nullable(),
     updatedAt: z.date().nullable()
   }).nullable().optional(),
@@ -27,6 +34,7 @@ export const MessageAggregateResultSchema = z.object({  _count: z.object({
     fileUrl: z.string().nullable(),
     memberId: z.string().nullable(),
     channelId: z.string().nullable(),
+    replyToId: z.string().nullable(),
     createdAt: z.date().nullable(),
     updatedAt: z.date().nullable()
   }).nullable().optional()});

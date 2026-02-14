@@ -5,7 +5,9 @@ import { SortOrderSchema } from '../enums/SortOrder.schema'
 const makeSchema = () => z.object({
   id: SortOrderSchema.optional(),
   memberOneId: SortOrderSchema.optional(),
-  memberTwoId: SortOrderSchema.optional()
+  memberTwoId: SortOrderSchema.optional(),
+  createdAt: SortOrderSchema.optional(),
+  updatedAt: SortOrderSchema.optional()
 }).strict();
 export const ConversationMaxOrderByAggregateInputObjectSchema: z.ZodType<Prisma.ConversationMaxOrderByAggregateInput> = makeSchema() as unknown as z.ZodType<Prisma.ConversationMaxOrderByAggregateInput>;
 export const ConversationMaxOrderByAggregateInputObjectZodSchema = makeSchema();

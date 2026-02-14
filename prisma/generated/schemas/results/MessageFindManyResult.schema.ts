@@ -9,9 +9,15 @@ export const MessageFindManyResultSchema = z.object({
   channelId: z.string(),
   channel: z.unknown(),
   deleted: z.boolean(),
+  edited: z.boolean(),
+  pinned: z.boolean(),
+  attachments: z.array(z.unknown()),
+  reactions: z.array(z.unknown()),
+  replyToId: z.string().optional(),
+  replyTo: z.unknown().optional(),
+  replies: z.array(z.unknown()),
   createdAt: z.date(),
-  updatedAt: z.date(),
-  edited: z.boolean()
+  updatedAt: z.date()
 })),
   pagination: z.object({
   page: z.number().int().min(1),

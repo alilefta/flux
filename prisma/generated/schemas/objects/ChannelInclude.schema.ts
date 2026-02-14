@@ -2,12 +2,14 @@ import * as z from 'zod';
 import type { Prisma } from '../../../../generated/prisma/client';
 import { ProfileArgsObjectSchema as ProfileArgsObjectSchema } from './ProfileArgs.schema';
 import { ServerArgsObjectSchema as ServerArgsObjectSchema } from './ServerArgs.schema';
+import { ChannelCategoryArgsObjectSchema as ChannelCategoryArgsObjectSchema } from './ChannelCategoryArgs.schema';
 import { MessageFindManySchema as MessageFindManySchema } from '../findManyMessage.schema';
 import { ChannelCountOutputTypeArgsObjectSchema as ChannelCountOutputTypeArgsObjectSchema } from './ChannelCountOutputTypeArgs.schema'
 
 const makeSchema = () => z.object({
   profile: z.union([z.boolean(), z.lazy(() => ProfileArgsObjectSchema)]).optional(),
   server: z.union([z.boolean(), z.lazy(() => ServerArgsObjectSchema)]).optional(),
+  category: z.union([z.boolean(), z.lazy(() => ChannelCategoryArgsObjectSchema)]).optional(),
   messages: z.union([z.boolean(), z.lazy(() => MessageFindManySchema)]).optional(),
   _count: z.union([z.boolean(), z.lazy(() => ChannelCountOutputTypeArgsObjectSchema)]).optional()
 }).strict();

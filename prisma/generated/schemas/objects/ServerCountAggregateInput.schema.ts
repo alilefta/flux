@@ -7,8 +7,9 @@ const makeSchema = () => z.object({
   name: z.literal(true).optional(),
   imageUrl: z.literal(true).optional(),
   inviteCode: z.literal(true).optional(),
-  profileId: z.literal(true).optional(),
+  description: z.literal(true).optional(),
   memberCount: z.literal(true).optional(),
+  profileId: z.literal(true).optional(),
   createdAt: z.literal(true).optional(),
   updatedAt: z.literal(true).optional(),
   _all: z.literal(true).optional()

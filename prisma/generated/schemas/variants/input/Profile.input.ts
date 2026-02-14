@@ -6,6 +6,7 @@ export const ProfileInputSchema = z.object({
     name: z.string(),
     imageUrl: z.string().optional().nullable(),
     email: z.string(),
+    bio: z.string().optional().nullable(),
     servers: z.array(z.unknown()),
     members: z.array(z.unknown()),
     channels: z.array(z.unknown()),

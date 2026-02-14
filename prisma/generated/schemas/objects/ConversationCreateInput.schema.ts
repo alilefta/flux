@@ -6,6 +6,7 @@ import { DirectMessageCreateNestedManyWithoutConversationInputObjectSchema as Di
 
 const makeSchema = () => z.object({
   id: z.string().optional(),
+  createdAt: z.coerce.date().optional(),
   memberOne: z.lazy(() => ProfileCreateNestedOneWithoutConversationsInitiatedInputObjectSchema),
   memberTwo: z.lazy(() => ProfileCreateNestedOneWithoutConversationsReceivedInputObjectSchema),
   directMessages: z.lazy(() => DirectMessageCreateNestedManyWithoutConversationInputObjectSchema).optional()

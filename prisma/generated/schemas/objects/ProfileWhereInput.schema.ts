@@ -18,6 +18,7 @@ const profilewhereinputSchema = z.object({
   name: z.union([z.lazy(() => StringFilterObjectSchema), z.string()]).optional(),
   imageUrl: z.union([z.lazy(() => StringNullableFilterObjectSchema), z.string()]).optional().nullable(),
   email: z.union([z.lazy(() => StringFilterObjectSchema), z.string()]).optional(),
+  bio: z.union([z.lazy(() => StringNullableFilterObjectSchema), z.string()]).optional().nullable(),
   createdAt: z.union([z.lazy(() => DateTimeFilterObjectSchema), z.coerce.date()]).optional(),
   updatedAt: z.union([z.lazy(() => DateTimeFilterObjectSchema), z.coerce.date()]).optional(),
   servers: z.lazy(() => ServerListRelationFilterObjectSchema).optional(),

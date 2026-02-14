@@ -5,6 +5,7 @@ export const ProfileGroupByResultSchema = z.array(z.object({
   name: z.string(),
   imageUrl: z.string(),
   email: z.string(),
+  bio: z.string(),
   createdAt: z.date(),
   updatedAt: z.date(),
   _count: z.object({
@@ -13,6 +14,7 @@ export const ProfileGroupByResultSchema = z.array(z.object({
     name: z.number(),
     imageUrl: z.number(),
     email: z.number(),
+    bio: z.number(),
     servers: z.number(),
     members: z.number(),
     channels: z.number(),
@@ -28,6 +30,7 @@ export const ProfileGroupByResultSchema = z.array(z.object({
     name: z.string().nullable(),
     imageUrl: z.string().nullable(),
     email: z.string().nullable(),
+    bio: z.string().nullable(),
     createdAt: z.date().nullable(),
     updatedAt: z.date().nullable()
   }).nullable().optional(),
@@ -37,6 +40,7 @@ export const ProfileGroupByResultSchema = z.array(z.object({
     name: z.string().nullable(),
     imageUrl: z.string().nullable(),
     email: z.string().nullable(),
+    bio: z.string().nullable(),
     createdAt: z.date().nullable(),
     updatedAt: z.date().nullable()
   }).nullable().optional()

@@ -1,6 +1,7 @@
 import * as z from 'zod';
 import type { Prisma } from '../../../../generated/prisma/client';
 import { StringFilterObjectSchema as StringFilterObjectSchema } from './StringFilter.schema';
+import { StringNullableFilterObjectSchema as StringNullableFilterObjectSchema } from './StringNullableFilter.schema';
 import { IntFilterObjectSchema as IntFilterObjectSchema } from './IntFilter.schema';
 import { DateTimeFilterObjectSchema as DateTimeFilterObjectSchema } from './DateTimeFilter.schema'
 
@@ -12,8 +13,9 @@ const serverscalarwhereinputSchema = z.object({
   name: z.union([z.lazy(() => StringFilterObjectSchema), z.string()]).optional(),
   imageUrl: z.union([z.lazy(() => StringFilterObjectSchema), z.string()]).optional(),
   inviteCode: z.union([z.lazy(() => StringFilterObjectSchema), z.string()]).optional(),
-  profileId: z.union([z.lazy(() => StringFilterObjectSchema), z.string()]).optional(),
+  description: z.union([z.lazy(() => StringNullableFilterObjectSchema), z.string()]).optional().nullable(),
   memberCount: z.union([z.lazy(() => IntFilterObjectSchema), z.number().int()]).optional(),
+  profileId: z.union([z.lazy(() => StringFilterObjectSchema), z.string()]).optional(),
   createdAt: z.union([z.lazy(() => DateTimeFilterObjectSchema), z.coerce.date()]).optional(),
   updatedAt: z.union([z.lazy(() => DateTimeFilterObjectSchema), z.coerce.date()]).optional()
 }).strict();

@@ -6,7 +6,9 @@ export const ConversationFindManyResultSchema = z.object({
   memberOne: z.unknown(),
   memberTwoId: z.string(),
   memberTwo: z.unknown(),
-  directMessages: z.array(z.unknown())
+  directMessages: z.array(z.unknown()),
+  createdAt: z.date(),
+  updatedAt: z.date()
 })),
   pagination: z.object({
   page: z.number().int().min(1),

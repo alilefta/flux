@@ -9,6 +9,8 @@ const makeSchema = () => z.object({
   id: SortOrderSchema.optional(),
   memberOneId: SortOrderSchema.optional(),
   memberTwoId: SortOrderSchema.optional(),
+  createdAt: SortOrderSchema.optional(),
+  updatedAt: SortOrderSchema.optional(),
   _count: z.lazy(() => ConversationCountOrderByAggregateInputObjectSchema).optional(),
   _max: z.lazy(() => ConversationMaxOrderByAggregateInputObjectSchema).optional(),
   _min: z.lazy(() => ConversationMinOrderByAggregateInputObjectSchema).optional()

@@ -8,6 +8,7 @@ const makeSchema = () => z.object({
   name: SortOrderSchema.optional(),
   imageUrl: SortOrderSchema.optional(),
   email: SortOrderSchema.optional(),
+  bio: SortOrderSchema.optional(),
   createdAt: SortOrderSchema.optional(),
   updatedAt: SortOrderSchema.optional()
 }).strict();

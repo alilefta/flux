@@ -8,6 +8,7 @@ const makeSchema = () => z.object({
   name: z.literal(true).optional(),
   imageUrl: z.literal(true).optional(),
   email: z.literal(true).optional(),
+  bio: z.literal(true).optional(),
   createdAt: z.literal(true).optional(),
   updatedAt: z.literal(true).optional()
 }).strict();

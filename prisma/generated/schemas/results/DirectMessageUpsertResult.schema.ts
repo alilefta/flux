@@ -8,6 +8,7 @@ export const DirectMessageUpsertResultSchema = z.object({
   conversationId: z.string(),
   conversation: z.unknown(),
   deleted: z.boolean(),
+  edited: z.boolean(),
   createdAt: z.date(),
   updatedAt: z.date()
 });

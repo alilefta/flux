@@ -8,9 +8,11 @@ const makeSchema = () => z.object({
   fileUrl: z.string().optional().nullable(),
   memberId: z.string(),
   deleted: z.boolean().optional(),
+  edited: z.boolean().optional(),
+  pinned: z.boolean().optional(),
+  replyToId: z.string().optional().nullable(),
   createdAt: z.coerce.date().optional(),
-  updatedAt: z.coerce.date().optional(),
-  edited: z.boolean().optional()
+  updatedAt: z.coerce.date().optional()
 }).strict();
 export const MessageCreateManyChannelInputObjectSchema: z.ZodType<Prisma.MessageCreateManyChannelInput> = makeSchema() as unknown as z.ZodType<Prisma.MessageCreateManyChannelInput>;
 export const MessageCreateManyChannelInputObjectZodSchema = makeSchema();

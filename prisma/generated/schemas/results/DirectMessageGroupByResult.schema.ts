@@ -6,6 +6,7 @@ export const DirectMessageGroupByResultSchema = z.array(z.object({
   memberId: z.string(),
   conversationId: z.string(),
   deleted: z.boolean(),
+  edited: z.boolean(),
   createdAt: z.date(),
   updatedAt: z.date(),
   _count: z.object({
@@ -17,6 +18,7 @@ export const DirectMessageGroupByResultSchema = z.array(z.object({
     conversationId: z.number(),
     conversation: z.number(),
     deleted: z.number(),
+    edited: z.number(),
     createdAt: z.number(),
     updatedAt: z.number()
   }).optional(),

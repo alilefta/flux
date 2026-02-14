@@ -9,6 +9,7 @@ const makeSchema = () => z.object({
   memberId: z.string(),
   conversationId: z.string(),
   deleted: z.boolean().optional(),
+  edited: z.boolean().optional(),
   createdAt: z.coerce.date().optional()
 }).strict();
 export const DirectMessageUncheckedCreateInputObjectSchema: z.ZodType<Prisma.DirectMessageUncheckedCreateInput> = makeSchema() as unknown as z.ZodType<Prisma.DirectMessageUncheckedCreateInput>;

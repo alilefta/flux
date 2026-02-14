@@ -9,9 +9,15 @@ export const MessageInputSchema = z.object({
     channelId: z.string(),
     channel: z.unknown(),
     deleted: z.boolean(),
+    edited: z.boolean(),
+    pinned: z.boolean(),
+    attachments: z.array(z.unknown()),
+    reactions: z.array(z.unknown()),
+    replyToId: z.string().optional().nullable(),
+    replyTo: z.unknown().optional().nullable(),
+    replies: z.array(z.unknown()),
     createdAt: z.date(),
-    updatedAt: z.date(),
-    edited: z.boolean()
+    updatedAt: z.date()
 }).strict();
 
 export type MessageInputType = z.infer<typeof MessageInputSchema>;

@@ -8,6 +8,7 @@ export const DirectMessageAggregateResultSchema = z.object({  _count: z.object({
     conversationId: z.number(),
     conversation: z.number(),
     deleted: z.number(),
+    edited: z.number(),
     createdAt: z.number(),
     updatedAt: z.number()
   }).optional(),

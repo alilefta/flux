@@ -16,6 +16,8 @@ export const ConversationFindManySelectSchema: z.ZodType<Prisma.ConversationSele
     memberTwoId: z.boolean().optional(),
     memberTwo: z.boolean().optional(),
     directMessages: z.boolean().optional(),
+    createdAt: z.boolean().optional(),
+    updatedAt: z.boolean().optional(),
     _count: z.boolean().optional()
   }).strict() as unknown as z.ZodType<Prisma.ConversationSelect>;
 
@@ -26,6 +28,8 @@ export const ConversationFindManySelectZodSchema = z.object({
     memberTwoId: z.boolean().optional(),
     memberTwo: z.boolean().optional(),
     directMessages: z.boolean().optional(),
+    createdAt: z.boolean().optional(),
+    updatedAt: z.boolean().optional(),
     _count: z.boolean().optional()
   }).strict();
 

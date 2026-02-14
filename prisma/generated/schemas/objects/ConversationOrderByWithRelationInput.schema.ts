@@ -8,6 +8,8 @@ const makeSchema = () => z.object({
   id: SortOrderSchema.optional(),
   memberOneId: SortOrderSchema.optional(),
   memberTwoId: SortOrderSchema.optional(),
+  createdAt: SortOrderSchema.optional(),
+  updatedAt: SortOrderSchema.optional(),
   memberOne: z.lazy(() => ProfileOrderByWithRelationInputObjectSchema).optional(),
   memberTwo: z.lazy(() => ProfileOrderByWithRelationInputObjectSchema).optional(),
   directMessages: z.lazy(() => DirectMessageOrderByRelationAggregateInputObjectSchema).optional()

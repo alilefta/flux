@@ -1,0 +1,10 @@
+import type { Prisma } from '../../../generated/prisma/client';
+import * as z from 'zod';
+import { ChannelCategoryOrderByWithRelationInputObjectSchema as ChannelCategoryOrderByWithRelationInputObjectSchema } from './objects/ChannelCategoryOrderByWithRelationInput.schema';
+import { ChannelCategoryWhereInputObjectSchema as ChannelCategoryWhereInputObjectSchema } from './objects/ChannelCategoryWhereInput.schema';
+import { ChannelCategoryWhereUniqueInputObjectSchema as ChannelCategoryWhereUniqueInputObjectSchema } from './objects/ChannelCategoryWhereUniqueInput.schema';
+import { ChannelCategoryCountAggregateInputObjectSchema as ChannelCategoryCountAggregateInputObjectSchema } from './objects/ChannelCategoryCountAggregateInput.schema';
+
+export const ChannelCategoryCountSchema: z.ZodType<Prisma.ChannelCategoryCountArgs> = z.object({ orderBy: z.union([ChannelCategoryOrderByWithRelationInputObjectSchema, ChannelCategoryOrderByWithRelationInputObjectSchema.array()]).optional(), where: ChannelCategoryWhereInputObjectSchema.optional(), cursor: ChannelCategoryWhereUniqueInputObjectSchema.optional(), take: z.number().optional(), skip: z.number().optional(), select: z.union([ z.literal(true), ChannelCategoryCountAggregateInputObjectSchema ]).optional() }).strict() as unknown as z.ZodType<Prisma.ChannelCategoryCountArgs>;
+
+export const ChannelCategoryCountZodSchema = z.object({ orderBy: z.union([ChannelCategoryOrderByWithRelationInputObjectSchema, ChannelCategoryOrderByWithRelationInputObjectSchema.array()]).optional(), where: ChannelCategoryWhereInputObjectSchema.optional(), cursor: ChannelCategoryWhereUniqueInputObjectSchema.optional(), take: z.number().optional(), skip: z.number().optional(), select: z.union([ z.literal(true), ChannelCategoryCountAggregateInputObjectSchema ]).optional() }).strict();

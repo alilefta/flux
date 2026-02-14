@@ -9,9 +9,11 @@ const makeSchema = () => z.object({
   memberId: z.string(),
   channelId: z.string(),
   deleted: z.boolean().optional(),
+  edited: z.boolean().optional(),
+  pinned: z.boolean().optional(),
+  replyToId: z.string().optional().nullable(),
   createdAt: z.coerce.date().optional(),
-  updatedAt: z.coerce.date().optional(),
-  edited: z.boolean().optional()
+  updatedAt: z.coerce.date().optional()
 }).strict();
 export const MessageCreateManyInputObjectSchema: z.ZodType<Prisma.MessageCreateManyInput> = makeSchema() as unknown as z.ZodType<Prisma.MessageCreateManyInput>;
 export const MessageCreateManyInputObjectZodSchema = makeSchema();
