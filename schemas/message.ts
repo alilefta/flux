@@ -6,11 +6,10 @@ import { ProfileBaseSchema } from "./profile";
 import { MemberBaseSchema } from "./member";
 
 // ============================= BASE SCHEMAS ======================================
-
 export const MessageBaseSchema = MessageModelSchema.omit({
 	member: true,
 	channel: true,
-	attachments: true, // ✅ Omit relations
+	attachments: true,
 	reactions: true,
 	replyTo: true,
 	replies: true,
@@ -18,9 +17,9 @@ export const MessageBaseSchema = MessageModelSchema.omit({
 
 export type MessageBase = z.infer<typeof MessageBaseSchema>;
 
-// ✅ File Attachment Schema
+//  File Attachment Schema
 export const FileAttachmentSchema = FileAttachmentModelSchema.omit({
-	message: true, // Omit relation
+	message: true,
 });
 
 export type FileAttachment = z.infer<typeof FileAttachmentSchema>;
@@ -40,7 +39,7 @@ export const ChannelMessageDTO = MessageBaseSchema.extend({
 			updatedAt: true,
 		}),
 	}),
-	attachments: z.array(FileAttachmentSchema), // ✅ Include attachments
+	attachments: z.array(FileAttachmentSchema),
 });
 
 export type ChannelMessage = z.infer<typeof ChannelMessageDTO>;
@@ -57,18 +56,26 @@ export type MessagePreview = z.infer<typeof MessagePreviewDTO>;
 
 // ============================= INPUT SCHEMAS ======================================
 
-// ✅ Create Message Input
-export const CreateMessageInput = z
+export const FileUploadSchema = z.object({
+	url: z.url(),
+	name: z.string().min(1),
+	type: z.string().min(1),
+	size: z.number().positive().optional(),
+});
+
+export type FileUploadInput = z.infer<typeof FileUploadSchema>;
+
+export const CreateMessageSchema = z
 	.object({
-		content: z.string().max(2000).optional().default(""), // ✅ Optional if files present
-		fileUrls: z.array(z.url()).max(10).optional(), // ✅ Max 10 files
+		content: z.string().max(2000).optional().default(""),
+		files: z.array(FileUploadSchema).max(10).optional(), // ✅ Accept file objects
 		channelId: z.uuid(),
-		replyToId: z.uuid().optional(), // ✅ Reply threading
+		replyToId: z.uuid().optional(),
 	})
 	.refine(
 		(data) => {
 			const hasContent = data.content && data.content.trim().length > 0;
-			const hasFiles = data.fileUrls && data.fileUrls.length > 0;
+			const hasFiles = data.files && data.files.length > 0;
 			return hasContent || hasFiles;
 		},
 		{
@@ -76,7 +83,7 @@ export const CreateMessageInput = z
 		},
 	);
 
-export type CreateMessageInput = z.infer<typeof CreateMessageInput>;
+export type CreateMessageInput = z.infer<typeof CreateMessageSchema>;
 
 // Edit Message Input
 export const EditMessageSchema = z.object({

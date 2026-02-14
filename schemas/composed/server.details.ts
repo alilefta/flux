@@ -1,16 +1,10 @@
 import z from "zod";
-import { ProfileBaseSchema } from "@/schemas/profile";
-import { MemberBaseSchema } from "./member";
-import { ChannelBaseSchema } from "./channel";
-import { ServerModelSchema } from "@/prisma/generated/schemas";
-
-export const ServerBaseSchema = ServerModelSchema.omit({
-	profile: true,
-	members: true,
-	channels: true,
-});
-
-export type ServerBase = z.infer<typeof ServerBaseSchema>;
+import { ChannelBaseSchema } from "../channel";
+import { ServerBaseSchema } from "../server.base";
+import { MemberBaseSchema } from "../member";
+import { ProfileBaseSchema } from "../profile";
+import { ChannelCategoryBaseSchema } from "../category.base";
+import { AuditLogBaseSchema } from "../audit-log.base";
 
 export const ServerListItemDTO = ServerBaseSchema.pick({
 	id: true,
@@ -36,6 +30,25 @@ export const ServerDetailsDTO = ServerBaseSchema.extend(
 					profile: ProfileBaseSchema,
 				}).shape,
 			),
+		),
+	}).shape,
+);
+
+export const ServerCompleteDetailsDTO = ServerBaseSchema.extend(
+	z.object({
+		channels: z.array(ChannelBaseSchema),
+		members: z.array(
+			MemberBaseSchema.extend(
+				z.object({
+					profile: ProfileBaseSchema,
+				}).shape,
+			),
+		),
+		categories: z.array(ChannelCategoryBaseSchema),
+		auditLog: z.array(
+			AuditLogBaseSchema.extend({
+				metadata: z.json(),
+			}),
 		),
 	}).shape,
 );
