@@ -1,7 +1,7 @@
 "use server";
 import { v4 as uuidv4 } from "uuid";
 import { actionClientWithProfile } from "@/lib/safe-action";
-import { CreateServerSchema, DeleteServerSchema, joinServerSchema, LeaveServerSchema, UpdateServerSchema } from "@/schemas/server";
+import { CreateServerSchema, DeleteServerSchema, joinServerSchema, LeaveServerSchema, UpdateServerSchema } from "@/schemas/composed/server.details";
 import { MemberRole } from "@/generated/prisma/enums";
 import { revalidatePath } from "next/cache";
 import prisma from "@/lib/prisma";

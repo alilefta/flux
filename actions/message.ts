@@ -1,55 +1,101 @@
 "use server";
 
-import { getChannelById } from "@/data/channel";
-import { getMemberByProfileId } from "@/data/member";
 import { MessageWhereInput } from "@/generated/prisma/models";
 import { ERRORS } from "@/lib/errors";
 import { MessageEvent } from "@/lib/events";
 import prisma from "@/lib/prisma";
 import { pusherServer } from "@/lib/pusher";
 import { actionClientWithProfile } from "@/lib/safe-action";
-import { CreateMessageInput, DeleteMessageSchema, GetMessageInputSchema, UpdateMessageSchema } from "@/schemas/message";
+import { CreateMessageSchema, DeleteMessageSchema, EditMessageSchema, GetMessageInputSchema } from "@/schemas/message";
+
+// ============================= SEND MESSAGE ======================================
 
 export const sendMessageAction = actionClientWithProfile
 	.metadata({ actionName: "send-message-action" })
-	.inputSchema(CreateMessageInput)
+	.inputSchema(CreateMessageSchema)
 	.action(async ({ ctx, parsedInput }) => {
-		const { channelId, content, fileUrl } = parsedInput;
+		const { channelId, content, files, replyToId } = parsedInput;
 
 		// Get member
-		const member = await getMemberByProfileId(ctx.profile.id);
-		if (!member) throw ERRORS.NOT_MEMBER;
-
-		// Verify channel exists
-		const channel = await getChannelById(channelId);
-		if (!channel) throw ERRORS.CHANNEL_NOT_FOUND;
-
-		// Create message
-		const message = await prisma.message.create({
-			data: {
-				content,
-				channelId,
-				fileUrl,
-				memberId: member.id,
+		const member = await prisma.member.findFirst({
+			where: {
+				profileId: ctx.profile.id,
 			},
 			include: {
-				member: {
-					include: {
-						profile: true,
-					},
-				},
+				profile: true,
 			},
 		});
 
-		// TODO: Emit Socket.io event here
-		// io.to(`channel:${channelId}`).emit("message:new", message);
+		if (!member) throw ERRORS.NOT_MEMBER;
 
-		// ✅ Broadcast via Pusher
-		const channelName = `channel-${channelId}`;
-		await pusherServer.trigger(channelName, MessageEvent.NEW, message);
+		// Verify channel exists
+		const channel = await prisma.channel.findUnique({
+			where: { id: channelId },
+		});
 
-		return { success: true, data: { message } };
+		if (!channel) throw ERRORS.CHANNEL_NOT_FOUND;
+
+		// ✅ Check if channel is locked (ANNOUNCEMENT type)
+		if (channel.isLocked && member.role !== "ADMIN") {
+			throw new Error("This channel is read-only");
+		}
+
+		try {
+			// ✅ Create message with attachments in transaction
+			const message = await prisma.$transaction(async (tx) => {
+				// 1. Create message
+				const newMessage = await tx.message.create({
+					data: {
+						content: content || "",
+						channelId,
+						memberId: member.id,
+						replyToId, // ✅ Thread support
+					},
+				});
+
+				// 2. ✅ Create attachments with FULL metadata
+				if (files && files.length > 0) {
+					await tx.fileAttachment.createMany({
+						data: files.map((file) => ({
+							url: file.url,
+							name: file.name,
+							type: file.type,
+							size: file.size || null, // ✅ Store actual size
+							messageId: newMessage.id,
+						})),
+					});
+				}
+
+				// 3. Fetch complete message with relations
+				return await tx.message.findUnique({
+					where: { id: newMessage.id },
+					include: {
+						member: {
+							include: {
+								profile: true,
+							},
+						},
+						attachments: true, // ✅ Include attachments
+					},
+				});
+			});
+
+			if (!message) {
+				throw new Error("Failed to create message");
+			}
+
+			// ✅ Broadcast via Pusher
+			const channelName = `channel-${channelId}`;
+			await pusherServer.trigger(channelName, MessageEvent.NEW, message);
+
+			return { success: true, data: { message } };
+		} catch (e) {
+			console.error("[Send-message-action] Error", e);
+			throw ERRORS.INTERNAL_SERVER_ERROR;
+		}
 	});
+
+// ============================= GET MESSAGES ======================================
 
 export const getMessagesAction = actionClientWithProfile
 	.metadata({ actionName: "get-messages-action" })
@@ -70,13 +116,12 @@ export const getMessagesAction = actionClientWithProfile
 		if (!member) {
 			throw ERRORS.NOT_MEMBER;
 		}
-		// ✅ Build where clause
 		const whereClause: MessageWhereInput = {
 			channelId,
 			deleted: false,
 			...(cursor && {
 				createdAt: {
-					lt: cursor, // Messages BEFORE this timestamp
+					lt: cursor,
 				},
 			}),
 		};
@@ -90,6 +135,7 @@ export const getMessagesAction = actionClientWithProfile
 						profile: true,
 					},
 				},
+				attachments: true,
 			},
 			orderBy: {
 				createdAt: "desc",
@@ -111,9 +157,11 @@ export const getMessagesAction = actionClientWithProfile
 		};
 	});
 
+// ============================= EDIT MESSAGE ======================================
+
 export const editMessageAction = actionClientWithProfile
 	.metadata({ actionName: "edit-message-action" })
-	.inputSchema(UpdateMessageSchema)
+	.inputSchema(EditMessageSchema)
 	.action(async ({ ctx, parsedInput }) => {
 		const { messageId, content } = parsedInput;
 
@@ -129,13 +177,12 @@ export const editMessageAction = actionClientWithProfile
 			},
 		});
 
-		if (!message) {
-			throw new Error("Message not found");
-		}
+		if (!message) throw ERRORS.NOT_FOUND;
 
 		// Check if user owns this message
+		// Check ownership
 		if (message.member.profileId !== ctx.profile.id) {
-			throw new Error("You can only edit your own messages");
+			throw ERRORS.UNAUTHORIZED;
 		}
 
 		// Check if message is deleted
@@ -143,33 +190,41 @@ export const editMessageAction = actionClientWithProfile
 			throw new Error("Cannot edit deleted message");
 		}
 
-		// Update message
-		const updatedMessage = await prisma.message.update({
-			where: { id: messageId },
-			data: {
-				content,
-				edited: true, // ✅ Set edited flag
-			},
-			include: {
-				member: {
-					include: {
-						profile: true,
-					},
+		try {
+			// Update message
+			const updatedMessage = await prisma.message.update({
+				where: { id: messageId },
+				data: {
+					content,
+					edited: true,
 				},
-			},
-		});
+				include: {
+					member: {
+						include: {
+							profile: true,
+						},
+					},
+					attachments: true,
+				},
+			});
 
-		// TODO: Emit Socket.io event
-		// io.to(`channel:${message.channelId}`).emit("message:update", updatedMessage);
-		// ✅ Broadcast update
-		const channelName = `channel-${updatedMessage.channelId}`;
-		await pusherServer.trigger(channelName, MessageEvent.UPDATE, updatedMessage);
+			// TODO: Emit Socket.io event
+			// io.to(`channel:${message.channelId}`).emit("message:update", updatedMessage);
+			// ✅ Broadcast update
+			const channelName = `channel-${updatedMessage.channelId}`;
+			await pusherServer.trigger(channelName, MessageEvent.UPDATE, updatedMessage);
 
-		return {
-			success: true,
-			data: { message: updatedMessage },
-		};
+			return {
+				success: true,
+				data: { message: updatedMessage },
+			};
+		} catch (e) {
+			console.error("[Edit-Message-Action] Error", e);
+			throw ERRORS.INTERNAL_SERVER_ERROR;
+		}
 	});
+
+// ============================= DELETE MESSAGE ======================================
 
 export const markMessageAsDeletedAction = actionClientWithProfile
 	.metadata({ actionName: "mark-message-as-deleted-action" })
@@ -189,16 +244,21 @@ export const markMessageAsDeletedAction = actionClientWithProfile
 			},
 		});
 
-		if (!message) {
-			throw new Error("Message not found");
-		}
+		if (!message) throw ERRORS.NOT_FOUND;
+
+		const member = await prisma.member.findFirst({
+			where: {
+				profileId: ctx.profile.id,
+				serverId: message.member.serverId,
+			},
+		});
 
 		// Only owner or ADMIN can delete
 		const isOwner = message.member.profileId === ctx.profile.id;
-		const isAdmin = message.member.role === "ADMIN";
+		const isAdmin = member?.role === "ADMIN";
 
 		if (!isOwner && !isAdmin) {
-			throw new Error("Permission denied");
+			throw ERRORS.UNAUTHORIZED;
 		}
 
 		// Check if user owns this message
@@ -206,28 +266,33 @@ export const markMessageAsDeletedAction = actionClientWithProfile
 			throw new Error("You can only delete your own messages");
 		}
 
-		// Update message
-		const markedAsDeletedMessage = await prisma.message.update({
-			where: { id: messageId },
-			data: {
-				deleted: true,
-			},
-			include: {
-				member: {
-					include: {
-						profile: true,
+		try {
+			// Update message
+			const markedAsDeletedMessage = await prisma.message.update({
+				where: { id: messageId },
+				data: {
+					deleted: true,
+				},
+				include: {
+					member: {
+						include: {
+							profile: true,
+						},
 					},
 				},
-			},
-		});
+			});
 
-		// TODO: Emit Socket.io event
-		// io.to(`channel:${message.channelId}`).emit("message:update", updatedMessage);
-		const channelName = `channel-${markedAsDeletedMessage.channelId}`;
-		await pusherServer.trigger(channelName, MessageEvent.DELETE, markedAsDeletedMessage);
+			// TODO: Emit Socket.io event
+			// io.to(`channel:${message.channelId}`).emit("message:update", updatedMessage);
+			const channelName = `channel-${markedAsDeletedMessage.channelId}`;
+			await pusherServer.trigger(channelName, MessageEvent.DELETE, markedAsDeletedMessage);
 
-		return {
-			success: true,
-			data: { message: markedAsDeletedMessage },
-		};
+			return {
+				success: true,
+				data: { message: markedAsDeletedMessage },
+			};
+		} catch (e) {
+			console.error("[Delete-Message-Action] Error", e);
+			throw ERRORS.INTERNAL_SERVER_ERROR;
+		}
 	});

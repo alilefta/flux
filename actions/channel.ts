@@ -5,7 +5,7 @@ import { MemberRole } from "@/generated/prisma/enums";
 import { actionClientWithProfile } from "@/lib/safe-action";
 import prisma from "@/lib/prisma";
 import { revalidatePath } from "next/cache";
-import { CreateChannelInput, DeleteChannelSchema, UpdateChannelInput } from "@/schemas/channel"; // Ensure this schema exists
+import { CreateChannelInput, DeleteChannelSchema, UpdateChannelInput } from "@/schemas/composed/channel.details"; // Ensure this schema exists
 import { ERRORS } from "@/lib/errors";
 
 // 1. CREATE CHANNEL
