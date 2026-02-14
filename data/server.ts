@@ -1,5 +1,5 @@
 import prisma from "@/lib/prisma";
-import { ServerDetails } from "@/schemas/server";
+import { ServerDetails } from "@/schemas/composed/server.details";
 
 export async function getServerById(serverId: string) {
 	const server = await prisma.server.findUnique({

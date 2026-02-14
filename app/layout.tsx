@@ -7,7 +7,6 @@ import { NextSSRPlugin } from "@uploadthing/react/next-ssr-plugin";
 import { extractRouterConfig } from "uploadthing/server";
 import { fluxUploadRouter } from "./api/uploadthing/core";
 import { dark } from "@clerk/themes";
-import { ModalProvider } from "@/providers/modal-provider";
 const inter = Inter({
 	variable: "--font-inter",
 	subsets: ["latin"],
@@ -47,9 +46,8 @@ export default function RootLayout({
 						 */
 						routerConfig={extractRouterConfig(fluxUploadRouter)}
 					/>
-					<ModalProvider />
-					<Toaster theme="dark" position="bottom-right" />
 					{children}
+					<Toaster theme="dark" position="bottom-right" />
 				</body>
 			</html>
 		</ClerkProvider>

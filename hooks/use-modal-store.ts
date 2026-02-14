@@ -1,6 +1,8 @@
-import { Server, Channel, ChannelType } from "@/generated/prisma/client";
+import { ChannelType } from "@/generated/prisma/enums";
+import { ChannelBase } from "@/schemas/channel";
 import { MemberProfile } from "@/schemas/member";
-import { ProfileBase, PublicProfile } from "@/schemas/profile";
+import { PublicProfile } from "@/schemas/profile";
+import { ServerBase } from "@/schemas/server.base";
 import { create } from "zustand";
 
 export type ModalType =
@@ -19,8 +21,8 @@ export type ModalType =
 	| "userSettings";
 
 interface ModalData {
-	server?: Server;
-	channel?: Channel;
+	server?: ServerBase;
+	channel?: ChannelBase;
 	channelType?: ChannelType;
 	apiUrl?: string;
 	query?: Record<string, unknown>;

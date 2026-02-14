@@ -58,10 +58,10 @@ export const fluxUploadRouter = {
 		.onUploadComplete(async (data) => uploadComplete({ data, fileRouteName: "Profile Picture" })),
 
 	messageFile: f({
-		image: { maxFileSize: "16MB", maxFileCount: 5 },
-		pdf: { maxFileSize: "16MB", maxFileCount: 5 },
-		video: { maxFileSize: "64MB", maxFileCount: 2 },
-		text: { maxFileSize: "64KB", maxFileCount: 5 },
+		image: { maxFileSize: "8MB", maxFileCount: 5 },
+		pdf: { maxFileSize: "8MB", maxFileCount: 5 },
+		text: { maxFileSize: "64KB", maxFileCount: 5 }, // Keep text files small
+		video: { maxFileSize: "32MB", maxFileCount: 2 },
 	})
 		.middleware(({ req }) => auth(req))
 		.onUploadComplete((data) => uploadComplete({ data, fileRouteName: "Message File Attachement" })),

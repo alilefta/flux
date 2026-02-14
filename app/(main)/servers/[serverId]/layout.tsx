@@ -4,6 +4,7 @@ import { getServersByProfileId, getServerWithDetails } from "@/data/server";
 import { notFound, redirect } from "next/navigation";
 import { getCurrentProfile } from "@/data/profile";
 import { QueryProvider } from "@/providers/query-provider";
+import { ModalProvider } from "@/providers/modal-provider";
 interface ServerLayoutProps {
 	children: React.ReactNode;
 	params: Promise<{ serverId: string }>;
@@ -56,6 +57,8 @@ export default async function ServerLayout({ children, params }: ServerLayoutPro
 			{/* Zone C: Page Content */}
 			<QueryProvider>
 				<main className="flex-1 h-full min-w-0 overflow-hidden">{children}</main>
+
+				<ModalProvider />
 			</QueryProvider>
 		</div>
 	);
