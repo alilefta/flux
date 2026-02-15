@@ -3,7 +3,7 @@
 import { MessageModelSchema, FileAttachmentModelSchema } from "@/prisma/generated/schemas";
 import z from "zod";
 import { ProfileBaseSchema } from "./profile";
-import { MemberBaseSchema } from "./member";
+import { MemberBaseSchema, MemberWithProfileSchema } from "./member";
 
 // ============================= BASE SCHEMAS ======================================
 export const MessageBaseSchema = MessageModelSchema.omit({
@@ -26,7 +26,34 @@ export type FileAttachment = z.infer<typeof FileAttachmentSchema>;
 
 // ============================= DTOs ======================================
 
-// ✅ Channel Message DTO (with full relations)
+export const MessageReactionSchema = z.object({
+	id: z.uuid(),
+	emoji: z.string().min(1),
+	messageId: z.uuid(),
+	profileId: z.uuid(),
+	createdAt: z.date(),
+});
+
+export type MessageReaction = z.infer<typeof MessageReactionSchema>;
+
+export const ReplyMessageDTO = MessageBaseSchema.extend({
+	member: MemberBaseSchema.extend({
+		profile: ProfileBaseSchema.pick({
+			id: true,
+			name: true,
+			imageUrl: true,
+			clerkId: true,
+			email: true,
+			createdAt: true,
+			updatedAt: true,
+		}),
+	}),
+	attachments: z.array(FileAttachmentSchema).optional(),
+});
+
+export type ReplyMessage = z.infer<typeof ReplyMessageDTO>;
+
+//  Channel Message DTO (with full relations)
 export const ChannelMessageDTO = MessageBaseSchema.extend({
 	member: MemberBaseSchema.extend({
 		profile: ProfileBaseSchema.pick({
@@ -39,7 +66,9 @@ export const ChannelMessageDTO = MessageBaseSchema.extend({
 			updatedAt: true,
 		}),
 	}),
+	replyTo: ReplyMessageDTO.nullable().optional(),
 	attachments: z.array(FileAttachmentSchema),
+	reactions: z.array(MessageReactionSchema).optional(),
 });
 
 export type ChannelMessage = z.infer<typeof ChannelMessageDTO>;
@@ -70,7 +99,7 @@ export const CreateMessageSchema = z
 		content: z.string().max(2000).optional().default(""),
 		files: z.array(FileUploadSchema).max(10).optional(), // ✅ Accept file objects
 		channelId: z.uuid(),
-		replyToId: z.uuid().optional(),
+		replyToId: z.uuid().nullable().optional(),
 	})
 	.refine(
 		(data) => {
@@ -108,3 +137,18 @@ export const GetMessageInputSchema = z.object({
 });
 
 export type GetMessageInput = z.infer<typeof GetMessageInputSchema>;
+
+// ✅ Reaction Input Schemas
+export const AddReactionSchema = z.object({
+	messageId: z.uuid(),
+	emoji: z.string().min(1).max(10),
+});
+
+export type AddReactionInput = z.infer<typeof AddReactionSchema>;
+
+export const RemoveReactionSchema = z.object({
+	messageId: z.uuid(),
+	emoji: z.string().min(1).max(10),
+});
+
+export type RemoveReactionInput = z.infer<typeof RemoveReactionSchema>;

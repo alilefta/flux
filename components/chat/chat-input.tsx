@@ -2,15 +2,17 @@
 
 import { sendMessageAction } from "@/actions/message";
 import { InfiniteData, useMutation, useQueryClient } from "@tanstack/react-query";
-import { Plus, Send, Loader2 } from "lucide-react";
+import { Plus, Send, Loader2, X } from "lucide-react";
 import { useAction } from "next-safe-action/hooks";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { toast } from "sonner";
 import TextareaAutosize from "react-textarea-autosize";
 import { ChannelMessage } from "@/schemas/message";
 import { MemberProfile } from "@/schemas/member";
 import { EmojiPopover } from "./emoji-popover";
 import { useModal } from "@/hooks/use-modal-store";
+import { useChatStore } from "@/hooks/use-chat-store";
+import { cn } from "@/lib/utils";
 
 interface ChatInputProps {
 	placeholder?: string;
@@ -23,6 +25,7 @@ type QueryDataShape = InfiniteData<ChannelMessage[], (Date | undefined)[]>;
 
 export const ChatInput = ({ placeholder, channelId, name, member }: ChatInputProps) => {
 	const { onOpen } = useModal();
+	const { replyingTo, setReplyingTo } = useChatStore();
 	const [message, setMessage] = useState("");
 	const queryClient = useQueryClient();
 
@@ -45,6 +48,7 @@ export const ChatInput = ({ placeholder, channelId, name, member }: ChatInputPro
 			const result = await sendMessage({
 				content,
 				channelId,
+				replyToId: replyingTo?.id,
 			});
 
 			if (result?.serverError) {
@@ -71,11 +75,13 @@ export const ChatInput = ({ placeholder, channelId, name, member }: ChatInputPro
 				deleted: false,
 				edited: false,
 				pinned: false,
-				replyToId: null,
-				fileUrl: null, // Deprecated
-				attachments: [], // ✅ Empty array for text-only messages
+				replyToId: replyingTo?.id ?? null,
+				fileUrl: null,
+				attachments: [],
+				reactions: [],
 				member,
 				memberId: member.id,
+				replyTo: replyingTo ?? null,
 			};
 
 			// Add optimistic message
@@ -95,7 +101,7 @@ export const ChatInput = ({ placeholder, channelId, name, member }: ChatInputPro
 		onSuccess: () => {
 			// Clear input
 			setMessage("");
-
+			setReplyingTo(null);
 			// ✅ That's it! Pusher will handle replacing optimistic message
 		},
 		onError: (error, variables, context) => {
@@ -118,14 +124,49 @@ export const ChatInput = ({ placeholder, channelId, name, member }: ChatInputPro
 			e.preventDefault();
 			handleSend();
 		}
+
+		if (e.key === "Escape" && replyingTo) {
+			setReplyingTo(null);
+			return;
+		}
+
 		if (openEmojiPicker) {
 			setOpenEmojiPicker(false);
 		}
 	};
 
+	// Auto-focus input when reply mode is activated
+	useEffect(() => {
+		if (replyingTo) {
+			// Simple way to focus the textarea if using react-textarea-autosize
+			const textarea = document.querySelector("textarea");
+			textarea?.focus();
+		}
+	}, [replyingTo]);
+
 	return (
 		<div className="px-4 pb-4">
-			<div className=" rounded-xl p-1 flex items-end gap-2 border border-white/10 bg-black/40 focus-within:border-primary/50 focus-within:ring-1 focus-within:ring-primary/50 transition-all">
+			{/* ✅ REPLY BANNER (Discord Style) */}
+			{replyingTo && (
+				<div className="flex items-center justify-between bg-[#1e1e22] px-4 py-2 rounded-t-xl border-x border-t border-white/10 -mb-px z-0 animate-in slide-in-from-bottom-2 fade-in">
+					<div className="flex items-center gap-2 text-sm text-zinc-400 overflow-hidden">
+						<span className="font-semibold text-zinc-300 whitespace-nowrap">Replying to @{replyingTo.member.profile.name}</span>
+						{/* Truncated preview of what we are replying to */}
+						<span className="truncate opacity-60 italic max-w-50 md:max-w-md">&quot;{replyingTo.content.length > 0 ? replyingTo.content : "attachements"}&quot;</span>
+					</div>
+
+					<button title="Discard replay" onClick={() => setReplyingTo(null)} className="text-zinc-500 hover:text-zinc-300 transition-colors">
+						<X className="w-4 h-4" />
+					</button>
+				</div>
+			)}
+			<div
+				className={cn(
+					"rounded-xl p-1 flex items-end gap-2 border border-white/10 bg-black/40 transition-all relative z-10",
+					// If replying, remove top rounding to merge with banner
+					replyingTo ? "rounded-t-none border-t-white/10 bg-[#1e1e22]" : "focus-within:border-primary/50",
+				)}
+			>
 				<button
 					disabled={mutation.isPending}
 					onClick={() =>

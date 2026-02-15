@@ -76,6 +76,15 @@ export const sendMessageAction = actionClientWithProfile
 							},
 						},
 						attachments: true, // ✅ Include attachments
+
+						replyTo: {
+							// ✅ Return the parent for optimistic UI / socket
+							include: {
+								member: {
+									include: { profile: true },
+								},
+							},
+						},
 					},
 				});
 			});
@@ -136,6 +145,16 @@ export const getMessagesAction = actionClientWithProfile
 					},
 				},
 				attachments: true,
+				reactions: true,
+
+				replyTo: {
+					include: {
+						member: {
+							include: { profile: true },
+						},
+						attachments: true,
+					},
+				},
 			},
 			orderBy: {
 				createdAt: "desc",

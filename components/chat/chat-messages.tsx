@@ -11,7 +11,7 @@ import { InferSafeActionFnResult } from "next-safe-action";
 import { toast } from "sonner";
 import { Fragment, useEffect, useLayoutEffect, useRef, useState } from "react";
 import { pusherClient } from "@/lib/pusher-client";
-import { ChannelMessage } from "@/schemas/message";
+import { ChannelMessage, MessageReaction } from "@/schemas/message";
 import { MessageEvent } from "@/lib/events";
 import { ChatDateSeparator } from "./chat-date-seperator";
 
@@ -31,7 +31,7 @@ interface ChatMessagesProps {
 }
 
 type GetMessagesResults = InferSafeActionFnResult<typeof getMessagesAction>;
-type QueryDataShape = InfiniteData<ChannelMessage[], (Date | undefined)[]>;
+type QueryDataShape = InfiniteData<ChannelMessage[], Date | undefined>;
 
 export const ChatMessages = ({ name, member, channelId, serverId }: ChatMessagesProps) => {
 	const chatRef = useRef<HTMLDivElement>(null);
@@ -41,7 +41,7 @@ export const ChatMessages = ({ name, member, channelId, serverId }: ChatMessages
 	const [newMessageCount, setNewMessageCount] = useState(0);
 
 	const isAtBottomRef = useRef(true);
-	const [isAtBottom, setIsAtBottom] = useState(true);
+	// const [isAtBottom, setIsAtBottom] = useState(true);
 
 	const hasScrolledRef = useRef(false);
 
@@ -140,13 +140,16 @@ export const ChatMessages = ({ name, member, channelId, serverId }: ChatMessages
 
 			console.log("New message arrived!!=======================", newMessage);
 
-			queryClient.setQueryData(["messages", channelId], (oldData: QueryDataShape): QueryDataShape => {
-				if (!oldData || !oldData.pages) return oldData;
+			const data = queryClient.getQueryData(["messages", channelId]);
+
+			console.log("NEW Message before set query data ============", data);
+
+			queryClient.setQueryData<QueryDataShape>(["messages", channelId], (oldData: QueryDataShape | undefined) => {
+				if (!oldData?.pages) return oldData;
 
 				const newPages = [...oldData.pages];
 
-				const optimisticIndex = newPages[0].findIndex((m) => m.id.startsWith("optimistic-") && m.memberId === newMessage.memberId);
-
+				const optimisticIndex = newPages[0].findIndex((m) => m.id.startsWith("optimistic-") && m.content === newMessage.content && m.memberId === newMessage.memberId);
 				if (optimisticIndex !== -1) {
 					// Own message - swap optimistic
 					newPages[0][optimisticIndex] = newMessage;
@@ -176,12 +179,13 @@ export const ChatMessages = ({ name, member, channelId, serverId }: ChatMessages
 					}
 				}
 
+				console.log(newPages);
 				return { ...oldData, pages: newPages };
 			});
 		});
 		channel.bind(MessageEvent.UPDATE, (updatedMessage: ChannelMessage) => {
-			queryClient.setQueryData(["messages", channelId], (oldData: QueryDataShape): QueryDataShape => {
-				if (!oldData.pages) return oldData;
+			queryClient.setQueryData<QueryDataShape>(["messages", channelId], (oldData: QueryDataShape | undefined) => {
+				if (!oldData?.pages) return oldData;
 
 				const newPages = oldData.pages.map((page: ChannelMessage[]) => page.map((msg) => (msg.id === updatedMessage.id ? updatedMessage : msg)));
 
@@ -194,7 +198,7 @@ export const ChatMessages = ({ name, member, channelId, serverId }: ChatMessages
 
 		// Listen for message deletions
 		channel.bind(MessageEvent.DELETE, (deletedMessage: ChannelMessage) => {
-			queryClient.setQueryData(["messages", channelId], (oldData: QueryDataShape) => {
+			queryClient.setQueryData<QueryDataShape>(["messages", channelId], (oldData: QueryDataShape | undefined) => {
 				if (!oldData?.pages) return oldData;
 
 				const newPages = oldData.pages.map((page: ChannelMessage[]) => page.map((msg) => (msg.id === deletedMessage.id ? deletedMessage : msg)));
@@ -203,6 +207,48 @@ export const ChatMessages = ({ name, member, channelId, serverId }: ChatMessages
 					...oldData,
 					pages: newPages,
 				};
+			});
+		});
+
+		// ✅ Reaction Add Handler
+		channel.bind(MessageEvent.REACTION_ADD, (reaction: MessageReaction) => {
+			queryClient.setQueryData<QueryDataShape>(["messages", channelId], (oldData: QueryDataShape | undefined) => {
+				if (!oldData?.pages) return oldData;
+
+				const newPages = oldData.pages.map((page) =>
+					page.map((msg) => {
+						if (msg.id === reaction.messageId) {
+							return {
+								...msg,
+								reactions: [...(msg.reactions || []), reaction],
+							};
+						}
+						return msg;
+					}),
+				);
+
+				return { ...oldData, pages: newPages };
+			});
+		});
+
+		// // ✅ Reaction Remove Handler
+		channel.bind(MessageEvent.REACTION_REMOVE, (data: { messageId: string; emoji: string; profileId: string }) => {
+			queryClient.setQueryData<QueryDataShape>(["messages", channelId], (oldData: QueryDataShape | undefined) => {
+				if (!oldData?.pages) return oldData;
+
+				const newPages = oldData.pages.map((page) =>
+					page.map((msg) => {
+						if (msg.id === data.messageId) {
+							return {
+								...msg,
+								reactions: (msg.reactions || []).filter((r) => !(r.emoji === data.emoji && r.profileId === data.profileId)),
+							};
+						}
+						return msg;
+					}),
+				);
+
+				return { ...oldData, pages: newPages };
 			});
 		});
 
@@ -224,7 +270,7 @@ export const ChatMessages = ({ name, member, channelId, serverId }: ChatMessages
 			const distanceFromBottom = scrollHeight - scrollTop - clientHeight;
 			const atBottom = distanceFromBottom < 100;
 
-			setIsAtBottom(atBottom);
+			// setIsAtBottom(atBottom);
 			isAtBottomRef.current = atBottom; // ✅ Update ref too!
 
 			if (atBottom) {
@@ -348,6 +394,8 @@ export const ChatMessages = ({ name, member, channelId, serverId }: ChatMessages
 								socketUrl=""
 								socketQuery={{}}
 								channelId={channelId}
+								reactions={message.reactions}
+								replyTo={message.replyTo}
 							/>
 						</Fragment>
 					);
