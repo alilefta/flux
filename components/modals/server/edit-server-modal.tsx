@@ -29,7 +29,10 @@ type FormData = z.infer<typeof formSchema>;
 type UpdateServerActionResult = InferSafeActionFnResult<typeof updateServerAction>;
 
 export const EditServerModal = () => {
-	const { isOpen, onClose, type, data } = useModal();
+	const isOpen = useModal((state) => state.isOpen);
+	const onClose = useModal((state) => state.onClose);
+	const type = useModal((state) => state.type);
+	const data = useModal((state) => state.data);
 	const router = useRouter();
 
 	const isModalOpen = isOpen && type === "editServer";

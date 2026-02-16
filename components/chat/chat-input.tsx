@@ -24,8 +24,10 @@ interface ChatInputProps {
 type QueryDataShape = InfiniteData<ChannelMessage[], (Date | undefined)[]>;
 
 export const ChatInput = ({ placeholder, channelId, name, member }: ChatInputProps) => {
-	const { onOpen } = useModal();
-	const { replyingTo, setReplyingTo } = useChatStore();
+	const onOpen = useModal((state) => state.onOpen);
+	const replyingTo = useChatStore((state) => state.replyingTo);
+	const setReplyingTo = useChatStore((state) => state.setReplyingTo);
+
 	const [message, setMessage] = useState("");
 	const queryClient = useQueryClient();
 
@@ -44,11 +46,12 @@ export const ChatInput = ({ placeholder, channelId, name, member }: ChatInputPro
 	});
 
 	const mutation = useMutation({
-		mutationFn: async (content: string) => {
+		mutationFn: async ({ content, optimisticId }: { content: string; optimisticId: string }) => {
 			const result = await sendMessage({
 				content,
 				channelId,
 				replyToId: replyingTo?.id,
+				optimisticClientId: optimisticId,
 			});
 
 			if (result?.serverError) {
@@ -58,14 +61,14 @@ export const ChatInput = ({ placeholder, channelId, name, member }: ChatInputPro
 			return result?.data;
 		},
 		// optimistic UI update
-		onMutate: async (content) => {
+		onMutate: async ({ content, optimisticId }, context) => {
 			// Cancel outgoing queries
-			await queryClient.cancelQueries({ queryKey: ["messages", channelId] });
+			await context.client.cancelQueries({ queryKey: ["messages", channelId] });
 
 			// Snapshot previous state
 			const previousMessages = queryClient.getQueryData<QueryDataShape>(["messages", channelId]);
 
-			const optimisticId = `optimistic-${crypto.randomUUID()}`;
+			// const optimisticId = `optimistic-${crypto.randomUUID()}`;
 			const optimisticMessage: ChannelMessage = {
 				id: optimisticId,
 				channelId,
@@ -87,6 +90,17 @@ export const ChatInput = ({ placeholder, channelId, name, member }: ChatInputPro
 			// Add optimistic message
 			queryClient.setQueryData<QueryDataShape>(["messages", channelId], (oldData) => {
 				if (!oldData?.pages) return oldData;
+
+				// const firstPage = oldData.pages[0];
+
+				// const wholePage = firstPage.slice(1);
+
+				// const newPage = [optimisticMessage, ...wholePage];
+
+				// const updatedData = {
+				// 	...oldData,
+				// 	pages: [...[optimisticMessage, ...oldData.pages[0].slice(1)], ...oldData.pages.slice(1)],
+				// };
 
 				const newPages = [...oldData.pages];
 				newPages[0] = [optimisticMessage, ...newPages[0]];
@@ -116,7 +130,9 @@ export const ChatInput = ({ placeholder, channelId, name, member }: ChatInputPro
 
 	const handleSend = () => {
 		if (!message.trim()) return;
-		mutation.mutate(message);
+
+		const optimisticId = `optimistic-${crypto.randomUUID()}`;
+		mutation.mutate({ content: message, optimisticId });
 	};
 
 	const handleKeyDown = (e: React.KeyboardEvent) => {

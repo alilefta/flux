@@ -14,7 +14,9 @@ export const sendMessageAction = actionClientWithProfile
 	.metadata({ actionName: "send-message-action" })
 	.inputSchema(CreateMessageSchema)
 	.action(async ({ ctx, parsedInput }) => {
-		const { channelId, content, files, replyToId } = parsedInput;
+		const { channelId, content, files, replyToId, optimisticClientId } = parsedInput;
+
+		console.log("[Send-Message-Action] Recieved Optimistic ID:", optimisticClientId);
 
 		// Get member
 		const member = await prisma.member.findFirst({
@@ -95,7 +97,7 @@ export const sendMessageAction = actionClientWithProfile
 
 			// ✅ Broadcast via Pusher
 			const channelName = `channel-${channelId}`;
-			await pusherServer.trigger(channelName, MessageEvent.NEW, message);
+			await pusherServer.trigger(channelName, MessageEvent.NEW, { ...message, optimisticClientId });
 
 			return { success: true, data: { message } };
 		} catch (e) {

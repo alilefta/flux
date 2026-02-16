@@ -18,7 +18,10 @@ import { FluxFormSelect } from "../../custom-ui/inputs/flux-form-select";
 import { CreateChannelInput } from "@/schemas/composed/channel.details";
 
 export const CreateChannelModal = () => {
-	const { isOpen, onClose, type, data } = useModal();
+	const isOpen = useModal((state) => state.isOpen);
+	const onClose = useModal((state) => state.onClose);
+	const type = useModal((state) => state.type);
+	const data = useModal((state) => state.data);
 	const router = useRouter();
 	const params = useParams();
 

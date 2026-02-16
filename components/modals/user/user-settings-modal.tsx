@@ -28,7 +28,10 @@ const formSchema = z.object({
 type FormData = z.infer<typeof formSchema>;
 
 export const UserSettingsModal = () => {
-	const { isOpen, onClose, type, data } = useModal();
+	const isOpen = useModal((state) => state.isOpen);
+	const onClose = useModal((state) => state.onClose);
+	const type = useModal((state) => state.type);
+	const data = useModal((state) => state.data);
 	const isModalOpen = isOpen && type === "userSettings";
 
 	// We define tabs for future scalability

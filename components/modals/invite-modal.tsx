@@ -12,7 +12,10 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 
 export const InviteModal = () => {
-	const { onOpen, isOpen, onClose, type, data } = useModal();
+	const isOpen = useModal((state) => state.isOpen);
+	const onClose = useModal((state) => state.onClose);
+	const type = useModal((state) => state.type);
+	const data = useModal((state) => state.data);
 	const origin = useOrigin();
 
 	const isModalOpen = isOpen && type === "invite";

@@ -9,7 +9,7 @@ import { getMessagesAction } from "@/actions/message";
 import { useAction } from "next-safe-action/hooks";
 import { InferSafeActionFnResult } from "next-safe-action";
 import { toast } from "sonner";
-import { Fragment, useEffect, useLayoutEffect, useRef, useState } from "react";
+import { Fragment, useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 import { pusherClient } from "@/lib/pusher-client";
 import { ChannelMessage, MessageReaction } from "@/schemas/message";
 import { MessageEvent } from "@/lib/events";
@@ -86,6 +86,10 @@ export const ChatMessages = ({ name, member, channelId, serverId }: ChatMessages
 		},
 	});
 
+	const messages = useMemo(() => {
+		return data?.pages.flat().reverse() || [];
+	}, [data]);
+
 	// ✅ Intersection Observer for auto-load
 	useEffect(() => {
 		if (!topRef.current || !hasNextPage) return;
@@ -135,52 +139,120 @@ export const ChatMessages = ({ name, member, channelId, serverId }: ChatMessages
 		const channel = pusherClient.subscribe(channelName);
 
 		// Listen for new messages
-		channel.bind(MessageEvent.NEW, (newMessage: ChannelMessage) => {
+		channel.bind(MessageEvent.NEW, (newMessage: ChannelMessage & { optimisticClientId?: string }) => {
 			// Update query cache with new message
-
-			console.log("New message arrived!!=======================", newMessage);
-
-			const data = queryClient.getQueryData(["messages", channelId]);
-
-			console.log("NEW Message before set query data ============", data);
+			console.log("🔔 Pusher NEW:", {
+				messageId: newMessage.id,
+				optimisticId: newMessage.optimisticClientId,
+				content: newMessage.content.slice(0, 50),
+			});
 
 			queryClient.setQueryData<QueryDataShape>(["messages", channelId], (oldData: QueryDataShape | undefined) => {
-				if (!oldData?.pages) return oldData;
+				if (!oldData || !oldData.pages) return oldData;
 
-				const newPages = [...oldData.pages];
+				let replaced = false;
+				let pageIndex = -1;
+				let messageIndex = -1;
 
-				const optimisticIndex = newPages[0].findIndex((m) => m.id.startsWith("optimistic-") && m.content === newMessage.content && m.memberId === newMessage.memberId);
-				if (optimisticIndex !== -1) {
-					// Own message - swap optimistic
-					newPages[0][optimisticIndex] = newMessage;
+				// ✅ Step 1: Find the optimistic message
+				for (let i = 0; i < oldData.pages.length; i++) {
+					const page = oldData.pages[i];
 
-					// ✅ Use ref value (always current)
-					if (isAtBottomRef.current && bottomRef.current) {
-						setTimeout(() => {
-							bottomRef.current?.scrollIntoView({ behavior: "smooth" });
-						}, 100);
+					// Try to find by optimistic ID first
+					if (newMessage.optimisticClientId) {
+						messageIndex = page.findIndex((m) => m.id === newMessage.optimisticClientId);
+						if (messageIndex !== -1) {
+							pageIndex = i;
+							replaced = true;
+							console.log("✅ Found optimistic by ID:", newMessage.optimisticClientId);
+							break;
+						}
 					}
-				} else {
-					// Someone else's message
-					const exists = newPages[0].some((m) => m.id === newMessage.id);
-					if (!exists) {
-						newPages[0] = [newMessage, ...newPages[0]];
 
-						// ✅ Use ref value (always current)
-						if (!isAtBottomRef.current) {
-							console.log("User scrolled up - showing badge");
-							setNewMessageCount((prev) => prev + 1);
-						} else {
-							console.log("User at bottom - auto-scrolling");
-							setTimeout(() => {
-								bottomRef.current?.scrollIntoView({ behavior: "smooth" });
-							}, 100);
+					// Fallback: Find by memberId + timestamp
+					if (!replaced) {
+						messageIndex = page.findIndex(
+							(m) => m.id.startsWith("optimistic-") && m.memberId === newMessage.memberId && Math.abs(new Date(m.createdAt).getTime() - new Date(newMessage.createdAt).getTime()) < 5000,
+						);
+
+						if (messageIndex !== -1) {
+							pageIndex = i;
+							replaced = true;
+							console.log("✅ Found optimistic by fallback");
+							break;
 						}
 					}
 				}
 
-				console.log(newPages);
-				return { ...oldData, pages: newPages };
+				// ✅ Step 2: Apply update with structural sharing
+				if (replaced && pageIndex !== -1 && messageIndex !== -1) {
+					// Only create new reference for the affected page
+					const newPages = oldData.pages.map((page, i) => {
+						if (i === pageIndex) {
+							// Only create new reference for the affected message
+							const newPage = [...page];
+							newPage[messageIndex] = newMessage;
+							return newPage;
+						}
+						return page; // ✅ Reuse existing page reference
+					});
+
+					return {
+						...oldData,
+						pages: newPages,
+					};
+				}
+
+				// ✅ Step 3: Check if message already exists (prevent duplicates)
+				const messageExists = oldData.pages.some((page) => page.some((m) => m.id === newMessage.id));
+
+				if (messageExists) {
+					console.log("⚠️ Message already exists, skipping");
+					return oldData; // ✅ Return same reference = no re-render
+				}
+
+				// ✅ Step 4: New message from another user
+				console.log("📨 New message from other user");
+
+				const newPages = [...oldData.pages];
+				newPages[0] = [newMessage, ...newPages[0]]; // Only first page changes
+
+				return {
+					...oldData,
+					pages: newPages,
+				};
+				// const optimisticIndex = newPages[0].findIndex((m) => m.id.startsWith("optimistic-") && m.content === newMessage.content && m.memberId === newMessage.memberId);
+				// if (optimisticIndex !== -1) {
+				// 	// Own message - swap optimistic
+				// 	newPages[0][optimisticIndex] = newMessage;
+
+				// 	// ✅ Use ref value (always current)
+				// 	if (isAtBottomRef.current && bottomRef.current) {
+				// 		setTimeout(() => {
+				// 			bottomRef.current?.scrollIntoView({ behavior: "smooth" });
+				// 		}, 100);
+				// 	}
+				// } else {
+				// 	// Someone else's message
+				// 	const exists = newPages[0].some((m) => m.id === newMessage.id);
+				// 	if (!exists) {
+				// 		newPages[0] = [newMessage, ...newPages[0]];
+
+				// 		// ✅ Use ref value (always current)
+				// 		if (!isAtBottomRef.current) {
+				// 			console.log("User scrolled up - showing badge");
+				// 			setNewMessageCount((prev) => prev + 1);
+				// 		} else {
+				// 			console.log("User at bottom - auto-scrolling");
+				// 			setTimeout(() => {
+				// 				bottomRef.current?.scrollIntoView({ behavior: "smooth" });
+				// 			}, 100);
+				// 		}
+				// 	}
+				// }
+
+				// console.log(newPages);
+				// return { ...oldData, pages: newPages };
 			});
 		});
 		channel.bind(MessageEvent.UPDATE, (updatedMessage: ChannelMessage) => {
@@ -329,7 +401,7 @@ export const ChatMessages = ({ name, member, channelId, serverId }: ChatMessages
 		return <div className="flex-1 flex items-center justify-center text-zinc-500">Failed to load messages. Please refresh.</div>;
 	}
 
-	const messages = data?.pages.flat().reverse() || [];
+	console.log("Universal Data:", data);
 
 	// useEffect(() => {
 	// 	console.log(queryClient.getQueryData(["messages", channelId]));

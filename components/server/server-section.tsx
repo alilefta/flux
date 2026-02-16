@@ -15,7 +15,7 @@ interface ServerSectionProps {
 }
 
 export const ServerSection = ({ label, role, sectionType, channelType, server }: ServerSectionProps) => {
-	const { onOpen } = useModal();
+	const onOpen = useModal((state) => state.onOpen);
 
 	return (
 		<div className="flex items-center justify-between py-2 px-2 group">

@@ -47,7 +47,11 @@ const RoleBadge = ({ role }: { role: MemberRole }) => {
 
 export const MembersModal = () => {
 	const router = useRouter();
-	const { onOpen, isOpen, onClose, type, data } = useModal();
+	const isOpen = useModal((state) => state.isOpen);
+	const onOpen = useModal((state) => state.onOpen);
+	const onClose = useModal((state) => state.onClose);
+	const type = useModal((state) => state.type);
+	const data = useModal((state) => state.data);
 	const [loadingId, setLoadingId] = useState("");
 
 	const isModalOpen = isOpen && type === "members";

@@ -16,7 +16,7 @@ import { CreateServerModal } from "../modals/create-server-modal";
 type JoinServerActionResults = InferSafeActionFnResult<typeof joinServerAction>;
 
 export const SetupUI = () => {
-	const { onOpen } = useModal();
+	const onOpen = useModal((state) => state.onOpen);
 	const router = useRouter();
 	const [inviteCode, setInviteCode] = useState("");
 

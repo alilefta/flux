@@ -17,7 +17,9 @@ import { CreateServerInput, CreateServerSchema } from "@/schemas/composed/server
 import { handleSafeActionError } from "@/lib/safe-action-helpers";
 
 export const CreateServerModal = () => {
-	const { isOpen, onClose, type } = useModal();
+	const isOpen = useModal((state) => state.isOpen);
+	const onClose = useModal((state) => state.onClose);
+	const type = useModal((state) => state.type);
 	const router = useRouter();
 
 	const isModalOpen = isOpen && type === "createServer";

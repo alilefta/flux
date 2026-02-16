@@ -100,6 +100,7 @@ export const CreateMessageSchema = z
 		files: z.array(FileUploadSchema).max(10).optional(), // ✅ Accept file objects
 		channelId: z.uuid(),
 		replyToId: z.uuid().nullable().optional(),
+		optimisticClientId: z.string().optional(),
 	})
 	.refine(
 		(data) => {

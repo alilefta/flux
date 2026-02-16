@@ -21,7 +21,7 @@ interface ChatHeaderProps {
 }
 
 export const ChatHeader = ({ serverId, imageUrl, channel, member, type = "channel" }: ChatHeaderProps) => {
-	const { onOpen } = useModal();
+	const onOpen = useModal((state) => state.onOpen);
 	const { name, id: channelId } = channel;
 
 	const { role, profile } = member;

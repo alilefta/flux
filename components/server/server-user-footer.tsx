@@ -15,7 +15,7 @@ interface ServerUserFooterProps {
 
 export const ServerUserFooter = ({ profile }: ServerUserFooterProps) => {
 	const { user, isLoaded } = useUser(); // 1. Fetch real user
-	const { onOpen } = useModal();
+	const onOpen = useModal((state) => state.onOpen);
 	const [isMuted, setIsMuted] = useState(false);
 	const [isDeafened, setIsDeafened] = useState(false);
 

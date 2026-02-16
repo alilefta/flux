@@ -24,7 +24,7 @@ const iconMap = {
 };
 
 export const ServerChannel = ({ channel, server, isActive, role }: ServerChannelProps) => {
-	const { onOpen } = useModal();
+	const onOpen = useModal((state) => state.onOpen);
 	const router = useRouter();
 	const Icon = iconMap[channel.type];
 

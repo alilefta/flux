@@ -16,7 +16,10 @@ import { Button } from "@/components/ui/button";
 import { FluxInput } from "@/components/custom-ui/inputs/flux-input";
 
 export const EditChannelModal = () => {
-	const { isOpen, onClose, type, data } = useModal();
+	const isOpen = useModal((state) => state.isOpen);
+	const onClose = useModal((state) => state.onClose);
+	const type = useModal((state) => state.type);
+	const data = useModal((state) => state.data);
 	const router = useRouter();
 
 	const isModalOpen = isOpen && type === "editChannel";

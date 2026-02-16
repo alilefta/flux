@@ -21,7 +21,7 @@ const roleIconMap = {
 
 export const ServerMember = ({ member }: ServerMemberProps) => {
 	const icon = roleIconMap[member.role];
-	const { onOpen } = useModal();
+	const onOpen = useModal((state) => state.onOpen);
 
 	return (
 		<button className={cn("group px-2 py-2 rounded-md flex items-center gap-x-2 w-full hover:bg-white/5 transition-all mb-1")} onClick={() => onOpen("userProfile", { member })}>
