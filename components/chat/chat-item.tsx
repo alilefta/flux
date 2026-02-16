@@ -1,10 +1,10 @@
 // /components/chat/chat-item.tsx
 "use client";
 
-import { Edit, ShieldAlert, ShieldCheck, Trash, FileIcon, FileText, CornerUpLeft } from "lucide-react";
+import { ShieldAlert, ShieldCheck, Trash, FileIcon, FileText } from "lucide-react";
 import Image from "next/image";
 import { cn } from "@/lib/utils";
-import React, { useEffect, useState } from "react";
+import React, { useCallback, useEffect, useState } from "react";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { UserAvatar } from "../user/user-avatar";
 import { MemberProfile } from "@/schemas/member";
@@ -12,17 +12,15 @@ import { useMutation } from "@tanstack/react-query";
 import { useAction } from "next-safe-action/hooks";
 import { editMessageAction, markMessageAsDeletedAction } from "@/actions/message";
 import { toast } from "sonner";
-import TextareaAutoSize from "react-textarea-autosize";
-import { Button } from "../ui/button";
 import { useModal } from "@/hooks/use-modal-store";
-import { ActionTooltip } from "../custom-ui/tooltip/action-tooltip";
 import { ChannelMessage, FileAttachment, MessageReaction } from "@/schemas/message";
 import Link from "next/link";
 import { addReactionAction } from "@/actions/reaction";
-import { ReactionPicker } from "./reaction-picker";
 import { MessageReactions } from "./message-reactions";
 import { useChatStore } from "@/hooks/use-chat-store";
 import { ReplyToMessage } from "./reply-to-message";
+import { ChatItemActions } from "./chat-item-actions";
+import { ChatEditForm } from "./chat-edit-form";
 
 interface ChatItemProps {
 	id: string;
@@ -50,11 +48,9 @@ const roleIconMap = {
 export const ChatItem = React.memo(
 	function ChatItem({ id, content, member, timestamp, fileUrl, deleted, currentMember, isUpdated, attachments = [], reactions, replyTo }: ChatItemProps) {
 		const [isEditing, setIsEditing] = useState(false);
-		const [editedContent, setEditedContent] = useState(content);
+		// const [editedContent, setEditedContent] = useState(content);
 
 		const isOptimistic = id.startsWith("optimistic-");
-
-		console.log("Message:", { id: id, content: content, isOptimistic: isOptimistic });
 
 		const onOpen = useModal((state) => state.onOpen);
 		const setReplyingTo = useChatStore((state) => state.setReplyingTo);
@@ -65,8 +61,6 @@ export const ChatItem = React.memo(
 		const canEditMessage = !deleted && isOwner && !fileUrl;
 		const hasAttachments = attachments && attachments.length > 0;
 		const hasContent = content && content.trim().length > 0;
-
-		const [isReactionPickerOpen, setIsReactionPickerOpen] = useState(false);
 
 		const handleReply = () => {
 			const messageObject: ChannelMessage = {
@@ -122,21 +116,25 @@ export const ChatItem = React.memo(
 			},
 		});
 
-		const handleReactionClick = (emoji: string) => {
-			reactionMutation.mutate(emoji);
-		};
+		// ✅ STABILIZE HANDLER
+		const handleReactionClick = useCallback(
+			(emoji: string) => {
+				reactionMutation.mutate(emoji);
+			},
+			[reactionMutation],
+		);
 
 		// Escape to cancel editing
-		useEffect(() => {
-			const handleKeyDown = (e: KeyboardEvent) => {
-				if (e.key === "Escape" && isEditing) {
-					setIsEditing(false);
-					setEditedContent(content);
-				}
-			};
-			window.addEventListener("keydown", handleKeyDown);
-			return () => window.removeEventListener("keydown", handleKeyDown);
-		}, [isEditing, content]);
+		// useEffect(() => {
+		// 	const handleKeyDown = (e: KeyboardEvent) => {
+		// 		if (e.key === "Escape" && isEditing) {
+		// 			setIsEditing(false);
+		// 			setEditedContent(content);
+		// 		}
+		// 	};
+		// 	window.addEventListener("keydown", handleKeyDown);
+		// 	return () => window.removeEventListener("keydown", handleKeyDown);
+		// }, [isEditing, content]);
 
 		// Edit mutation
 		const editMutation = useMutation({
@@ -190,14 +188,15 @@ export const ChatItem = React.memo(
 			},
 		});
 
-		const handleSaveEditing = () => {
-			if (!editedContent.trim() || editedContent === content) {
-				setIsEditing(false);
-				setEditedContent(content);
-				return;
-			}
-			editMutation.mutate(editedContent);
-		};
+		// moved to its own component
+		// const handleSaveEditing = () => {
+		// 	if (!editedContent.trim() || editedContent === content) {
+		// 		setIsEditing(false);
+		// 		setEditedContent(content);
+		// 		return;
+		// 	}
+		// 	editMutation.mutate(editedContent);
+		// };
 
 		const handleDelete = () => {
 			// ✅ Add confirmation for better UX
@@ -281,109 +280,26 @@ export const ChatItem = React.memo(
 
 						{/* Render Reactions */}
 						{!deleted && <MessageReactions reactions={reactions} currentProfileId={currentMember.profile.id} onReactionClick={handleReactionClick} />}
-
 						{/* Edit Mode */}
-						{!deleted && isEditing && (
-							<div className="mt-2 w-full">
-								<div className="relative w-full rounded-xl bg-[#09090b] border border-indigo-500/30 ring-1 ring-indigo-500/20 overflow-hidden shadow-sm">
-									<TextareaAutoSize
-										minRows={1}
-										maxRows={10}
-										value={editedContent}
-										onChange={(e) => setEditedContent(e.target.value)}
-										disabled={editMutation.isPending}
-										className="p-3 bg-transparent text-zinc-200 w-full text-[15px] focus:outline-none resize-none font-sans leading-relaxed"
-										onKeyDown={(e) => {
-											if (e.key === "Enter" && !e.shiftKey) {
-												e.preventDefault();
-												handleSaveEditing();
-											}
-										}}
-										autoFocus
-									/>
-								</div>
-								<div className="flex items-center gap-x-2 mt-2">
-									<span className="text-[10px] text-zinc-500 font-medium">
-										escape to{" "}
-										<span
-											className="hover:text-white cursor-pointer"
-											onClick={() => {
-												setIsEditing(false);
-												setEditedContent(content);
-											}}
-										>
-											cancel
-										</span>{" "}
-										• enter to{" "}
-										<span className="text-indigo-400 cursor-pointer hover:underline" onClick={handleSaveEditing}>
-											save
-										</span>
-									</span>
-									<Button
-										size="sm"
-										variant="default"
-										disabled={editMutation.isPending}
-										onClick={handleSaveEditing}
-										className="ml-auto h-6 text-[10px] bg-indigo-600 hover:bg-indigo-700 text-white px-3 py-0"
-									>
-										{editMutation.isPending ? "Saving..." : "Save"}
-									</Button>
-								</div>
-							</div>
-						)}
+
+						{/* ✅ EDIT MODE: Render the isolated form */}
+						{!deleted && isEditing && <ChatEditForm messageId={id} initialContent={content} onCancel={() => setIsEditing(false)} onSuccess={() => setIsEditing(false)} />}
 					</div>
 				</div>
 
 				{/* ======================= 3. ACTION BAR ======================= */}
-				{canDeleteMessage && (
-					<div
-						className={cn(
-							"flex items-center gap-x-1 absolute -top-3 right-5 bg-[#09090b] border border-white/10 p-1 rounded-lg shadow-xl z-20 transition-opacity duration-200",
-							isReactionPickerOpen ? "opacity-100 pointer-events-auto" : "opacity-0 group-hover:opacity-100 pointer-events-none group-hover:pointer-events-auto",
-						)}
-					>
-						{!deleted && <ReactionPicker onSelect={handleReactionClick} onOpenChange={setIsReactionPickerOpen} />}
-
-						<ActionTooltip label="Reply">
-							<button
-								title="Reply to this message"
-								onClick={handleReply}
-								disabled={isOptimistic}
-								className={cn(
-									"cursor-pointer hover:bg-white/10 p-1.5 rounded-md text-zinc-400 hover:text-white transition",
-									// Visual cue
-									isOptimistic && "opacity-50 cursor-not-allowed",
-								)}
-							>
-								<CornerUpLeft className="w-3.5 h-3.5" />
-							</button>
-						</ActionTooltip>
-
-						{canEditMessage && (
-							<ActionTooltip label="Edit">
-								<button
-									title="Edit message"
-									onClick={() => setIsEditing(!isEditing)}
-									disabled={editMutation.isPending}
-									className="cursor-pointer hover:bg-white/10 p-1.5 rounded-md text-zinc-400 hover:text-white transition disabled:opacity-50"
-								>
-									<Edit className="w-3.5 h-3.5" />
-								</button>
-							</ActionTooltip>
-						)}
-
-						<ActionTooltip label="Delete">
-							<button
-								title="Delete message"
-								onClick={handleDelete}
-								disabled={deleteMutation.isPending}
-								className="cursor-pointer hover:bg-red-500/10 p-1.5 rounded-md text-zinc-400 hover:text-red-500 transition disabled:opacity-50"
-							>
-								<Trash className="w-3.5 h-3.5" />
-							</button>
-						</ActionTooltip>
-					</div>
-				)}
+				<ChatItemActions
+					canDeleteMessage={canDeleteMessage}
+					canEditMessage={canEditMessage}
+					isDeleted={deleted}
+					isEditPending={isEditing}
+					isDeletePending={deleteMutation.isPending}
+					isOptimistic={isOptimistic}
+					onReply={handleReply}
+					onEdit={() => setIsEditing(true)}
+					onDelete={handleDelete}
+					onReaction={handleReactionClick}
+				/>
 			</div>
 		);
 	},

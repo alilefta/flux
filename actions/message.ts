@@ -226,6 +226,15 @@ export const editMessageAction = actionClientWithProfile
 						},
 					},
 					attachments: true,
+					reactions: true,
+					replyTo: {
+						include: {
+							member: {
+								include: { profile: true },
+							},
+							attachments: true,
+						},
+					},
 				},
 			});
 

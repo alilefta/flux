@@ -58,11 +58,12 @@ export const MessageFileModal = () => {
 	const { executeAsync: sendMessage } = useAction(sendMessageAction);
 
 	const mutation = useMutation({
-		mutationFn: async (files: FormData["fileUrls"]) => {
+		mutationFn: async ({ files, optimisticId }: { files: FormData["fileUrls"]; optimisticId: string }) => {
 			const result = await sendMessage({
 				content: "", // Empty content for file-only message
 				files,
 				channelId: channelId as string,
+				optimisticClientId: optimisticId,
 			});
 
 			if (result?.serverError) {
@@ -72,7 +73,7 @@ export const MessageFileModal = () => {
 			return result?.data;
 		},
 
-		onMutate: async (files) => {
+		onMutate: async ({ files, optimisticId }) => {
 			if (!channelId || !member) {
 				console.error("Missing channelId or member");
 				return;
@@ -84,7 +85,7 @@ export const MessageFileModal = () => {
 
 			// ✅ Create optimistic message with file metadata
 			const optimisticMessage: ChannelMessage = {
-				id: `optimistic-${crypto.randomUUID()}`,
+				id: optimisticId,
 				channelId: channelId as string,
 				content: "",
 				fileUrl: null,
@@ -94,7 +95,7 @@ export const MessageFileModal = () => {
 					name: file.name,
 					type: file.type,
 					size: file.size || null,
-					messageId: `optimistic-${crypto.randomUUID()}`,
+					messageId: optimisticId,
 					createdAt: new Date(),
 				})),
 				createdAt: new Date(),
@@ -143,7 +144,8 @@ export const MessageFileModal = () => {
 			return;
 		}
 
-		mutation.mutate(values.fileUrls);
+		const optimisticId = `optimistic-${crypto.randomUUID()}`;
+		mutation.mutate({ files: values.fileUrls, optimisticId: optimisticId });
 	};
 
 	const handleClose = () => {
