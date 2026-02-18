@@ -5,6 +5,7 @@ import { ChatInput } from "@/components/chat/chat-input";
 import { ChatMessages } from "@/components/chat/chat-messages";
 import { getChannelById } from "@/data/channel";
 import { getCurrentMemberByServerAndProfileId } from "@/data/member";
+import { ChatPinnedMessage } from "@/components/chat/chat-pinned-message";
 
 interface ChannelPageProps {
 	params: Promise<{
@@ -32,7 +33,8 @@ export default async function ChannelPage({ params }: ChannelPageProps) {
 		<div className="bg-[#141417]/60 backdrop-blur-xl border border-white/5 rounded-3xl shadow-2xl flex flex-col h-full overflow-hidden w-full relative z-0">
 			{/* 1. Header */}
 			<ChatHeader serverId={serverId} channel={channel} member={member} />
-
+			{/* 2. ✅ PINNED MESSAGE BAR */}
+			<ChatPinnedMessage channelId={channel.id} />
 			{/* 2. Messages */}
 			<ChatMessages
 				serverId={serverId}
