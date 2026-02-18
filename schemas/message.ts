@@ -135,6 +135,10 @@ export const GetMessageInputSchema = z.object({
 	channelId: z.uuid(),
 	serverId: z.uuid(),
 	cursor: z.date().optional(),
+
+	// ✅ NEW: Jump mode
+	mode: z.enum(["chronological", "around"]).default("chronological"),
+	targetMessageId: z.string().optional(), // Required when mode = 'around'
 });
 
 export type GetMessageInput = z.infer<typeof GetMessageInputSchema>;

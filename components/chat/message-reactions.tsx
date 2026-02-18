@@ -76,11 +76,11 @@ export const MessageReactions = React.memo(
 
 		if (prevReactions.length !== nextReactions.length) return false;
 
-		const prevSig = prev.reactions
+		const prevSig = prevReactions
 			.map((r) => r.emoji + r.profileId)
 			.sort()
 			.join("");
-		const nextSig = next.reactions
+		const nextSig = nextReactions
 			.map((r) => r.emoji + r.profileId)
 			.sort()
 			.join("");

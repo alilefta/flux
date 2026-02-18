@@ -1,16 +1,16 @@
 // /components/chat/chat-item.tsx
 "use client";
 
-import { ShieldAlert, ShieldCheck, Trash, FileIcon, FileText } from "lucide-react";
+import { ShieldAlert, ShieldCheck, Trash, FileIcon, FileText, Pin } from "lucide-react";
 import Image from "next/image";
 import { cn } from "@/lib/utils";
-import React, { useCallback, useEffect, useState } from "react";
+import React, { useCallback, useState } from "react";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { UserAvatar } from "../user/user-avatar";
 import { MemberProfile } from "@/schemas/member";
 import { useMutation } from "@tanstack/react-query";
 import { useAction } from "next-safe-action/hooks";
-import { editMessageAction, markMessageAsDeletedAction } from "@/actions/message";
+import { markMessageAsDeletedAction, pinMessageAction } from "@/actions/message";
 import { toast } from "sonner";
 import { useModal } from "@/hooks/use-modal-store";
 import { ChannelMessage, FileAttachment, MessageReaction } from "@/schemas/message";
@@ -37,6 +37,7 @@ interface ChatItemProps {
 	channelId: string;
 	reactions: MessageReaction[];
 	replyTo?: ChannelMessage | null;
+	pinned: boolean;
 }
 
 const roleIconMap = {
@@ -46,7 +47,7 @@ const roleIconMap = {
 };
 
 export const ChatItem = React.memo(
-	function ChatItem({ id, content, member, timestamp, fileUrl, deleted, currentMember, isUpdated, attachments = [], reactions, replyTo }: ChatItemProps) {
+	function ChatItem({ id, content, member, timestamp, fileUrl, deleted, currentMember, isUpdated, attachments = [], reactions, replyTo, pinned }: ChatItemProps) {
 		const [isEditing, setIsEditing] = useState(false);
 		// const [editedContent, setEditedContent] = useState(content);
 
@@ -61,6 +62,7 @@ export const ChatItem = React.memo(
 		const canEditMessage = !deleted && isOwner && !fileUrl;
 		const hasAttachments = attachments && attachments.length > 0;
 		const hasContent = content && content.trim().length > 0;
+		const canPinMessage = currentMember.role === "ADMIN" || currentMember.role === "MODERATOR";
 
 		const handleReply = () => {
 			const messageObject: ChannelMessage = {
@@ -84,11 +86,11 @@ export const ChatItem = React.memo(
 			setReplyingTo(messageObject);
 		};
 
-		const { executeAsync: editMessage } = useAction(editMessageAction, {
-			onError: ({ error }) => {
-				toast.error(error.serverError || "Failed to update message");
-			},
-		});
+		// const { executeAsync: editMessage } = useAction(editMessageAction, {
+		// 	onError: ({ error }) => {
+		// 		toast.error(error.serverError || "Failed to update message");
+		// 	},
+		// });
 
 		const { executeAsync: deleteMessage } = useAction(markMessageAsDeletedAction, {
 			onError: ({ error }) => {
@@ -116,6 +118,15 @@ export const ChatItem = React.memo(
 			},
 		});
 
+		// ✅ Mutation
+		const { execute: pinMessage } = useAction(pinMessageAction, {
+			onError: ({ error }) => toast.error(error.serverError || "Failed to pin"),
+			onSuccess: ({ data }) => {
+				const msg = data?.data.message.pinned ? "Message pinned" : "Message unpinned";
+				toast.success(msg);
+			},
+		});
+
 		// ✅ STABILIZE HANDLER
 		const handleReactionClick = useCallback(
 			(emoji: string) => {
@@ -136,33 +147,33 @@ export const ChatItem = React.memo(
 		// 	return () => window.removeEventListener("keydown", handleKeyDown);
 		// }, [isEditing, content]);
 
-		// Edit mutation
-		const editMutation = useMutation({
-			mutationFn: async (newContent: string) => {
-				const result = await editMessage({
-					messageId: id,
-					content: newContent,
-				});
+		// // Edit mutation
+		// const editMutation = useMutation({
+		// 	mutationFn: async (newContent: string) => {
+		// 		const result = await editMessage({
+		// 			messageId: id,
+		// 			content: newContent,
+		// 		});
 
-				if (result?.serverError) {
-					throw new Error(result.serverError);
-				}
+		// 		if (result?.serverError) {
+		// 			throw new Error(result.serverError);
+		// 		}
 
-				return result?.data;
-			},
-			onSuccess: () => {
-				setIsEditing(false);
+		// 		return result?.data;
+		// 	},
+		// 	onSuccess: () => {
+		// 		setIsEditing(false);
 
-				// ❌ REMOVE THIS - Pusher handles updates now!
-				// queryClient.invalidateQueries({ queryKey: ["messages"] });
+		// 		// ❌ REMOVE THIS - Pusher handles updates now!
+		// 		// queryClient.invalidateQueries({ queryKey: ["messages"] });
 
-				// ✅ Optional: Show success toast (or remove for cleaner UX)
-				// toast.success("Message updated");
-			},
-			onError: (error) => {
-				toast.error(error.message || "Failed to edit message");
-			},
-		});
+		// 		// ✅ Optional: Show success toast (or remove for cleaner UX)
+		// 		// toast.success("Message updated");
+		// 	},
+		// 	onError: (error) => {
+		// 		toast.error(error.message || "Failed to edit message");
+		// 	},
+		// });
 
 		// Delete mutation
 		const deleteMutation = useMutation({
@@ -251,6 +262,18 @@ export const ChatItem = React.memo(
 								</TooltipProvider>
 							</div>
 							<span className="text-[10px] text-zinc-500 select-none">{timestamp}</span>
+
+							{/* ✅ VISUAL: Pin Icon Indicator */}
+							{pinned && (
+								<TooltipProvider>
+									<Tooltip>
+										<TooltipTrigger>
+											<Pin className="w-3 h-3 text-zinc-400 rotate-45 ml-1" />
+										</TooltipTrigger>
+										<TooltipContent className="bg-black border-white/10 text-xs">Pinned by a moderator</TooltipContent>
+									</Tooltip>
+								</TooltipProvider>
+							)}
 						</div>
 
 						{/* Render Deleted State */}
@@ -279,7 +302,7 @@ export const ChatItem = React.memo(
 						)}
 
 						{/* Render Reactions */}
-						{!deleted && <MessageReactions reactions={reactions} currentProfileId={currentMember.profile.id} onReactionClick={handleReactionClick} />}
+						{!deleted && <MessageReactions reactions={reactions ?? []} currentProfileId={currentMember.profile.id} onReactionClick={handleReactionClick} />}
 						{/* Edit Mode */}
 
 						{/* ✅ EDIT MODE: Render the isolated form */}
@@ -299,6 +322,9 @@ export const ChatItem = React.memo(
 					onEdit={() => setIsEditing(true)}
 					onDelete={handleDelete}
 					onReaction={handleReactionClick}
+					canPinMessage={canPinMessage}
+					isPinned={pinned}
+					onPin={() => pinMessage({ messageId: id, memberId: member.id })}
 				/>
 			</div>
 		);
@@ -316,6 +342,8 @@ export const ChatItem = React.memo(
 
 		// Edit status changed
 		if (prevProps.isUpdated !== nextProps.isUpdated) return false;
+
+		if (prevProps.pinned !== nextProps.pinned) return false; // ✅ Re-render if pin state changes
 
 		// ✅ Null-safe attachment comparison
 		const prevAttachments = prevProps.attachments || [];

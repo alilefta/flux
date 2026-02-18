@@ -14,6 +14,7 @@ import { pusherClient } from "@/lib/pusher-client";
 import { ChannelMessage, MessageReaction } from "@/schemas/message";
 import { MessageEvent } from "@/lib/events";
 import { ChatDateSeparator } from "./chat-date-seperator";
+import { useChatScroll } from "@/hooks/use-chat-scroll";
 
 const DATE_FORMAT = "d MMM yyyy, HH:mm";
 
@@ -41,9 +42,11 @@ export const ChatMessages = ({ name, member, channelId, serverId }: ChatMessages
 	const [newMessageCount, setNewMessageCount] = useState(0);
 
 	const isAtBottomRef = useRef(true);
-	// const [isAtBottom, setIsAtBottom] = useState(true);
 
 	const hasScrolledRef = useRef(false);
+
+	// ✅ NEW: Ref to store height before fetching
+	const prevScrollHeightRef = useRef(0);
 
 	// Debounced Intersection Observer
 	const fetchTimeoutRef = useRef<NodeJS.Timeout | null>(null);
@@ -90,6 +93,14 @@ export const ChatMessages = ({ name, member, channelId, serverId }: ChatMessages
 		return data?.pages.flat().reverse() || [];
 	}, [data]);
 
+	const { scrollToBottom } = useChatScroll({
+		chatRef,
+		bottomRef,
+		loadMoreRef: topRef,
+		shouldLoadMore: !isFetchingNextPage && !!hasNextPage, // Logic for inverse scroll triggering
+		count: messages.length, // Trigger initial scroll when messages load
+	});
+
 	// ✅ Intersection Observer for auto-load
 	useEffect(() => {
 		if (!topRef.current || !hasNextPage) return;
@@ -101,17 +112,13 @@ export const ChatMessages = ({ name, member, channelId, serverId }: ChatMessages
 				const [entry] = entries;
 
 				if (entry.isIntersecting && hasNextPage && !isFetchingNextPage) {
-					// ✅ Clear any pending fetch
 					if (fetchTimeoutRef.current) {
 						clearTimeout(fetchTimeoutRef.current);
 					}
 
-					// we should add a margin or scroll slightly to the bottom so it hide the top ref div
-
-					// ✅ Debounce fetch to prevent rapid triggers
 					fetchTimeoutRef.current = setTimeout(() => {
 						fetchNextPage();
-					}, 100);
+					}, 100); // Reduced to 100ms for snappier feel
 				}
 			},
 			{
@@ -197,6 +204,15 @@ export const ChatMessages = ({ name, member, channelId, serverId }: ChatMessages
 						return page; // ✅ Reuse existing page reference
 					});
 
+					// 🟢 SCROLL LOGIC: REPLACEMENT
+					scrollToBottom();
+					// // Scroll if at bottom
+					// if (isAtBottomRef.current && bottomRef.current) {
+					// 	setTimeout(() => {
+					// 		bottomRef.current?.scrollIntoView({ behavior: "smooth" });
+					// 	}, 100);
+					// }
+
 					return {
 						...oldData,
 						pages: newPages,
@@ -216,6 +232,14 @@ export const ChatMessages = ({ name, member, channelId, serverId }: ChatMessages
 
 				const newPages = [...oldData.pages];
 				newPages[0] = [newMessage, ...newPages[0]]; // Only first page changes
+
+				// 🟢 SCROLL LOGIC: NEW MESSAGE
+				const didScroll = scrollToBottom();
+
+				if (!didScroll) {
+					// Only show badge if we didn't scroll!
+					setNewMessageCount((prev) => prev + 1);
+				}
 
 				return {
 					...oldData,
@@ -326,11 +350,11 @@ export const ChatMessages = ({ name, member, channelId, serverId }: ChatMessages
 
 		// Cleanup on unmount or channel change
 		return () => {
-			channel.unbind_all();
-			channel.unsubscribe();
-			// pusherClient.unsubscribe(channelName);
+			// channel.unbind_all();
+			// channel.unsubscribe();
+			pusherClient.unsubscribe(channelName);
 		};
-	}, [channelId, queryClient]);
+	}, [channelId, queryClient, scrollToBottom]);
 
 	// ✅ Track scroll position
 	useEffect(() => {
@@ -340,10 +364,10 @@ export const ChatMessages = ({ name, member, channelId, serverId }: ChatMessages
 		const handleScroll = () => {
 			const { scrollTop, scrollHeight, clientHeight } = chatContainer;
 			const distanceFromBottom = scrollHeight - scrollTop - clientHeight;
+			// Increased buffer to 300px for better UX
 			const atBottom = distanceFromBottom < 100;
 
-			// setIsAtBottom(atBottom);
-			isAtBottomRef.current = atBottom; // ✅ Update ref too!
+			isAtBottomRef.current = atBottom;
 
 			if (atBottom) {
 				setNewMessageCount(0);
@@ -362,32 +386,66 @@ export const ChatMessages = ({ name, member, channelId, serverId }: ChatMessages
 		}
 	}, [data?.pages]);
 
-	// ✅ Preserve scroll position when loading old messages
-	useEffect(() => {
-		if (!chatRef.current || !isFetchingNextPage) return;
-
-		const chatContainer = chatRef.current;
-		const previousScrollHeight = chatContainer.scrollHeight;
-		const previousScrollTop = chatContainer.scrollTop;
-
-		const preserveScroll = () => {
-			const newScrollHeight = chatContainer.scrollHeight;
-			const heightDifference = newScrollHeight - previousScrollHeight;
-
-			if (heightDifference > 0) {
-				// ✅ Use scrollTo with smooth: false to prevent triggering scroll event
-				chatContainer.scrollTo({
-					top: previousScrollTop + heightDifference,
-					behavior: "instant", // ✅ Instant - no smooth animation
-				});
-			}
-		};
-
-		// Wait for messages to render
-		requestAnimationFrame(() => {
-			requestAnimationFrame(preserveScroll);
-		});
+	// ✅ 1. CAPTURE HEIGHT BEFORE FETCH
+	// When we start fetching, save the current scroll height
+	useLayoutEffect(() => {
+		if (isFetchingNextPage && chatRef.current) {
+			prevScrollHeightRef.current = chatRef.current.scrollHeight;
+		}
 	}, [isFetchingNextPage]);
+
+	// ✅ 2. RESTORE POSITION AFTER FETCH
+	// When fetch finishes and data updates, calculate difference and adjust scroll
+	useLayoutEffect(() => {
+		if (!isFetchingNextPage && chatRef.current && prevScrollHeightRef.current > 0) {
+			const chatContainer = chatRef.current;
+			const currentScrollHeight = chatContainer.scrollHeight;
+			const heightDifference = currentScrollHeight - prevScrollHeightRef.current;
+
+			// If the content grew (new messages added at top), push scroll down by that amount
+			if (heightDifference > 0) {
+				chatContainer.scrollTop = heightDifference;
+			}
+
+			// Reset
+			prevScrollHeightRef.current = 0;
+		}
+	}, [isFetchingNextPage, data]); // Trigger when loading state changes or data updates
+
+	// ----------------------------------------------------------------------
+	// SMART AUTO-SCROLL (When new messages arrive)
+	// ----------------------------------------------------------------------
+	// useEffect(() => {
+	// 	// 1. Initial Load: Always scroll to bottom
+	// 	if (!hasInitializedRef.current && messages.length > 0) {
+	// 		bottomRef.current?.scrollIntoView({ behavior: "instant" });
+	// 		hasInitializedRef.current = true;
+	// 		return;
+	// 	}
+
+	// 	// 2. New Message Arrived
+	// 	const lastMessage = messages[messages.length - 1];
+
+	// 	// Check if the last message is ours (Optimistic or Real)
+	// 	const isMyMessage = lastMessage?.memberId === member.id;
+
+	// 	if (isMyMessage) {
+	// 		// Always scroll for my own messages
+	// 		setTimeout(() => {
+	// 			bottomRef.current?.scrollIntoView({ behavior: "smooth" });
+	// 		}, 100);
+	// 	} else if (isAtBottomRef.current) {
+	// 		// If I was already at the bottom, stay at the bottom
+	// 		setTimeout(() => {
+	// 			bottomRef.current?.scrollIntoView({ behavior: "smooth" });
+	// 		}, 100);
+	// 	} else {
+	// 		// I am scrolled up reading -> Show Badge
+	// 		// Don't force scroll!
+	// 		// We can detect if the list grew to verify it's a new message event
+	// 		setNewMessageCount((prev) => prev + 1);
+	// 	}
+	// }, [messages.length, member.id]); // Only run when message count changes
 
 	if (isLoading) {
 		return (
@@ -400,12 +458,6 @@ export const ChatMessages = ({ name, member, channelId, serverId }: ChatMessages
 	if (error) {
 		return <div className="flex-1 flex items-center justify-center text-zinc-500">Failed to load messages. Please refresh.</div>;
 	}
-
-	console.log("Universal Data:", data);
-
-	// useEffect(() => {
-	// 	console.log(queryClient.getQueryData(["messages", channelId]));
-	// }, [messages]);
 
 	return (
 		<div ref={chatRef} className="flex-1 flex flex-col py-4 overflow-y-auto no-scrollbar relative">
@@ -468,6 +520,7 @@ export const ChatMessages = ({ name, member, channelId, serverId }: ChatMessages
 								channelId={channelId}
 								reactions={message.reactions}
 								replyTo={message.replyTo}
+								pinned={message.pinned}
 							/>
 						</Fragment>
 					);

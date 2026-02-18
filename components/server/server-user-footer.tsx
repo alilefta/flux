@@ -2,12 +2,12 @@
 
 import { Mic, MicOff, Headphones, HeadphoneOff, Settings, LucideIcon } from "lucide-react";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
-import Image from "next/image";
 import { useState } from "react";
 import { cn } from "@/lib/utils";
 import { UserButton, useUser } from "@clerk/nextjs";
 import { ProfileBase } from "@/schemas/profile";
 import { useModal } from "@/hooks/use-modal-store";
+import { useIsMounted } from "@/hooks/use-is-mounted";
 
 interface ServerUserFooterProps {
 	profile: ProfileBase;
@@ -18,12 +18,23 @@ export const ServerUserFooter = ({ profile }: ServerUserFooterProps) => {
 	const onOpen = useModal((state) => state.onOpen);
 	const [isMuted, setIsMuted] = useState(false);
 	const [isDeafened, setIsDeafened] = useState(false);
+	const isMounted = useIsMounted();
 
-	if (!isLoaded || !user) {
-		// Loading skeleton
-		return <div className="h-14 bg-black/20 px-3 flex items-center gap-x-2 border-t border-white/5 mt-auto animate-pulse" />;
+	// ✅ Combine checks:
+	// 1. If not mounted yet (Server-side or first client render) -> Render Skeleton
+	// 2. If Clerk not loaded -> Render Skeleton
+	if (!isMounted || !isLoaded || !user) {
+		return (
+			<div className="h-14 bg-black/20 px-3 flex items-center gap-x-2 border-t border-white/5 mt-auto animate-pulse">
+				{/* Optional: Add inner skeleton shapes to make it look nicer */}
+				<div className="h-8 w-8 rounded-full bg-white/10" />
+				<div className="flex-1 space-y-1">
+					<div className="h-3 w-20 bg-white/10 rounded" />
+					<div className="h-2 w-12 bg-white/10 rounded" />
+				</div>
+			</div>
+		);
 	}
-
 	return (
 		<div className="h-14 bg-black/20 px-3 flex items-center justify-between border-t border-white/5 mt-auto">
 			{/* 1. Clerk User Button & Info */}

@@ -112,7 +112,7 @@ export const getMessagesAction = actionClientWithProfile
 	.metadata({ actionName: "get-messages-action" })
 	.inputSchema(GetMessageInputSchema)
 	.action(async ({ ctx, parsedInput }) => {
-		const { channelId, serverId, cursor } = parsedInput;
+		const { channelId, serverId, cursor, mode, targetMessageId } = parsedInput;
 
 		const pageSize = 50;
 
@@ -127,6 +127,17 @@ export const getMessagesAction = actionClientWithProfile
 		if (!member) {
 			throw ERRORS.NOT_MEMBER;
 		}
+
+		// ✅ MODE 1: Around a specific message (Jump)
+		if (mode === "around" && targetMessageId) {
+			return await getMessagesAroundTarget({
+				channelId,
+				targetMessageId,
+				pageSize,
+			});
+		}
+
+		// ✅ MODE 2: Normal chronological (existing logic)
 		const whereClause: MessageWhereInput = {
 			channelId,
 			deleted: false,
@@ -177,6 +188,121 @@ export const getMessagesAction = actionClientWithProfile
 			nextCursor,
 		};
 	});
+
+// ✅ Helper: Load messages around a target
+async function getMessagesAroundTarget({ channelId, targetMessageId, pageSize }: { channelId: string; targetMessageId: string; pageSize: number }) {
+	// 1. Find the target message
+	const targetMessage = await prisma.message.findUnique({
+		where: { id: targetMessageId },
+		select: { createdAt: true, id: true },
+	});
+
+	if (!targetMessage) {
+		throw new Error("Target message not found");
+	}
+
+	const halfPage = Math.floor(pageSize / 2);
+
+	// 2. Get messages BEFORE target (older)
+	const messagesBefore = await prisma.message.findMany({
+		where: {
+			channelId,
+			deleted: false,
+			createdAt: {
+				lt: targetMessage.createdAt,
+			},
+		},
+		include: {
+			member: {
+				include: {
+					profile: true,
+				},
+			},
+			attachments: true,
+			reactions: true,
+			replyTo: {
+				include: {
+					member: {
+						include: { profile: true },
+					},
+					attachments: true,
+				},
+			},
+		},
+		orderBy: {
+			createdAt: "desc",
+		},
+		take: halfPage,
+	});
+
+	// 3. Get the target message itself
+	const targetWithDetails = await prisma.message.findUnique({
+		where: { id: targetMessageId },
+		include: {
+			member: {
+				include: {
+					profile: true,
+				},
+			},
+			attachments: true,
+			reactions: true,
+			replyTo: {
+				include: {
+					member: {
+						include: { profile: true },
+					},
+					attachments: true,
+				},
+			},
+		},
+	});
+
+	// 4. Get messages AFTER target (newer)
+	const messagesAfter = await prisma.message.findMany({
+		where: {
+			channelId,
+			deleted: false,
+			createdAt: {
+				gt: targetMessage.createdAt,
+			},
+		},
+		include: {
+			member: {
+				include: {
+					profile: true,
+				},
+			},
+			attachments: true,
+			reactions: true,
+			replyTo: {
+				include: {
+					member: {
+						include: { profile: true },
+					},
+					attachments: true,
+				},
+			},
+		},
+		orderBy: {
+			createdAt: "asc", // ✅ ASC for newer messages
+		},
+		take: halfPage,
+	});
+
+	// 5. Combine: [older...target...newer]
+	const allMessages = [
+		...messagesBefore.reverse(), // Reverse to get chronological order
+		targetWithDetails!,
+		...messagesAfter,
+	];
+
+	return {
+		success: true,
+		messages: allMessages.reverse(), // Return in DESC order (newest first) for consistency
+		nextCursor: messagesBefore.length > 0 ? messagesBefore[messagesBefore.length - 1].createdAt : undefined,
+		targetMessageId, // ✅ Return this so frontend knows to scroll to it
+	};
+}
 
 // ============================= EDIT MESSAGE ======================================
 

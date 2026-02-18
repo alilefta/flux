@@ -205,6 +205,7 @@ export const ChatInput = ({ placeholder, channelId, name, member }: ChatInputPro
 					className="w-full pb-1  bg-transparent text-sm text-white placeholder-zinc-500 resize-none max-h-32 min-h-10 py-2.5 focus:outline-none font-sans disabled:opacity-50"
 					minRows={1}
 					maxRows={4}
+					name="chat-input"
 					onFocus={() => {
 						if (openEmojiPicker) {
 							setOpenEmojiPicker(false);

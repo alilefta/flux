@@ -11,7 +11,7 @@ import { toast } from "sonner";
 import { useEffect } from "react";
 import { Loader2, Hash, Mic, Video } from "lucide-react";
 
-import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { FluxInput } from "../../custom-ui/inputs/flux-input";
 import { FluxFormSelect } from "../../custom-ui/inputs/flux-form-select";
@@ -75,9 +75,10 @@ export const CreateChannelModal = () => {
 			<DialogContent className="bg-[#141417]/90 backdrop-blur-xl border border-white/5 text-white p-0 overflow-hidden shadow-2xl sm:max-w-md">
 				<DialogHeader className="pt-8 px-6 bg-zinc-900/50 pb-6 border-b border-white/5">
 					<DialogTitle className="text-2xl text-center font-bold">Create Channel</DialogTitle>
+					<DialogDescription className="sr-only">Create a new channel</DialogDescription>
 				</DialogHeader>
 
-				<form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
+				<form onSubmit={handleSubmit(onSubmit)} className="space-y-6" id="create-channel-form">
 					<div className="p-6 space-y-6">
 						{/* NAME INPUT */}
 						<Controller
@@ -113,10 +114,10 @@ export const CreateChannelModal = () => {
 					</div>
 
 					<DialogFooter className="bg-zinc-900/50 px-6 py-4 border-t border-white/5">
-						<Button disabled={isLoading} variant="ghost" onClick={handleClose} className="text-zinc-400 hover:text-white">
+						<Button disabled={isLoading} variant="ghost" onClick={handleClose} className="text-zinc-400 hover:text-white" type="button">
 							Cancel
 						</Button>
-						<Button disabled={isLoading} className="bg-indigo-600 hover:bg-indigo-700 text-white">
+						<Button disabled={isLoading} className="bg-indigo-600 hover:bg-indigo-700 text-white" type="submit" form="create-channel-form">
 							{isLoading ? <Loader2 className="animate-spin w-4 h-4" /> : "Create"}
 						</Button>
 					</DialogFooter>

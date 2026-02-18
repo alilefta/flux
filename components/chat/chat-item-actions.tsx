@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { Edit, Trash, CornerUpLeft } from "lucide-react";
+import { Edit, Trash, CornerUpLeft, PinOff, Pin } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { ActionTooltip } from "@/components/custom-ui/tooltip/action-tooltip";
 import { ReactionPicker } from "./reaction-picker";
@@ -17,9 +17,26 @@ interface ChatItemActionsProps {
 	onEdit: () => void;
 	onDelete: () => void;
 	onReaction: (emoji: string) => void;
+	canPinMessage: boolean;
+	isPinned: boolean;
+	onPin: () => void;
 }
 
-export const ChatItemActions = ({ canDeleteMessage, canEditMessage, isDeleted, isEditPending, isDeletePending, isOptimistic, onReply, onEdit, onDelete, onReaction }: ChatItemActionsProps) => {
+export const ChatItemActions = ({
+	canDeleteMessage,
+	canEditMessage,
+	isDeleted,
+	isEditPending,
+	isDeletePending,
+	isOptimistic,
+	onReply,
+	onEdit,
+	onDelete,
+	onReaction,
+	canPinMessage,
+	isPinned,
+	onPin,
+}: ChatItemActionsProps) => {
 	const [isReactionPickerOpen, setIsReactionPickerOpen] = useState(false);
 
 	if (!canDeleteMessage) return null;
@@ -44,6 +61,15 @@ export const ChatItemActions = ({ canDeleteMessage, canEditMessage, isDeleted, i
 					<CornerUpLeft className="w-3.5 h-3.5" />
 				</button>
 			</ActionTooltip>
+
+			{/* ✅ PIN ACTION */}
+			{canPinMessage && (
+				<ActionTooltip label={isPinned ? "Unpin" : "Pin"}>
+					<button onClick={onPin} className="cursor-pointer hover:bg-white/10 p-1.5 rounded-md text-zinc-400 hover:text-white transition">
+						{isPinned ? <PinOff className="w-3.5 h-3.5" /> : <Pin className="w-3.5 h-3.5" />}
+					</button>
+				</ActionTooltip>
+			)}
 
 			{canEditMessage && (
 				<ActionTooltip label="Edit">
