@@ -6,7 +6,7 @@ import { MessageEvent } from "@/lib/events";
 import prisma from "@/lib/prisma";
 import { pusherServer } from "@/lib/pusher";
 import { actionClientWithProfile } from "@/lib/safe-action";
-import { CreateMessageSchema, DeleteMessageSchema, EditMessageSchema, GetMessageInputSchema } from "@/schemas/message";
+import { ChannelMessage, CreateMessageSchema, DeleteMessageSchema, EditMessageSchema, GetMessageInputSchema, GetPinMessageSchema, PinMessageSchema } from "@/schemas/message";
 
 // ============================= SEND MESSAGE ======================================
 
@@ -323,6 +323,118 @@ export const markMessageAsDeletedAction = actionClientWithProfile
 			};
 		} catch (e) {
 			console.error("[Delete-Message-Action] Error", e);
+			throw ERRORS.INTERNAL_SERVER_ERROR;
+		}
+	});
+
+// ============================= PIN MESSAGE ======================================
+export const pinMessageAction = actionClientWithProfile
+	.metadata({ actionName: "pin-message-action" })
+	.inputSchema(PinMessageSchema)
+	.action(async ({ ctx, parsedInput }) => {
+		const { messageId, memberId } = parsedInput;
+
+		// 1. Fetch message + member relations to check permissions
+		const message = await prisma.message.findUnique({
+			where: { id: messageId },
+			include: {
+				member: true,
+				channel: {
+					include: {
+						server: true,
+					},
+				},
+			},
+		});
+
+		if (!message || message.deleted) {
+			throw new Error("Message not found");
+		}
+
+		// 2. Fetch the *Current User's* member record for this server
+		const currentMember = await prisma.member.findFirst({
+			where: {
+				serverId: message.channel.serverId,
+				profileId: ctx.profile.id,
+				id: memberId,
+			},
+		});
+
+		if (!currentMember) throw new Error("Unauthorized");
+
+		// 3. Permission Check: Only Admins or Moderators can pin
+		const isAdmin = currentMember.role === "ADMIN";
+		const isModerator = currentMember.role === "MODERATOR";
+
+		if (!isAdmin && !isModerator) {
+			throw new Error("Only Moderators can pin messages");
+		}
+
+		try {
+			// 4. Toggle the pinned state
+			const updatedMessage = await prisma.message.update({
+				where: { id: messageId },
+				data: {
+					pinned: !message.pinned, // Toggle
+				},
+				include: {
+					member: {
+						include: {
+							profile: true,
+						},
+					},
+					attachments: true,
+					replyTo: {
+						include: {
+							member: {
+								include: { profile: true },
+							},
+						},
+					},
+				},
+			});
+
+			// 5. Broadcast Update
+			const channelName = `channel-${message.channelId}`;
+			await pusherServer.trigger(channelName, MessageEvent.UPDATE, updatedMessage);
+
+			return { success: true, data: { message: updatedMessage } };
+		} catch (e) {
+			console.error("[Pin-Message-Action] Error", e);
+			throw ERRORS.INTERNAL_SERVER_ERROR;
+		}
+	});
+
+// ============================= GET PINNED MESSAGE ======================================
+
+export const getPinnedMessageAction = actionClientWithProfile
+	.metadata({ actionName: "get-pinned-message" })
+	.inputSchema(GetPinMessageSchema)
+	.action(async ({ parsedInput }) => {
+		const { channelId } = parsedInput;
+
+		try {
+			const pinnedMessage = await prisma.message.findFirst({
+				where: {
+					channelId,
+					pinned: true,
+					deleted: false,
+				},
+				include: {
+					member: {
+						include: { profile: true },
+					},
+					attachments: true,
+					// We don't need replyTo or reactions for the tiny preview
+				},
+				orderBy: {
+					createdAt: "desc", // Latest pinned message
+				},
+			});
+
+			return { success: true, message: pinnedMessage };
+		} catch (e) {
+			console.error("[Get-Pin-Message-Action] Error", e);
 			throw ERRORS.INTERNAL_SERVER_ERROR;
 		}
 	});
