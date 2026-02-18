@@ -6,7 +6,7 @@ import { MessageEvent } from "@/lib/events";
 import prisma from "@/lib/prisma";
 import { pusherServer } from "@/lib/pusher";
 import { actionClientWithProfile } from "@/lib/safe-action";
-import { ChannelMessage, CreateMessageSchema, DeleteMessageSchema, EditMessageSchema, GetMessageInputSchema, GetPinMessageSchema, PinMessageSchema } from "@/schemas/message";
+import { CreateMessageSchema, DeleteMessageSchema, EditMessageSchema, GetMessageInputSchema, GetPinMessageSchema, PinMessageSchema } from "@/schemas/message";
 
 // ============================= SEND MESSAGE ======================================
 
