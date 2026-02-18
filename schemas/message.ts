@@ -3,7 +3,7 @@
 import { MessageModelSchema, FileAttachmentModelSchema } from "@/prisma/generated/schemas";
 import z from "zod";
 import { ProfileBaseSchema } from "./profile";
-import { MemberBaseSchema, MemberWithProfileSchema } from "./member";
+import { MemberBaseSchema } from "./member";
 
 // ============================= BASE SCHEMAS ======================================
 export const MessageBaseSchema = MessageModelSchema.omit({
@@ -153,3 +153,16 @@ export const RemoveReactionSchema = z.object({
 });
 
 export type RemoveReactionInput = z.infer<typeof RemoveReactionSchema>;
+
+export const PinMessageSchema = z.object({
+	messageId: z.uuid(),
+	memberId: z.uuid(),
+});
+
+export type PinMessageInput = z.infer<typeof PinMessageSchema>;
+
+export const GetPinMessageSchema = z.object({
+	channelId: z.uuid(),
+});
+
+export type GetPinMessageInput = z.infer<typeof GetPinMessageSchema>;
