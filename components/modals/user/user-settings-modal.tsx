@@ -62,6 +62,7 @@ export const UserSettingsModal = () => {
 		onSuccess: () => {
 			router.refresh();
 			toast.success("Profile Updated");
+			onClose();
 			// Optional: don't close, just show success, so they can keep editing
 		},
 		onError: ({ error }) => {
