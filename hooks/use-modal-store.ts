@@ -16,6 +16,7 @@ export type ModalType =
 	| "deleteChannel"
 	| "editChannel"
 	| "messageFile"
+	| "searchMessages"
 	| "deleteMessage"
 	| "userProfile"
 	| "userSettings";

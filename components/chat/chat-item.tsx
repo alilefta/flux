@@ -32,8 +32,6 @@ interface ChatItemProps {
 	deleted: boolean;
 	currentMember: MemberProfile;
 	isUpdated: boolean;
-	socketUrl: string;
-	socketQuery: Record<string, string>;
 	channelId: string;
 	reactions: MessageReaction[];
 	replyTo?: ChannelMessage | null;
@@ -119,7 +117,7 @@ export const ChatItem = React.memo(
 		});
 
 		// ✅ Mutation
-		const { execute: pinMessage } = useAction(pinMessageAction, {
+		const { executeAsync: pinMessage } = useAction(pinMessageAction, {
 			onError: ({ error }) => toast.error(error.serverError || "Failed to pin"),
 			onSuccess: ({ data }) => {
 				const msg = data?.data.message.pinned ? "Message pinned" : "Message unpinned";
@@ -324,7 +322,7 @@ export const ChatItem = React.memo(
 					onReaction={handleReactionClick}
 					canPinMessage={canPinMessage}
 					isPinned={pinned}
-					onPin={() => pinMessage({ messageId: id, memberId: member.id })}
+					onPin={() => pinMessage({ messageId: id })}
 				/>
 			</div>
 		);

@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useLayoutEffect, RefObject } from "react";
+import React, { useState, useLayoutEffect, RefObject, useCallback } from "react";
 
 interface UseChatScrollProps {
 	chatRef: RefObject<HTMLDivElement | null>;
@@ -9,8 +9,10 @@ interface UseChatScrollProps {
 }
 
 export const useChatScroll = ({ chatRef, bottomRef, shouldLoadMore, loadMoreRef, count }: UseChatScrollProps) => {
-	const [hasInitialized, setHasInitialized] = useState(false);
 	const prevScrollHeightRef = React.useRef(0);
+	const [hasInitialized, setHasInitialized] = useState(false);
+
+	console.log("useChatScroll requested!");
 
 	// 1. Initial Scroll (Instant)
 	useLayoutEffect(() => {
@@ -21,7 +23,7 @@ export const useChatScroll = ({ chatRef, bottomRef, shouldLoadMore, loadMoreRef,
 			bottomDiv.scrollIntoView({ behavior: "auto" });
 			setHasInitialized(true);
 		}
-	}, [count, hasInitialized, chatRef, bottomRef]);
+	}, [count, chatRef, bottomRef]);
 
 	// 2. Inverse Scroll (Maintain position when loading history)
 	useLayoutEffect(() => {
@@ -51,9 +53,14 @@ export const useChatScroll = ({ chatRef, bottomRef, shouldLoadMore, loadMoreRef,
 	};
 
 	// 4. Helper: Auto-scroll ONLY if already at bottom
-	const scrollToBottom = () => {
-		// CHECK LIVE DOM STATE
-		const isAtBottom = checkIfAtBottom();
+	// ✅ STABILIZE CALLBACK
+	const scrollToBottom = useCallback(() => {
+		const chatDiv = chatRef.current;
+		if (!chatDiv) return false;
+
+		const { scrollTop, scrollHeight, clientHeight } = chatDiv;
+		const distanceFromBottom = scrollHeight - scrollTop - clientHeight;
+		const isAtBottom = distanceFromBottom <= 100;
 
 		if (isAtBottom && bottomRef.current) {
 			setTimeout(() => {
@@ -62,10 +69,8 @@ export const useChatScroll = ({ chatRef, bottomRef, shouldLoadMore, loadMoreRef,
 			return true;
 		}
 		return false;
-	};
-
+	}, [chatRef, bottomRef]); // Only recreate if refs change (rare)
 	return {
 		scrollToBottom,
-		// We don't need to expose the ref anymore, we use the function
 	};
 };

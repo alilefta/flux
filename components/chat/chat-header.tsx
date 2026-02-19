@@ -68,7 +68,10 @@ export const ChatHeader = ({ serverId, imageUrl, channel, member, type = "channe
 				</TooltipProvider>
 
 				{/* Search Bar */}
-				<div className="hidden md:flex items-center gap-2 bg-black/20 px-2 py-1.5 rounded-md border border-white/5 text-zinc-500 text-xs hover:border-white/10 transition-colors cursor-text w-40 lg:w-56">
+				<div
+					className="hidden md:flex items-center gap-2 bg-black/20 px-2 py-1.5 rounded-md border border-white/5 text-zinc-500 text-xs hover:border-white/10 transition-colors cursor-text w-40 lg:w-56"
+					onClick={() => onOpen("searchMessages", { query: { channelId } })}
+				>
 					<Search className="w-3.5 h-3.5" />
 					<span className="truncate">Search...</span>
 					<kbd className="ml-auto pointer-events-none inline-flex h-4 select-none items-center gap-1 rounded border border-white/10 bg-white/5 px-1.5 font-mono text-[10px] font-medium text-muted-foreground opacity-100">

@@ -13,13 +13,11 @@ import { LeaveServerModal } from "@/components/modals/server/leave-server-modal"
 import { DeleteServerModal } from "@/components/modals/server/delete-server-modal";
 import { UserSettingsModal } from "@/components/modals/user/user-settings-modal";
 import { MessageFileModal } from "@/components/modals/chat/message-file-modal";
+import { ChatSearchModal } from "@/components/modals/chat/chat-search-modal";
+import { useIsMounted } from "@/hooks/use-is-mounted";
 
 export const ModalProvider = () => {
-	const [isMounted, setIsMounted] = useState(false);
-
-	useEffect(() => {
-		setIsMounted(true);
-	}, []);
+	const isMounted = useIsMounted();
 
 	if (!isMounted) return null;
 
@@ -41,6 +39,9 @@ export const ModalProvider = () => {
 			{/* Users */}
 			<UserSettingsModal />
 			<MessageFileModal />
+
+			{/* Messages */}
+			<ChatSearchModal />
 		</>
 	);
 };

@@ -1,12 +1,8 @@
 "use client";
 
-import { useInfiniteQuery, useQueryClient, InfiniteData } from "@tanstack/react-query";
+import { useInfiniteQuery } from "@tanstack/react-query";
 import { useAction } from "next-safe-action/hooks";
-import { useEffect, useMemo } from "react";
 import { getMessagesAction } from "@/actions/message";
-import { pusherClient } from "@/lib/pusher-client";
-import { MessageEvent } from "@/lib/events";
-import { ChannelMessage, MessageReaction } from "@/schemas/message";
 import { toast } from "sonner";
 import { InferSafeActionFnResult } from "next-safe-action";
 
@@ -18,9 +14,10 @@ interface UseChatQueryProps {
 }
 
 type GetMessagesResults = InferSafeActionFnResult<typeof getMessagesAction>;
-type QueryDataShape = InfiniteData<ChannelMessage[], Date | undefined>;
 
 export function useChatQuery({ channelId, serverId, mode = "chronological", targetMessageId }: UseChatQueryProps) {
+	console.log("useChatQuery requested!");
+
 	const { executeAsync: getMessages } = useAction(getMessagesAction, {
 		onSuccess() {},
 		onError(e) {
@@ -38,9 +35,16 @@ export function useChatQuery({ channelId, serverId, mode = "chronological", targ
 			toast.error("An error occured");
 		}
 	};
+
+	// ✅ CRITICAL: Different query key based on mode
+	const queryKey = mode === "around" && targetMessageId ? ["messages", channelId, "jump", targetMessageId] : ["messages", channelId];
+	console.log("🔑 Query Key:", queryKey, { mode, targetMessageId });
+
 	return useInfiniteQuery({
-		queryKey: ["messages", channelId],
+		queryKey: queryKey,
 		queryFn: async ({ pageParam }) => {
+			console.log("📡 Fetching messages:", { mode, targetMessageId, cursor: pageParam });
+
 			const result: GetMessagesResults = await getMessages({
 				channelId,
 				serverId,
@@ -59,5 +63,10 @@ export function useChatQuery({ channelId, serverId, mode = "chronological", targ
 			const oldestMessage = lastPage[lastPage.length - 1];
 			return oldestMessage.createdAt;
 		},
+		notifyOnChangeProps: ["data", "error", "isLoading"], // ✅ Ignore other state changes
+		// ✅ Don't auto-refetch jump queries
+		refetchOnMount: mode === "chronological",
+		refetchOnWindowFocus: mode === "chronological",
+		staleTime: mode === "around" ? Infinity : 0, // Jump data never stale
 	});
 }
