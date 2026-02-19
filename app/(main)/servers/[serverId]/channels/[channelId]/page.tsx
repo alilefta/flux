@@ -1,11 +1,8 @@
 import { redirect } from "next/navigation";
 import { getCurrentProfile } from "@/data/profile";
-import { ChatHeader } from "@/components/chat/chat-header";
-import { ChatInput } from "@/components/chat/chat-input";
-import { ChatMessages } from "@/components/chat/chat-messages";
 import { getChannelById } from "@/data/channel";
 import { getCurrentMemberByServerAndProfileId } from "@/data/member";
-import { ChatPinnedMessage } from "@/components/chat/chat-pinned-message";
+import { ChatWrapper } from "@/components/chat/chat-wrapper";
 
 interface ChannelPageProps {
 	params: Promise<{
@@ -31,29 +28,7 @@ export default async function ChannelPage({ params }: ChannelPageProps) {
 
 	return (
 		<div className="bg-[#141417]/60 backdrop-blur-xl border border-white/5 rounded-3xl shadow-2xl flex flex-col h-full overflow-hidden w-full relative z-0">
-			{/* 1. Header */}
-			<ChatHeader serverId={serverId} channel={channel} member={member} />
-			{/* 2. ✅ PINNED MESSAGE BAR */}
-			<ChatPinnedMessage channelId={channel.id} />
-			{/* 2. Messages */}
-			<ChatMessages
-				serverId={serverId}
-				member={member}
-				name={channel.name}
-				channelId={channel.id}
-				type="channel"
-				apiUrl="/api/messages"
-				socketUrl="/api/socket/messages"
-				socketQuery={{
-					channelId: channel.id,
-					serverId: serverId,
-				}}
-				paramKey="channelId"
-				paramValue={channel.id}
-			/>
-
-			{/* 3. Input */}
-			<ChatInput name={channel.name} channelId={channel.id} placeholder="Type..." member={member} />
+			<ChatWrapper channel={channel} member={member} serverId={serverId} />
 		</div>
 	);
 }
