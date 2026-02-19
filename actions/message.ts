@@ -6,7 +6,7 @@ import { MessageEvent } from "@/lib/events";
 import prisma from "@/lib/prisma";
 import { pusherServer } from "@/lib/pusher";
 import { actionClientWithProfile } from "@/lib/safe-action";
-import { CreateMessageSchema, DeleteMessageSchema, EditMessageSchema, GetMessageInputSchema, GetPinMessageSchema, PinMessageSchema } from "@/schemas/message";
+import { CreateMessageSchema, DeleteMessageSchema, EditMessageSchema, GetMessageInputSchema, GetPinMessageSchema, PinMessageSchema, SearchMessagesSchema } from "@/schemas/message";
 
 // ============================= SEND MESSAGE ======================================
 
@@ -189,9 +189,9 @@ export const getMessagesAction = actionClientWithProfile
 		};
 	});
 
-// ✅ Helper: Load messages around a target
+// ✅ Helper function: Load messages around a specific message
 async function getMessagesAroundTarget({ channelId, targetMessageId, pageSize }: { channelId: string; targetMessageId: string; pageSize: number }) {
-	// 1. Find the target message
+	// 1. Find the target message to get its timestamp
 	const targetMessage = await prisma.message.findUnique({
 		where: { id: targetMessageId },
 		select: { createdAt: true, id: true },
@@ -203,7 +203,7 @@ async function getMessagesAroundTarget({ channelId, targetMessageId, pageSize }:
 
 	const halfPage = Math.floor(pageSize / 2);
 
-	// 2. Get messages BEFORE target (older)
+	// 2. Get messages BEFORE target (older messages)
 	const messagesBefore = await prisma.message.findMany({
 		where: {
 			channelId,
@@ -235,7 +235,7 @@ async function getMessagesAroundTarget({ channelId, targetMessageId, pageSize }:
 		take: halfPage,
 	});
 
-	// 3. Get the target message itself
+	// 3. Get the target message itself with full details
 	const targetWithDetails = await prisma.message.findUnique({
 		where: { id: targetMessageId },
 		include: {
@@ -257,7 +257,7 @@ async function getMessagesAroundTarget({ channelId, targetMessageId, pageSize }:
 		},
 	});
 
-	// 4. Get messages AFTER target (newer)
+	// 4. Get messages AFTER target (newer messages)
 	const messagesAfter = await prisma.message.findMany({
 		where: {
 			channelId,
@@ -284,23 +284,26 @@ async function getMessagesAroundTarget({ channelId, targetMessageId, pageSize }:
 			},
 		},
 		orderBy: {
-			createdAt: "asc", // ✅ ASC for newer messages
+			createdAt: "asc", // ✅ ASC to get chronological order
 		},
 		take: halfPage,
 	});
 
-	// 5. Combine: [older...target...newer]
+	// 5. Combine: [older...target...newer] then reverse for DESC order
 	const allMessages = [
-		...messagesBefore.reverse(), // Reverse to get chronological order
+		...messagesBefore.reverse(), // Oldest to newest
 		targetWithDetails!,
-		...messagesAfter,
+		...messagesAfter, // Already oldest to newest
 	];
+
+	// Return in DESC order (newest first) to match existing pattern
+	const messagesInDescOrder = allMessages.reverse();
 
 	return {
 		success: true,
-		messages: allMessages.reverse(), // Return in DESC order (newest first) for consistency
+		messages: messagesInDescOrder,
 		nextCursor: messagesBefore.length > 0 ? messagesBefore[messagesBefore.length - 1].createdAt : undefined,
-		targetMessageId, // ✅ Return this so frontend knows to scroll to it
+		targetMessageId, // ✅ Return target ID so frontend knows to scroll to it
 	};
 }
 
@@ -458,7 +461,7 @@ export const pinMessageAction = actionClientWithProfile
 	.metadata({ actionName: "pin-message-action" })
 	.inputSchema(PinMessageSchema)
 	.action(async ({ ctx, parsedInput }) => {
-		const { messageId, memberId } = parsedInput;
+		const { messageId } = parsedInput;
 
 		// 1. Fetch message + member relations to check permissions
 		const message = await prisma.message.findUnique({
@@ -482,7 +485,6 @@ export const pinMessageAction = actionClientWithProfile
 			where: {
 				serverId: message.channel.serverId,
 				profileId: ctx.profile.id,
-				id: memberId,
 			},
 		});
 
@@ -563,4 +565,30 @@ export const getPinnedMessageAction = actionClientWithProfile
 			console.error("[Get-Pin-Message-Action] Error", e);
 			throw ERRORS.INTERNAL_SERVER_ERROR;
 		}
+	});
+
+// ============================= SEARCH MESSAGES ======================================
+export const searchMessagesAction = actionClientWithProfile
+	.metadata({ actionName: "search-messages-action" })
+	.inputSchema(SearchMessagesSchema)
+	.action(async ({ parsedInput }) => {
+		const { channelId, query } = parsedInput;
+
+		const messages = await prisma.message.findMany({
+			where: {
+				channelId,
+				content: {
+					contains: query,
+					mode: "insensitive",
+				},
+				deleted: false,
+			},
+			include: {
+				member: { include: { profile: true } },
+			},
+			orderBy: { createdAt: "desc" },
+			take: 20,
+		});
+
+		return { success: true, messages };
 	});
