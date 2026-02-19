@@ -160,7 +160,7 @@ export type RemoveReactionInput = z.infer<typeof RemoveReactionSchema>;
 
 export const PinMessageSchema = z.object({
 	messageId: z.uuid(),
-	memberId: z.uuid(),
+	// memberId: z.uuid(),
 });
 
 export type PinMessageInput = z.infer<typeof PinMessageSchema>;
@@ -170,3 +170,7 @@ export const GetPinMessageSchema = z.object({
 });
 
 export type GetPinMessageInput = z.infer<typeof GetPinMessageSchema>;
+
+export const SearchMessagesSchema = z.object({ channelId: z.uuid(), query: z.string() });
+
+export type SearchMessagesInput = z.infer<typeof SearchMessagesSchema>;
