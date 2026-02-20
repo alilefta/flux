@@ -96,11 +96,6 @@ export const ChatMessages = memo(
 
 		const { data, isLoading, error, fetchNextPage, hasNextPage, isFetchingNextPage } = useChatQuery(queryProps);
 
-		// for logging and debugging only!
-		useEffect(() => {
-			console.log("jump mode: changed ", jumpMode);
-		}, [jumpMode]);
-
 		const messages = useMemo(() => {
 			return data?.pages.flat().reverse() || [];
 		}, [data]);
@@ -160,6 +155,35 @@ export const ChatMessages = memo(
 			jumpToMessage,
 		}));
 
+		// ✅ Handle switching back to Live Mode
+		const returnToPresent = useCallback(() => {
+			// 1. Switch state back to Chronological
+			setJumpMode({ active: false });
+
+			// 2. Cancel any background fetching for the jump query
+			// This stops network requests if the user clicks "Return" quickly
+			queryClient.cancelQueries({
+				queryKey: ["messages", channelId, "jump"],
+			});
+
+			// 3. Remove the Jump Cache (Optional, but keeps memory clean)
+			// We don't need to cache every random jump forever
+			queryClient.removeQueries({
+				queryKey: ["messages", channelId, "jump"],
+			});
+
+			// 4. Force scroll to bottom to re-orient the user
+			// We use a timeout to let the "Chronological" data render first
+			setTimeout(() => {
+				if (bottomRef.current) {
+					bottomRef.current.scrollIntoView({ behavior: "smooth" });
+					setNewMessageCount(0); // Clear unread badge
+				}
+			}, 100);
+
+			toast.info("Returned to latest messages");
+		}, [channelId, queryClient]);
+
 		// ✅ After jump data loads, scroll to target
 		useEffect(() => {
 			if (!jumpMode.active || !jumpMode.targetMessageId || messages.length === 0) {
@@ -183,10 +207,10 @@ export const ChatMessages = memo(
 
 					toast.success("Found message!");
 
-					// Reset jump mode
-					setTimeout(() => {
-						setJumpMode({ active: false });
-					}, 500);
+					// // Reset jump mode
+					// setTimeout(() => {
+					// 	setJumpMode({ active: false });
+					// }, 500);
 				}, 100);
 			}
 		}, [jumpMode, messages.length]); // ✅ Only depend on length, not full array
@@ -231,10 +255,10 @@ export const ChatMessages = memo(
 
 		// ✅ Pusher Subscription Effect
 		useEffect(() => {
-			if (jumpMode.active) {
-				console.log("⏸️ Pusher disabled (jump mode)");
-				return;
-			}
+			// if (jumpMode.active) {
+			// 	console.log("⏸️ Pusher disabled (jump mode)");
+			// 	return;
+			// }
 			console.log("📡 Pusher subscribed");
 
 			// Subscribe to channel
@@ -242,6 +266,12 @@ export const ChatMessages = memo(
 			const channel = pusherClient.subscribe(channelName);
 
 			const handleNewMessage = (newMessage: ChannelMessage & { optimisticClientId?: string }) => {
+				// ✅ 1. If in Jump Mode, just notify and exit
+				if (jumpMode.active) {
+					setNewMessageCount((prev) => prev + 1);
+					return;
+				}
+
 				// Update query cache with new message
 				console.log("🔔 Pusher NEW:", {
 					messageId: newMessage.id,
@@ -433,12 +463,17 @@ export const ChatMessages = memo(
 
 				if (atBottom) {
 					setNewMessageCount(0);
+
+					// ✅ AUTO-EXIT: If user hits bottom in Jump Mode, go back to live
+					if (jumpMode.active) {
+						returnToPresent();
+					}
 				}
 			};
 
 			chatContainer.addEventListener("scroll", handleScroll);
 			return () => chatContainer.removeEventListener("scroll", handleScroll);
-		}, []);
+		}, [jumpMode.active, returnToPresent]);
 
 		// ✅ Initial scroll to bottom (ONCE) - only in chronological mode
 		useLayoutEffect(() => {
@@ -467,17 +502,20 @@ export const ChatMessages = memo(
 		// ✅ 2. RESTORE POSITION AFTER FETCH
 		// When fetch finishes and data updates, calculate difference and adjust scroll
 		useLayoutEffect(() => {
-			if (!isFetchingNextPage && chatRef.current && prevScrollHeightRef.current > 0) {
-				const chatContainer = chatRef.current;
+			const chatContainer = chatRef.current;
+
+			// Run only when fetch is done, we have a previous height, and data exists
+			if (!isFetchingNextPage && chatContainer && prevScrollHeightRef.current > 0) {
 				const currentScrollHeight = chatContainer.scrollHeight;
 				const heightDifference = currentScrollHeight - prevScrollHeightRef.current;
 
-				// If the content grew (new messages added at top), push scroll down by that amount
+				// Only adjust if content grew (prepended)
 				if (heightDifference > 0) {
+					// Jump instantly to the new position to maintain visual stability
 					chatContainer.scrollTop = heightDifference;
 				}
 
-				// Reset
+				// Reset ref to prevent double corrections
 				prevScrollHeightRef.current = 0;
 			}
 		}, [isFetchingNextPage, data]);
@@ -495,7 +533,16 @@ export const ChatMessages = memo(
 		}
 
 		return (
-			<div ref={chatRef} className="flex-1 flex flex-col py-4 overflow-y-auto no-scrollbar relative">
+			<div ref={chatRef} className="flex-1 flex flex-col py-4 overflow-y-auto  no-scrollbar relative">
+				{/* ✅ VISUAL INDICATOR: Jump Mode Banner */}
+				{jumpMode.active && (
+					<div className="fixed top-28 left-1/2 -translate-x-1/2 z-20 bg-[#1e1e22] border border-white/10 px-4 py-2 rounded-full shadow-xl flex items-center gap-3 animate-in slide-in-from-top-2 fade-in">
+						<span className="text-xs text-zinc-400">Viewing message history</span>
+						<button onClick={returnToPresent} className="text-xs font-bold text-indigo-400 hover:text-indigo-300 hover:underline">
+							Jump to present
+						</button>
+					</div>
+				)}
 				{/* ✅ Divider - ONLY if welcome message shown */}
 				{!hasNextPage && <div className="w-full h-px bg-white/5 my-2 mx-6" />}
 

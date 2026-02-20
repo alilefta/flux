@@ -1,7 +1,6 @@
 "use client";
 
 import { useInfiniteQuery } from "@tanstack/react-query";
-import { useAction } from "next-safe-action/hooks";
 import { getMessagesAction } from "@/actions/message";
 import { toast } from "sonner";
 import { InferSafeActionFnResult } from "next-safe-action";
@@ -17,13 +16,6 @@ type GetMessagesResults = InferSafeActionFnResult<typeof getMessagesAction>;
 
 export function useChatQuery({ channelId, serverId, mode = "chronological", targetMessageId }: UseChatQueryProps) {
 	console.log("useChatQuery requested!");
-
-	const { executeAsync: getMessages } = useAction(getMessagesAction, {
-		onSuccess() {},
-		onError(e) {
-			handleActionError(e.error);
-		},
-	});
 
 	const handleActionError = (error: { serverError?: GetMessagesResults["serverError"]; validationErrors?: GetMessagesResults["validationErrors"] }) => {
 		if (error.validationErrors) {
@@ -45,14 +37,20 @@ export function useChatQuery({ channelId, serverId, mode = "chronological", targ
 		queryFn: async ({ pageParam }) => {
 			console.log("📡 Fetching messages:", { mode, targetMessageId, cursor: pageParam });
 
-			const result: GetMessagesResults = await getMessages({
+			const result: GetMessagesResults = await getMessagesAction({
 				channelId,
 				serverId,
 				cursor: pageParam,
 				mode,
 				targetMessageId,
 			});
-			if (!result?.data?.success) throw new Error(result?.serverError || "Failed");
+			if (!result?.data?.success) {
+				handleActionError({
+					serverError: result.serverError,
+					validationErrors: result.validationErrors,
+				});
+				throw new Error(result?.serverError || "Failed");
+			}
 
 			return result.data.messages;
 		},
@@ -63,10 +61,9 @@ export function useChatQuery({ channelId, serverId, mode = "chronological", targ
 			const oldestMessage = lastPage[lastPage.length - 1];
 			return oldestMessage.createdAt;
 		},
-		notifyOnChangeProps: ["data", "error", "isLoading"], // ✅ Ignore other state changes
-		// ✅ Don't auto-refetch jump queries
+		notifyOnChangeProps: ["data", "error", "isLoading"],
 		refetchOnMount: mode === "chronological",
 		refetchOnWindowFocus: mode === "chronological",
-		staleTime: mode === "around" ? Infinity : 0, // Jump data never stale
+		staleTime: mode === "around" ? Infinity : 0,
 	});
 }

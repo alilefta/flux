@@ -253,6 +253,10 @@ body {
 	.animate-flash {
 		animation: flash 1s ease-in-out;
 	}
+
+	.overflow-anchor-none {
+		overflow-anchor: none;
+	}
 }
 
 @keyframes flash {

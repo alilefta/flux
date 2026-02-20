@@ -19,14 +19,13 @@ export const ChatPinnedMessage = memo(
 		console.log("🔄 ChatPinnedMessage rendered");
 
 		const queryClient = useQueryClient();
-		const { executeAsync: getPinned } = useAction(getPinnedMessageAction);
 		const [isVisible, setIsVisible] = useState(true);
 
 		// 1. Fetch initial pinned message
 		const { data: message, isLoading } = useQuery({
 			queryKey: ["pinned-message", channelId],
 			queryFn: async () => {
-				const res = await getPinned({ channelId });
+				const res = await getPinnedMessageAction({ channelId });
 				return res?.data?.message || null;
 			},
 			staleTime: 30000,
