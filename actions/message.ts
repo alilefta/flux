@@ -585,6 +585,7 @@ export const searchMessagesAction = actionClientWithProfile
 			},
 			include: {
 				member: { include: { profile: true } },
+				attachments: true,
 			},
 			orderBy: { createdAt: "desc" },
 			take: 20,
