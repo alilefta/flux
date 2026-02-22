@@ -1,9 +1,11 @@
 // /schemas/message.ts
 
-import { MessageModelSchema, FileAttachmentModelSchema } from "@/prisma/generated/schemas";
+import { MessageModelSchema } from "@/prisma/generated/schemas";
 import z from "zod";
 import { ProfileBaseSchema } from "./profile";
 import { MemberBaseSchema } from "./member";
+import { FileAttachmentSchema, FileUploadSchema } from "./file-attachement.base";
+import { MessageReactionSchema } from "./message-reaction.base";
 
 // ============================= BASE SCHEMAS ======================================
 export const MessageBaseSchema = MessageModelSchema.omit({
@@ -17,24 +19,7 @@ export const MessageBaseSchema = MessageModelSchema.omit({
 
 export type MessageBase = z.infer<typeof MessageBaseSchema>;
 
-//  File Attachment Schema
-export const FileAttachmentSchema = FileAttachmentModelSchema.omit({
-	message: true,
-});
-
-export type FileAttachment = z.infer<typeof FileAttachmentSchema>;
-
 // ============================= DTOs ======================================
-
-export const MessageReactionSchema = z.object({
-	id: z.uuid(),
-	emoji: z.string().min(1),
-	messageId: z.uuid(),
-	profileId: z.uuid(),
-	createdAt: z.date(),
-});
-
-export type MessageReaction = z.infer<typeof MessageReactionSchema>;
 
 export const ReplyMessageDTO = MessageBaseSchema.extend({
 	member: MemberBaseSchema.extend({
@@ -84,15 +69,6 @@ export const MessagePreviewDTO = MessageBaseSchema.pick({
 export type MessagePreview = z.infer<typeof MessagePreviewDTO>;
 
 // ============================= INPUT SCHEMAS ======================================
-
-export const FileUploadSchema = z.object({
-	url: z.url(),
-	name: z.string().min(1),
-	type: z.string().min(1),
-	size: z.number().positive().optional(),
-});
-
-export type FileUploadInput = z.infer<typeof FileUploadSchema>;
 
 export const CreateMessageSchema = z
 	.object({

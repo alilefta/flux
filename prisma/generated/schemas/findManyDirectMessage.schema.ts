@@ -19,8 +19,15 @@ export const DirectMessageFindManySelectSchema: z.ZodType<Prisma.DirectMessageSe
     conversation: z.boolean().optional(),
     deleted: z.boolean().optional(),
     edited: z.boolean().optional(),
+    pinned: z.boolean().optional(),
+    attachments: z.boolean().optional(),
+    reactions: z.boolean().optional(),
+    replyToId: z.boolean().optional(),
+    replyTo: z.boolean().optional(),
+    replies: z.boolean().optional(),
     createdAt: z.boolean().optional(),
-    updatedAt: z.boolean().optional()
+    updatedAt: z.boolean().optional(),
+    _count: z.boolean().optional()
   }).strict() as unknown as z.ZodType<Prisma.DirectMessageSelect>;
 
 export const DirectMessageFindManySelectZodSchema = z.object({
@@ -33,8 +40,15 @@ export const DirectMessageFindManySelectZodSchema = z.object({
     conversation: z.boolean().optional(),
     deleted: z.boolean().optional(),
     edited: z.boolean().optional(),
+    pinned: z.boolean().optional(),
+    attachments: z.boolean().optional(),
+    reactions: z.boolean().optional(),
+    replyToId: z.boolean().optional(),
+    replyTo: z.boolean().optional(),
+    replies: z.boolean().optional(),
     createdAt: z.boolean().optional(),
-    updatedAt: z.boolean().optional()
+    updatedAt: z.boolean().optional(),
+    _count: z.boolean().optional()
   }).strict();
 
 export const DirectMessageFindManySchema: z.ZodType<Prisma.DirectMessageFindManyArgs> = z.object({ select: DirectMessageFindManySelectSchema.optional(), include: z.lazy(() => DirectMessageIncludeObjectSchema.optional()), orderBy: z.union([DirectMessageOrderByWithRelationInputObjectSchema, DirectMessageOrderByWithRelationInputObjectSchema.array()]).optional(), where: DirectMessageWhereInputObjectSchema.optional(), cursor: DirectMessageWhereUniqueInputObjectSchema.optional(), take: z.number().optional(), skip: z.number().optional(), distinct: z.union([DirectMessageScalarFieldEnumSchema, DirectMessageScalarFieldEnumSchema.array()]).optional() }).strict() as unknown as z.ZodType<Prisma.DirectMessageFindManyArgs>;

@@ -17,6 +17,8 @@ export const FileAttachmentFindFirstSelectSchema: z.ZodType<Prisma.FileAttachmen
     size: z.boolean().optional(),
     messageId: z.boolean().optional(),
     message: z.boolean().optional(),
+    directMessageId: z.boolean().optional(),
+    directMessage: z.boolean().optional(),
     createdAt: z.boolean().optional()
   }).strict() as unknown as z.ZodType<Prisma.FileAttachmentSelect>;
 
@@ -28,6 +30,8 @@ export const FileAttachmentFindFirstSelectZodSchema = z.object({
     size: z.boolean().optional(),
     messageId: z.boolean().optional(),
     message: z.boolean().optional(),
+    directMessageId: z.boolean().optional(),
+    directMessage: z.boolean().optional(),
     createdAt: z.boolean().optional()
   }).strict();
 

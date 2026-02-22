@@ -6,6 +6,7 @@ export const FileAttachmentGroupByResultSchema = z.array(z.object({
   type: z.string(),
   size: z.number().int(),
   messageId: z.string(),
+  directMessageId: z.string(),
   createdAt: z.date(),
   _count: z.object({
     id: z.number(),
@@ -15,6 +16,8 @@ export const FileAttachmentGroupByResultSchema = z.array(z.object({
     size: z.number(),
     messageId: z.number(),
     message: z.number(),
+    directMessageId: z.number(),
+    directMessage: z.number(),
     createdAt: z.number()
   }).optional(),
   _sum: z.object({
@@ -30,6 +33,7 @@ export const FileAttachmentGroupByResultSchema = z.array(z.object({
     type: z.string().nullable(),
     size: z.number().int().nullable(),
     messageId: z.string().nullable(),
+    directMessageId: z.string().nullable(),
     createdAt: z.date().nullable()
   }).nullable().optional(),
   _max: z.object({
@@ -39,6 +43,7 @@ export const FileAttachmentGroupByResultSchema = z.array(z.object({
     type: z.string().nullable(),
     size: z.number().int().nullable(),
     messageId: z.string().nullable(),
+    directMessageId: z.string().nullable(),
     createdAt: z.date().nullable()
   }).nullable().optional()
 }));

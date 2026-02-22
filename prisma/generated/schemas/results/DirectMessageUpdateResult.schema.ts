@@ -9,6 +9,12 @@ export const DirectMessageUpdateResultSchema = z.nullable(z.object({
   conversation: z.unknown(),
   deleted: z.boolean(),
   edited: z.boolean(),
+  pinned: z.boolean(),
+  attachments: z.array(z.unknown()),
+  reactions: z.array(z.unknown()),
+  replyToId: z.string().optional(),
+  replyTo: z.unknown().optional(),
+  replies: z.array(z.unknown()),
   createdAt: z.date(),
   updatedAt: z.date()
 }));

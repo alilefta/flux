@@ -14,6 +14,8 @@ export const MessageReactionFindFirstOrThrowSelectSchema: z.ZodType<Prisma.Messa
     emoji: z.boolean().optional(),
     messageId: z.boolean().optional(),
     message: z.boolean().optional(),
+    directMessageId: z.boolean().optional(),
+    directMessage: z.boolean().optional(),
     memberId: z.boolean().optional(),
     profileId: z.boolean().optional(),
     createdAt: z.boolean().optional()
@@ -24,6 +26,8 @@ export const MessageReactionFindFirstOrThrowSelectZodSchema = z.object({
     emoji: z.boolean().optional(),
     messageId: z.boolean().optional(),
     message: z.boolean().optional(),
+    directMessageId: z.boolean().optional(),
+    directMessage: z.boolean().optional(),
     memberId: z.boolean().optional(),
     profileId: z.boolean().optional(),
     createdAt: z.boolean().optional()

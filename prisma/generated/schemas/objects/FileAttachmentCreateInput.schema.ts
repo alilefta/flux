@@ -1,6 +1,7 @@
 import * as z from 'zod';
 import type { Prisma } from '../../../../generated/prisma/client';
-import { MessageCreateNestedOneWithoutAttachmentsInputObjectSchema as MessageCreateNestedOneWithoutAttachmentsInputObjectSchema } from './MessageCreateNestedOneWithoutAttachmentsInput.schema'
+import { MessageCreateNestedOneWithoutAttachmentsInputObjectSchema as MessageCreateNestedOneWithoutAttachmentsInputObjectSchema } from './MessageCreateNestedOneWithoutAttachmentsInput.schema';
+import { DirectMessageCreateNestedOneWithoutAttachmentsInputObjectSchema as DirectMessageCreateNestedOneWithoutAttachmentsInputObjectSchema } from './DirectMessageCreateNestedOneWithoutAttachmentsInput.schema'
 
 const makeSchema = () => z.object({
   id: z.string().optional(),
@@ -9,7 +10,8 @@ const makeSchema = () => z.object({
   type: z.string(),
   size: z.number().int().optional().nullable(),
   createdAt: z.coerce.date().optional(),
-  message: z.lazy(() => MessageCreateNestedOneWithoutAttachmentsInputObjectSchema)
+  message: z.lazy(() => MessageCreateNestedOneWithoutAttachmentsInputObjectSchema),
+  directMessage: z.lazy(() => DirectMessageCreateNestedOneWithoutAttachmentsInputObjectSchema).optional()
 }).strict();
 export const FileAttachmentCreateInputObjectSchema: z.ZodType<Prisma.FileAttachmentCreateInput> = makeSchema() as unknown as z.ZodType<Prisma.FileAttachmentCreateInput>;
 export const FileAttachmentCreateInputObjectZodSchema = makeSchema();

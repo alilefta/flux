@@ -6,6 +6,7 @@ const makeSchema = () => z.object({
   id: SortOrderSchema.optional(),
   emoji: SortOrderSchema.optional(),
   messageId: SortOrderSchema.optional(),
+  directMessageId: SortOrderSchema.optional(),
   memberId: SortOrderSchema.optional(),
   profileId: SortOrderSchema.optional(),
   createdAt: SortOrderSchema.optional()

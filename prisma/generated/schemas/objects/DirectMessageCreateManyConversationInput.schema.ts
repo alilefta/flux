@@ -9,6 +9,8 @@ const makeSchema = () => z.object({
   memberId: z.string(),
   deleted: z.boolean().optional(),
   edited: z.boolean().optional(),
+  pinned: z.boolean().optional(),
+  replyToId: z.string().optional().nullable(),
   createdAt: z.coerce.date().optional(),
   updatedAt: z.coerce.date().optional()
 }).strict();

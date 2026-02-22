@@ -9,6 +9,7 @@ const makeSchema = () => z.object({
   type: z.literal(true).optional(),
   size: z.literal(true).optional(),
   messageId: z.literal(true).optional(),
+  directMessageId: z.literal(true).optional(),
   createdAt: z.literal(true).optional(),
   _all: z.literal(true).optional()
 }).strict();

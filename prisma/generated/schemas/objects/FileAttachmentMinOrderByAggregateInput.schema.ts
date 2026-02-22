@@ -9,6 +9,7 @@ const makeSchema = () => z.object({
   type: SortOrderSchema.optional(),
   size: SortOrderSchema.optional(),
   messageId: SortOrderSchema.optional(),
+  directMessageId: SortOrderSchema.optional(),
   createdAt: SortOrderSchema.optional()
 }).strict();
 export const FileAttachmentMinOrderByAggregateInputObjectSchema: z.ZodType<Prisma.FileAttachmentMinOrderByAggregateInput> = makeSchema() as unknown as z.ZodType<Prisma.FileAttachmentMinOrderByAggregateInput>;

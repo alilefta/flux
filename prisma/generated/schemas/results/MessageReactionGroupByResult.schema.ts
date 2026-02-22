@@ -3,6 +3,7 @@ export const MessageReactionGroupByResultSchema = z.array(z.object({
   id: z.string(),
   emoji: z.string(),
   messageId: z.string(),
+  directMessageId: z.string(),
   memberId: z.string(),
   profileId: z.string(),
   createdAt: z.date(),
@@ -11,6 +12,8 @@ export const MessageReactionGroupByResultSchema = z.array(z.object({
     emoji: z.number(),
     messageId: z.number(),
     message: z.number(),
+    directMessageId: z.number(),
+    directMessage: z.number(),
     memberId: z.number(),
     profileId: z.number(),
     createdAt: z.number()
@@ -19,6 +22,7 @@ export const MessageReactionGroupByResultSchema = z.array(z.object({
     id: z.string().nullable(),
     emoji: z.string().nullable(),
     messageId: z.string().nullable(),
+    directMessageId: z.string().nullable(),
     memberId: z.string().nullable(),
     profileId: z.string().nullable(),
     createdAt: z.date().nullable()
@@ -27,6 +31,7 @@ export const MessageReactionGroupByResultSchema = z.array(z.object({
     id: z.string().nullable(),
     emoji: z.string().nullable(),
     messageId: z.string().nullable(),
+    directMessageId: z.string().nullable(),
     memberId: z.string().nullable(),
     profileId: z.string().nullable(),
     createdAt: z.date().nullable()

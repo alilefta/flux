@@ -15,6 +15,7 @@ const makeSchema = () => z.object({
   type: SortOrderSchema.optional(),
   size: z.union([SortOrderSchema, z.lazy(() => SortOrderInputObjectSchema)]).optional(),
   messageId: SortOrderSchema.optional(),
+  directMessageId: z.union([SortOrderSchema, z.lazy(() => SortOrderInputObjectSchema)]).optional(),
   createdAt: SortOrderSchema.optional(),
   _count: z.lazy(() => FileAttachmentCountOrderByAggregateInputObjectSchema).optional(),
   _avg: z.lazy(() => FileAttachmentAvgOrderByAggregateInputObjectSchema).optional(),

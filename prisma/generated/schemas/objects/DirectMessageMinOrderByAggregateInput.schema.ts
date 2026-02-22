@@ -10,6 +10,8 @@ const makeSchema = () => z.object({
   conversationId: SortOrderSchema.optional(),
   deleted: SortOrderSchema.optional(),
   edited: SortOrderSchema.optional(),
+  pinned: SortOrderSchema.optional(),
+  replyToId: SortOrderSchema.optional(),
   createdAt: SortOrderSchema.optional(),
   updatedAt: SortOrderSchema.optional()
 }).strict();

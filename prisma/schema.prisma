@@ -216,12 +216,19 @@ model FileAttachment {
   type String // image, pdf, video, text, code, etc.
   size Int?
 
-  messageId String
-  message   Message @relation(fields: [messageId], references: [id], onDelete: Cascade)
+  messageId String?
+  message   Message? @relation(fields: [messageId], references: [id], onDelete: Cascade)
+
+    // ✅ ADD DirectMessage Relation
+  directMessageId String?
+  directMessage   DirectMessage? @relation(fields: [directMessageId], references: [id], onDelete: Cascade)
+
 
   createdAt DateTime @default(now())
 
   @@index([messageId])
+  @@index([directMessageId]) // Add index
+
 }
 
 // 8. MESSAGE REACTION: Emoji reactions (Discord-style)
@@ -232,6 +239,11 @@ model MessageReaction {
   messageId String
   message   Message @relation(fields: [messageId], references: [id], onDelete: Cascade)
 
+    // ✅ ADD DirectMessage Relation
+  directMessageId String?
+  directMessage   DirectMessage? @relation(fields: [directMessageId], references: [id], onDelete: Cascade)
+
+
   memberId String
   // Note: Not using Member relation to allow reactions from any profile
   profileId String // Who reacted
@@ -241,6 +253,8 @@ model MessageReaction {
   @@unique([messageId, profileId, emoji]) // One reaction per emoji per user
   @@index([messageId])
   @@index([profileId])
+  @@index([directMessageId]) // Add index
+
 }
 
 // ============================= DIRECT MESSAGES ======================================
@@ -279,9 +293,17 @@ model DirectMessage {
   // ✅ Message metadata
   deleted Boolean @default(false)
   edited  Boolean @default(false)
+  pinned  Boolean @default(false) // ✅ Pin important messages
 
-  // ✅ Future: Add attachments for DMs too
-  // dmAttachments DMAttachment[]
+
+  // ✅ Add Relations
+  attachments FileAttachment[]
+  reactions   MessageReaction[]
+
+  // Update Reply Relation if you want threading in DMs too
+  replyToId   String?
+  replyTo     DirectMessage?  @relation("ReplyTo", fields: [replyToId], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  replies     DirectMessage[] @relation("ReplyTo")
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt

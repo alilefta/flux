@@ -2,9 +2,12 @@ import * as z from 'zod';
 import type { Prisma } from '../../../../generated/prisma/client';
 import { StringFilterObjectSchema as StringFilterObjectSchema } from './StringFilter.schema';
 import { IntNullableFilterObjectSchema as IntNullableFilterObjectSchema } from './IntNullableFilter.schema';
+import { StringNullableFilterObjectSchema as StringNullableFilterObjectSchema } from './StringNullableFilter.schema';
 import { DateTimeFilterObjectSchema as DateTimeFilterObjectSchema } from './DateTimeFilter.schema';
 import { MessageScalarRelationFilterObjectSchema as MessageScalarRelationFilterObjectSchema } from './MessageScalarRelationFilter.schema';
-import { MessageWhereInputObjectSchema as MessageWhereInputObjectSchema } from './MessageWhereInput.schema'
+import { MessageWhereInputObjectSchema as MessageWhereInputObjectSchema } from './MessageWhereInput.schema';
+import { DirectMessageNullableScalarRelationFilterObjectSchema as DirectMessageNullableScalarRelationFilterObjectSchema } from './DirectMessageNullableScalarRelationFilter.schema';
+import { DirectMessageWhereInputObjectSchema as DirectMessageWhereInputObjectSchema } from './DirectMessageWhereInput.schema'
 
 const fileattachmentwhereinputSchema = z.object({
   AND: z.union([z.lazy(() => FileAttachmentWhereInputObjectSchema), z.lazy(() => FileAttachmentWhereInputObjectSchema).array()]).optional(),
@@ -16,8 +19,10 @@ const fileattachmentwhereinputSchema = z.object({
   type: z.union([z.lazy(() => StringFilterObjectSchema), z.string()]).optional(),
   size: z.union([z.lazy(() => IntNullableFilterObjectSchema), z.number().int()]).optional().nullable(),
   messageId: z.union([z.lazy(() => StringFilterObjectSchema), z.string()]).optional(),
+  directMessageId: z.union([z.lazy(() => StringNullableFilterObjectSchema), z.string()]).optional().nullable(),
   createdAt: z.union([z.lazy(() => DateTimeFilterObjectSchema), z.coerce.date()]).optional(),
-  message: z.union([z.lazy(() => MessageScalarRelationFilterObjectSchema), z.lazy(() => MessageWhereInputObjectSchema)]).optional()
+  message: z.union([z.lazy(() => MessageScalarRelationFilterObjectSchema), z.lazy(() => MessageWhereInputObjectSchema)]).optional(),
+  directMessage: z.union([z.lazy(() => DirectMessageNullableScalarRelationFilterObjectSchema), z.lazy(() => DirectMessageWhereInputObjectSchema)]).optional()
 }).strict();
 export const FileAttachmentWhereInputObjectSchema: z.ZodType<Prisma.FileAttachmentWhereInput> = fileattachmentwhereinputSchema as unknown as z.ZodType<Prisma.FileAttachmentWhereInput>;
 export const FileAttachmentWhereInputObjectZodSchema = fileattachmentwhereinputSchema;

@@ -14,6 +14,8 @@ const makeSchema = () => z.object({
   conversationId: SortOrderSchema.optional(),
   deleted: SortOrderSchema.optional(),
   edited: SortOrderSchema.optional(),
+  pinned: SortOrderSchema.optional(),
+  replyToId: z.union([SortOrderSchema, z.lazy(() => SortOrderInputObjectSchema)]).optional(),
   createdAt: SortOrderSchema.optional(),
   updatedAt: SortOrderSchema.optional(),
   _count: z.lazy(() => DirectMessageCountOrderByAggregateInputObjectSchema).optional(),

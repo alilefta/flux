@@ -8,6 +8,8 @@ export const FileAttachmentResultSchema = z.object({
     size: z.number().int().nullable(),
     messageId: z.string(),
     message: z.unknown(),
+    directMessageId: z.string().nullable(),
+    directMessage: z.unknown().nullable(),
     createdAt: z.date()
 }).strict();
 

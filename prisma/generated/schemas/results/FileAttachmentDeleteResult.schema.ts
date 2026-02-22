@@ -7,5 +7,7 @@ export const FileAttachmentDeleteResultSchema = z.nullable(z.object({
   size: z.number().int().optional(),
   messageId: z.string(),
   message: z.unknown(),
+  directMessageId: z.string().optional(),
+  directMessage: z.unknown().optional(),
   createdAt: z.date()
 }));

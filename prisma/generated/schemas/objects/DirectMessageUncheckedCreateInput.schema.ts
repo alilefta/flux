@@ -1,6 +1,8 @@
 import * as z from 'zod';
 import type { Prisma } from '../../../../generated/prisma/client';
-
+import { FileAttachmentUncheckedCreateNestedManyWithoutDirectMessageInputObjectSchema as FileAttachmentUncheckedCreateNestedManyWithoutDirectMessageInputObjectSchema } from './FileAttachmentUncheckedCreateNestedManyWithoutDirectMessageInput.schema';
+import { MessageReactionUncheckedCreateNestedManyWithoutDirectMessageInputObjectSchema as MessageReactionUncheckedCreateNestedManyWithoutDirectMessageInputObjectSchema } from './MessageReactionUncheckedCreateNestedManyWithoutDirectMessageInput.schema';
+import { DirectMessageUncheckedCreateNestedManyWithoutReplyToInputObjectSchema as DirectMessageUncheckedCreateNestedManyWithoutReplyToInputObjectSchema } from './DirectMessageUncheckedCreateNestedManyWithoutReplyToInput.schema'
 
 const makeSchema = () => z.object({
   id: z.string().optional(),
@@ -10,7 +12,12 @@ const makeSchema = () => z.object({
   conversationId: z.string(),
   deleted: z.boolean().optional(),
   edited: z.boolean().optional(),
-  createdAt: z.coerce.date().optional()
+  pinned: z.boolean().optional(),
+  replyToId: z.string().optional().nullable(),
+  createdAt: z.coerce.date().optional(),
+  attachments: z.lazy(() => FileAttachmentUncheckedCreateNestedManyWithoutDirectMessageInputObjectSchema).optional(),
+  reactions: z.lazy(() => MessageReactionUncheckedCreateNestedManyWithoutDirectMessageInputObjectSchema).optional(),
+  replies: z.lazy(() => DirectMessageUncheckedCreateNestedManyWithoutReplyToInputObjectSchema).optional()
 }).strict();
 export const DirectMessageUncheckedCreateInputObjectSchema: z.ZodType<Prisma.DirectMessageUncheckedCreateInput> = makeSchema() as unknown as z.ZodType<Prisma.DirectMessageUncheckedCreateInput>;
 export const DirectMessageUncheckedCreateInputObjectZodSchema = makeSchema();

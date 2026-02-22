@@ -4,6 +4,8 @@ export const MessageReactionAggregateResultSchema = z.object({  _count: z.object
     emoji: z.number(),
     messageId: z.number(),
     message: z.number(),
+    directMessageId: z.number(),
+    directMessage: z.number(),
     memberId: z.number(),
     profileId: z.number(),
     createdAt: z.number()
@@ -12,6 +14,7 @@ export const MessageReactionAggregateResultSchema = z.object({  _count: z.object
     id: z.string().nullable(),
     emoji: z.string().nullable(),
     messageId: z.string().nullable(),
+    directMessageId: z.string().nullable(),
     memberId: z.string().nullable(),
     profileId: z.string().nullable(),
     createdAt: z.date().nullable()
@@ -20,6 +23,7 @@ export const MessageReactionAggregateResultSchema = z.object({  _count: z.object
     id: z.string().nullable(),
     emoji: z.string().nullable(),
     messageId: z.string().nullable(),
+    directMessageId: z.string().nullable(),
     memberId: z.string().nullable(),
     profileId: z.string().nullable(),
     createdAt: z.date().nullable()

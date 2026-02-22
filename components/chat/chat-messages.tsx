@@ -6,13 +6,14 @@ import { ArrowDown, Hash, Loader2 } from "lucide-react";
 import { MemberProfile } from "@/schemas/member";
 import { forwardRef, Fragment, memo, useCallback, useEffect, useImperativeHandle, useLayoutEffect, useMemo, useRef, useState } from "react";
 import { pusherClient } from "@/lib/pusher-client";
-import { ChannelMessage, MessageReaction } from "@/schemas/message";
+import { ChannelMessage } from "@/schemas/message";
 import { MessageEvent } from "@/lib/events";
 import { ChatDateSeparator } from "./chat-date-seperator";
 import { useChatScroll } from "@/hooks/use-chat-scroll";
 import { useChatQuery } from "@/hooks/use-chat-query";
 import { InfiniteData, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
+import { MessageReaction } from "@/schemas/message-reaction.base";
 
 const DATE_FORMAT = "d MMM yyyy, HH:mm";
 
