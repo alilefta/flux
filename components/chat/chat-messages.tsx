@@ -69,14 +69,17 @@ export const ChatMessages = memo(
 		const chatRef = useRef<HTMLDivElement>(null);
 		const bottomRef = useRef<HTMLDivElement>(null);
 		const topRef = useRef<HTMLDivElement>(null);
+
+		const topMessageIdRef = useRef<string | null>(null); // AnchorId to preserve the current top message Id
+		const hasScrolledRef = useRef(false);
+		const fetchTimeoutRef = useRef<NodeJS.Timeout | null>(null); // Debounced Intersection Observer
+
 		const queryClient = useQueryClient();
 		const [newMessageCount, setNewMessageCount] = useState(0);
 
+		// Use a ref for immediate access inside event listeners
 		const isAtBottomRef = useRef(true);
-		const hasScrolledRef = useRef(false);
-		const prevScrollHeightRef = useRef(0); // ✅ NEW: Ref to store height before fetching
-
-		const fetchTimeoutRef = useRef<NodeJS.Timeout | null>(null); // Debounced Intersection Observer
+		// const prevScrollHeightRef = useRef(0); // ✅ NEW: Ref to store height before fetching
 
 		// ✅ NEW: Jump mode state
 		const [jumpMode, setJumpMode] = useState<{
@@ -108,12 +111,11 @@ export const ChatMessages = memo(
 			count: messages.length, // Trigger initial scroll when messages load
 		});
 
-		// ✅ CRITICAL: Memoize scrollToBottom callback
 		const scrollToBottomCallback = useCallback(() => {
 			return scrollToBottom();
 		}, [scrollToBottom]);
 
-		// ✅ NEW: Jump to message function
+		// Jump to message function
 		const jumpToMessage = useCallback((messageId: string) => {
 			console.log("🎯 jumpToMessage called:", messageId);
 
@@ -121,16 +123,18 @@ export const ChatMessages = memo(
 			const el = document.getElementById(`message-${messageId}`);
 
 			if (el) {
-				console.log("✅ Message found in DOM, scrolling...");
 				el.scrollIntoView({ behavior: "smooth", block: "center" });
 				el.classList.add("animate-flash");
 				setTimeout(() => el.classList.remove("animate-flash"), 1000);
 			} else {
-				console.log("📡 Message not in DOM, fetching with jump mode...");
 				toast.info("Loading message...");
 				setJumpMode({ active: true, targetMessageId: messageId }); // ✅ This triggers re-query
 			}
 		}, []);
+
+		useImperativeHandle(ref, () => ({
+			jumpToMessage,
+		}));
 
 		useEffect(() => {
 			type EventPayload = {
@@ -150,45 +154,31 @@ export const ChatMessages = memo(
 			return () => window.removeEventListener("jump-to-message", handleJump);
 		}, [jumpToMessage]);
 
-		// ✅ Expose jumpToMessage to parent via ref
-		useImperativeHandle(ref, () => ({
-			jumpToMessage,
-		}));
-
-		// ✅ Handle switching back to Live Mode
 		const returnToPresent = useCallback(() => {
 			// 1. Switch state back to Chronological
 			setJumpMode({ active: false });
 
-			// 2. Cancel any background fetching for the jump query
-			// This stops network requests if the user clicks "Return" quickly
 			queryClient.cancelQueries({
 				queryKey: ["messages", channelId, "jump"],
 			});
 
-			// 3. Remove the Jump Cache (Optional, but keeps memory clean)
-			// We don't need to cache every random jump forever
 			queryClient.removeQueries({
 				queryKey: ["messages", channelId, "jump"],
 			});
 
-			// 4. Force scroll to bottom to re-orient the user
-			// We use a timeout to let the "Chronological" data render first
 			setTimeout(() => {
 				if (bottomRef.current) {
 					bottomRef.current.scrollIntoView({ behavior: "smooth" });
-					setNewMessageCount(0); // Clear unread badge
+					setNewMessageCount(0);
 				}
 			}, 100);
 
 			toast.info("Returned to latest messages");
 		}, [channelId, queryClient]);
 
-		// ✅ After jump data loads, scroll to target
+		// --- EFFECTS: Jump Mode Handling ---
 		useEffect(() => {
-			if (!jumpMode.active || !jumpMode.targetMessageId || messages.length === 0) {
-				return;
-			}
+			if (!jumpMode.active || !jumpMode.targetMessageId || messages.length === 0) return;
 
 			console.log("🔍 Jump mode active, looking for message...");
 
@@ -204,61 +194,94 @@ export const ChatMessages = memo(
 					el.scrollIntoView({ behavior: "smooth", block: "center" });
 					el.classList.add("animate-flash");
 					setTimeout(() => el.classList.remove("animate-flash"), 1000);
-
 					toast.success("Found message!");
-
-					// // Reset jump mode
-					// setTimeout(() => {
-					// 	setJumpMode({ active: false });
-					// }, 500);
 				}, 100);
 			}
-		}, [jumpMode, messages.length]); // ✅ Only depend on length, not full array
+		}, [jumpMode, messages.length]);
 
-		// ✅ Intersection Observer for auto-load
+		// --- EFFECTS: Scroll Restoration (Anchor ID Method) ---
+		// 1. Before Fetching: Save the ID of the top-most message
+		useLayoutEffect(() => {
+			if (isFetchingNextPage && messages.length > 0 && !jumpMode.active) {
+				topMessageIdRef.current = messages[0].id;
+			}
+		}, [isFetchingNextPage, messages, jumpMode.active]);
+
+		// 2. After Fetching: Find that message and snap to it
+		useLayoutEffect(() => {
+			if (!isFetchingNextPage && topMessageIdRef.current) {
+				const anchorEl = document.getElementById(`message-${topMessageIdRef.current}`);
+				if (anchorEl) {
+					// 'start' aligns it to top, effectively keeping the view stable
+					anchorEl.scrollIntoView({ block: "start", behavior: "auto" });
+				}
+				topMessageIdRef.current = null;
+			}
+		}, [isFetchingNextPage, messages]);
+
+		// --- EFFECTS: Initial Scroll (Chronological) ---
+		useLayoutEffect(() => {
+			if (jumpMode.active || hasScrolledRef.current || !data?.pages?.length || !bottomRef.current) {
+				return;
+			}
+			bottomRef.current.scrollIntoView({ behavior: "auto" });
+			hasScrolledRef.current = true;
+		}, [data?.pages, jumpMode.active]);
+
+		//  --- EFFECTS: Infinite Scroll Observer ---
 		useEffect(() => {
 			if (!topRef.current || !hasNextPage || jumpMode.active) return;
 
-			const shadowRef = topRef;
-
 			const observer = new IntersectionObserver(
 				(entries) => {
-					const [entry] = entries;
-
-					if (entry.isIntersecting && hasNextPage && !isFetchingNextPage) {
-						if (fetchTimeoutRef.current) {
-							clearTimeout(fetchTimeoutRef.current);
-						}
-
+					if (entries[0].isIntersecting && hasNextPage && !isFetchingNextPage) {
+						if (fetchTimeoutRef.current) clearTimeout(fetchTimeoutRef.current);
 						fetchTimeoutRef.current = setTimeout(() => {
 							fetchNextPage();
-						}, 100); // Reduced to 100ms for snappier feel
+						}, 100);
 					}
 				},
-				{
-					root: chatRef.current,
-					threshold: 1.0,
-				},
+				{ root: chatRef.current, threshold: 1.0 },
 			);
 
 			observer.observe(topRef.current);
 
 			return () => {
-				if (shadowRef.current) {
-					observer.unobserve(shadowRef.current);
-				}
-				if (fetchTimeoutRef.current) {
-					clearTimeout(fetchTimeoutRef.current);
-				}
+				observer.disconnect();
+				if (fetchTimeoutRef.current) clearTimeout(fetchTimeoutRef.current);
 			};
 		}, [hasNextPage, isFetchingNextPage, fetchNextPage, jumpMode.active]);
 
-		// ✅ Pusher Subscription Effect
+		// --- EFFECTS: Scroll Tracking (At Bottom?) ---
 		useEffect(() => {
-			// if (jumpMode.active) {
-			// 	console.log("⏸️ Pusher disabled (jump mode)");
-			// 	return;
-			// }
+			const chatContainer = chatRef.current;
+			if (!chatContainer) return;
+
+			const handleScroll = () => {
+				const { scrollTop, scrollHeight, clientHeight } = chatContainer;
+				const distanceFromBottom = scrollHeight - scrollTop - clientHeight;
+				// Increased buffer to 300px for better UX
+				const atBottom = distanceFromBottom < 100;
+
+				isAtBottomRef.current = atBottom;
+
+				if (atBottom) {
+					setNewMessageCount(0);
+
+					// ✅ AUTO-EXIT: If user hits bottom in Jump Mode, go back to live
+					if (jumpMode.active) {
+						returnToPresent();
+					}
+				}
+			};
+
+			chatContainer.addEventListener("scroll", handleScroll, { passive: true });
+			return () => chatContainer.removeEventListener("scroll", handleScroll);
+		}, [jumpMode.active, returnToPresent]);
+
+		//  --- EFFECTS: Pusher ---
+		useEffect(() => {
+			if (jumpMode.active) return; // Don't sync live messages while jumping
 			console.log("📡 Pusher subscribed");
 
 			// Subscribe to channel
@@ -266,11 +289,11 @@ export const ChatMessages = memo(
 			const channel = pusherClient.subscribe(channelName);
 
 			const handleNewMessage = (newMessage: ChannelMessage & { optimisticClientId?: string }) => {
-				// ✅ 1. If in Jump Mode, just notify and exit
-				if (jumpMode.active) {
-					setNewMessageCount((prev) => prev + 1);
-					return;
-				}
+				// // ✅ 1. If in Jump Mode, just notify and exit
+				// if (jumpMode.active) {
+				// 	setNewMessageCount((prev) => prev + 1);
+				// 	return;
+				// }
 
 				// Update query cache with new message
 				console.log("🔔 Pusher NEW:", {
@@ -439,86 +462,10 @@ export const ChatMessages = memo(
 			// Cleanup on unmount or channel change
 			return () => {
 				console.log("📡 Pusher unsubscribed");
-				channel.unbind(MessageEvent.NEW, handleNewMessage);
-				channel.unbind(MessageEvent.UPDATE, handleMessageUpdate);
-				channel.unbind(MessageEvent.DELETE, handleMessageDelete);
-				channel.unbind(MessageEvent.REACTION_ADD, handleAddReaction);
-				channel.unbind(MessageEvent.REACTION_REMOVE, handleRemoveReaction);
+				channel.unbind_all();
 				pusherClient.unsubscribe(channelName);
 			};
 		}, [channelId, queryClient, jumpMode.active, scrollToBottomCallback]);
-
-		// ✅ Track scroll position
-		useEffect(() => {
-			const chatContainer = chatRef.current;
-			if (!chatContainer) return;
-
-			const handleScroll = () => {
-				const { scrollTop, scrollHeight, clientHeight } = chatContainer;
-				const distanceFromBottom = scrollHeight - scrollTop - clientHeight;
-				// Increased buffer to 300px for better UX
-				const atBottom = distanceFromBottom < 100;
-
-				isAtBottomRef.current = atBottom;
-
-				if (atBottom) {
-					setNewMessageCount(0);
-
-					// ✅ AUTO-EXIT: If user hits bottom in Jump Mode, go back to live
-					if (jumpMode.active) {
-						returnToPresent();
-					}
-				}
-			};
-
-			chatContainer.addEventListener("scroll", handleScroll);
-			return () => chatContainer.removeEventListener("scroll", handleScroll);
-		}, [jumpMode.active, returnToPresent]);
-
-		// ✅ Initial scroll to bottom (ONCE) - only in chronological mode
-		useLayoutEffect(() => {
-			if (
-				jumpMode.active || // ✅ Skip if in jump mode
-				hasScrolledRef.current ||
-				!data?.pages?.length ||
-				!bottomRef.current
-			) {
-				return;
-			}
-
-			console.log("📍 Initial scroll to bottom");
-			bottomRef.current.scrollIntoView({ behavior: "instant" });
-			hasScrolledRef.current = true;
-		}, [data?.pages, jumpMode.active]);
-
-		// ✅ 1. CAPTURE HEIGHT BEFORE FETCH
-		// When we start fetching, save the current scroll height
-		useLayoutEffect(() => {
-			if (isFetchingNextPage && chatRef.current) {
-				prevScrollHeightRef.current = chatRef.current.scrollHeight;
-			}
-		}, [isFetchingNextPage]);
-
-		// ✅ 2. RESTORE POSITION AFTER FETCH
-		// When fetch finishes and data updates, calculate difference and adjust scroll
-		useLayoutEffect(() => {
-			const chatContainer = chatRef.current;
-
-			// Run only when fetch is done, we have a previous height, and data exists
-			if (!isFetchingNextPage && chatContainer && prevScrollHeightRef.current > 0) {
-				const currentScrollHeight = chatContainer.scrollHeight;
-				const heightDifference = currentScrollHeight - prevScrollHeightRef.current;
-
-				// Only adjust if content grew (prepended)
-				if (heightDifference > 0) {
-					// Jump instantly to the new position to maintain visual stability
-					chatContainer.scrollTop = heightDifference;
-				}
-
-				// Reset ref to prevent double corrections
-				prevScrollHeightRef.current = 0;
-			}
-		}, [isFetchingNextPage, data]);
 
 		if (isLoading) {
 			return (
