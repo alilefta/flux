@@ -61,7 +61,7 @@ export function useChatQuery({ channelId, serverId, mode = "chronological", targ
 			const oldestMessage = lastPage[lastPage.length - 1];
 			return oldestMessage.createdAt;
 		},
-		notifyOnChangeProps: ["data", "error", "isLoading"],
+		notifyOnChangeProps: ["data", "error", "isLoading", "isFetchingNextPage"],
 		refetchOnMount: mode === "chronological",
 		refetchOnWindowFocus: mode === "chronological",
 		staleTime: mode === "around" ? Infinity : 0,
