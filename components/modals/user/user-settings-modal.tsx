@@ -79,7 +79,7 @@ export const UserSettingsModal = () => {
 
 	return (
 		<Dialog open={isModalOpen} onOpenChange={onClose}>
-			<DialogContent className="bg-[#09090b] border border-white/10 text-white p-0 overflow-hidden shadow-2xl sm:max-w-4xl h-[600px] gap-0 rounded-2xl flex">
+			<DialogContent className="bg-[#09090b] border border-white/10 text-white p-0 overflow-hidden shadow-2xl sm:max-w-4xl h-150 gap-0 rounded-2xl flex">
 				<DialogHeader className="sr-only">
 					<DialogTitle>{profile.name} Settings</DialogTitle>
 					<DialogDescription>Shows the profile settings for {profile.name}</DialogDescription>
@@ -118,7 +118,7 @@ export const UserSettingsModal = () => {
 									{/* PROFILE BANNER SECTION */}
 									<div className="space-y-6">
 										<h3 className="text-sm font-medium text-zinc-400">Profile Picture</h3>
-										<div className="flex items-center gap-6 p-4 bg-white/[0.02] border border-white/5 rounded-xl">
+										<div className="flex items-center gap-6 p-4 bg-white/2 border border-white/5 rounded-xl">
 											<UserImageUpload name="imageUrl" />
 											<div className="text-sm text-zinc-500">
 												We recommend an image of at least 512x512px. <br />
@@ -149,7 +149,7 @@ export const UserSettingsModal = () => {
 											<Button type="button" variant="ghost" onClick={onClose} className="text-zinc-400 hover:text-white">
 												Cancel
 											</Button>
-											<Button type="submit" disabled={isLoading} className="bg-indigo-600 hover:bg-indigo-700 text-white min-w-[100px]">
+											<Button type="submit" disabled={isLoading} className="bg-indigo-600 hover:bg-indigo-700 text-white min-w-25">
 												{isLoading ? <Loader2 className="animate-spin w-4 h-4" /> : "Save Changes"}
 											</Button>
 										</div>
@@ -171,6 +171,7 @@ export const UserSettingsModal = () => {
 function SidebarItem({ icon: Icon, label, active, onClick }: { icon: LucideIcon; label: string; active: boolean; onClick: () => void }) {
 	return (
 		<button
+			type="button"
 			onClick={onClick}
 			className={cn(
 				"flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-all w-full text-left",
