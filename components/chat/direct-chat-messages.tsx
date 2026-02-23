@@ -14,6 +14,7 @@ import { InfiniteData, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { DirectChatMessage } from "@/schemas/composed/direct-message.details";
 import { MessageReaction } from "@/schemas/message-reaction.base";
+import { MessagesType } from "@/schemas/composed/shared.base";
 
 const DATE_FORMAT = "d MMM yyyy, HH:mm";
 
@@ -35,6 +36,7 @@ export interface ChatMessagesHandle {
 export const ChatMessages = memo(
 	forwardRef<ChatMessagesHandle, ChatMessagesProps>((props, ref) => {
 		const { name, member, channelId, serverId } = props;
+		const type: MessagesType = "conversation";
 
 		// ✅ Track what causes re-renders
 		// useWhyDidYouRender("ChatMessages", props);
@@ -66,8 +68,9 @@ export const ChatMessages = memo(
 				serverId,
 				mode: jumpMode.active ? ("around" as const) : ("chronological" as const),
 				targetMessageId: jumpMode.targetMessageId,
+				type,
 			}),
-			[channelId, serverId, jumpMode.active, jumpMode.targetMessageId],
+			[channelId, serverId, jumpMode, type],
 		);
 
 		const { data, isLoading, error, fetchNextPage, hasNextPage, isFetchingNextPage } = useChatQuery(queryProps);

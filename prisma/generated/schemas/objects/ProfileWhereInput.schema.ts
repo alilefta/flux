@@ -7,7 +7,8 @@ import { ServerListRelationFilterObjectSchema as ServerListRelationFilterObjectS
 import { MemberListRelationFilterObjectSchema as MemberListRelationFilterObjectSchema } from './MemberListRelationFilter.schema';
 import { ChannelListRelationFilterObjectSchema as ChannelListRelationFilterObjectSchema } from './ChannelListRelationFilter.schema';
 import { ConversationListRelationFilterObjectSchema as ConversationListRelationFilterObjectSchema } from './ConversationListRelationFilter.schema';
-import { DirectMessageListRelationFilterObjectSchema as DirectMessageListRelationFilterObjectSchema } from './DirectMessageListRelationFilter.schema'
+import { DirectMessageListRelationFilterObjectSchema as DirectMessageListRelationFilterObjectSchema } from './DirectMessageListRelationFilter.schema';
+import { MessageReactionListRelationFilterObjectSchema as MessageReactionListRelationFilterObjectSchema } from './MessageReactionListRelationFilter.schema'
 
 const profilewhereinputSchema = z.object({
   AND: z.union([z.lazy(() => ProfileWhereInputObjectSchema), z.lazy(() => ProfileWhereInputObjectSchema).array()]).optional(),
@@ -26,7 +27,8 @@ const profilewhereinputSchema = z.object({
   channels: z.lazy(() => ChannelListRelationFilterObjectSchema).optional(),
   conversationsInitiated: z.lazy(() => ConversationListRelationFilterObjectSchema).optional(),
   conversationsReceived: z.lazy(() => ConversationListRelationFilterObjectSchema).optional(),
-  directMessages: z.lazy(() => DirectMessageListRelationFilterObjectSchema).optional()
+  directMessages: z.lazy(() => DirectMessageListRelationFilterObjectSchema).optional(),
+  reactions: z.lazy(() => MessageReactionListRelationFilterObjectSchema).optional()
 }).strict();
 export const ProfileWhereInputObjectSchema: z.ZodType<Prisma.ProfileWhereInput> = profilewhereinputSchema as unknown as z.ZodType<Prisma.ProfileWhereInput>;
 export const ProfileWhereInputObjectZodSchema = profilewhereinputSchema;

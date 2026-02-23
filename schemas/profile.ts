@@ -8,6 +8,7 @@ export const ProfileBaseSchema = ProfileModelSchema.omit({
 	conversationsInitiated: true,
 	conversationsReceived: true,
 	directMessages: true,
+	reactions: true,
 });
 
 export type ProfileBase = z.infer<typeof ProfileBaseSchema>;

@@ -22,6 +22,7 @@ export const ProfileFindFirstOrThrowSelectSchema: z.ZodType<Prisma.ProfileSelect
     conversationsInitiated: z.boolean().optional(),
     conversationsReceived: z.boolean().optional(),
     directMessages: z.boolean().optional(),
+    reactions: z.boolean().optional(),
     createdAt: z.boolean().optional(),
     updatedAt: z.boolean().optional(),
     _count: z.boolean().optional()
@@ -40,6 +41,7 @@ export const ProfileFindFirstOrThrowSelectZodSchema = z.object({
     conversationsInitiated: z.boolean().optional(),
     conversationsReceived: z.boolean().optional(),
     directMessages: z.boolean().optional(),
+    reactions: z.boolean().optional(),
     createdAt: z.boolean().optional(),
     updatedAt: z.boolean().optional(),
     _count: z.boolean().optional()

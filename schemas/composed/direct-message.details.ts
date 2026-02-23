@@ -7,39 +7,6 @@ import { FileAttachmentModelSchema } from "@/prisma/generated/schemas";
 import { MessageReactionSchema } from "../message-reaction.base";
 import { FileUploadSchema } from "../file-attachement.base";
 
-// export const ReplyMessageDTO = MessageBaseSchema.extend({
-// 	member: MemberBaseSchema.extend({
-// 		profile: ProfileBaseSchema.pick({
-// 			id: true,
-// 			name: true,
-// 			imageUrl: true,
-// 			clerkId: true,
-// 			email: true,
-// 			createdAt: true,
-// 			updatedAt: true,
-// 		}),
-// 	}),
-// 	attachments: z.array(FileAttachmentSchema).optional(),
-// });
-
-// full relations
-// export const ChannelMessageDTO = MessageBaseSchema.extend({
-// 	member: MemberBaseSchema.extend({
-// 		profile: ProfileBaseSchema.pick({
-// 			id: true,
-// 			name: true,
-// 			imageUrl: true,
-// 			clerkId: true,
-// 			email: true,
-// 			createdAt: true,
-// 			updatedAt: true,
-// 		}),
-// 	}),
-// 	replyTo: ReplyMessageDTO.nullable().optional(),
-// 	attachments: z.array(FileAttachmentSchema),
-// 	reactions: z.array(MessageReactionSchema).optional(),
-// });
-
 //  File Attachment Schema
 export const FileAttachmentSchema = FileAttachmentModelSchema.omit({
 	directMessage: true,
@@ -53,10 +20,7 @@ export const ReplyDirectMessageDTO = DirectMessageBaseSchema.extend({
 		id: true,
 		name: true,
 		imageUrl: true,
-		clerkId: true,
 		email: true,
-		createdAt: true,
-		updatedAt: true,
 	}),
 	attachments: z.array(FileAttachmentSchema).optional(),
 });
@@ -65,8 +29,10 @@ export type ReplyDirectMessage = z.infer<typeof ReplyDirectMessageDTO>;
 
 export const DirectChatMessageSchema = DirectMessageBaseSchema.extend(
 	z.object({
-		conversation: ConversationBaseSchema,
-		member: MemberBaseSchema,
+		// conversation: ConversationBaseSchema,
+		member: ProfileBaseSchema.omit({
+			bio: true,
+		}),
 		replyTo: ReplyDirectMessageDTO.nullable().optional(),
 		attachments: z.array(FileAttachmentSchema),
 		reactions: z.array(MessageReactionSchema).optional(),

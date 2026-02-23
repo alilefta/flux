@@ -5,8 +5,7 @@ import type { Prisma } from '../../../../generated/prisma/client';
 const makeSchema = () => z.object({
   id: z.string().optional(),
   emoji: z.string(),
-  messageId: z.string(),
-  memberId: z.string(),
+  messageId: z.string().optional().nullable(),
   profileId: z.string(),
   createdAt: z.coerce.date().optional()
 }).strict();

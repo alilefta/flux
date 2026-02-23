@@ -3,12 +3,12 @@ export const MessageReactionFindManyResultSchema = z.object({
   data: z.array(z.object({
   id: z.string(),
   emoji: z.string(),
-  messageId: z.string(),
-  message: z.unknown(),
+  messageId: z.string().optional(),
+  message: z.unknown().optional(),
   directMessageId: z.string().optional(),
   directMessage: z.unknown().optional(),
-  memberId: z.string(),
   profileId: z.string(),
+  profile: z.unknown(),
   createdAt: z.date()
 })),
   pagination: z.object({

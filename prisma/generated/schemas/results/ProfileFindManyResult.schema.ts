@@ -13,6 +13,7 @@ export const ProfileFindManyResultSchema = z.object({
   conversationsInitiated: z.array(z.unknown()),
   conversationsReceived: z.array(z.unknown()),
   directMessages: z.array(z.unknown()),
+  reactions: z.array(z.unknown()),
   createdAt: z.date(),
   updatedAt: z.date()
 })),

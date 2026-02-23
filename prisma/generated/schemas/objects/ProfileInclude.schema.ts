@@ -5,6 +5,7 @@ import { MemberFindManySchema as MemberFindManySchema } from '../findManyMember.
 import { ChannelFindManySchema as ChannelFindManySchema } from '../findManyChannel.schema';
 import { ConversationFindManySchema as ConversationFindManySchema } from '../findManyConversation.schema';
 import { DirectMessageFindManySchema as DirectMessageFindManySchema } from '../findManyDirectMessage.schema';
+import { MessageReactionFindManySchema as MessageReactionFindManySchema } from '../findManyMessageReaction.schema';
 import { ProfileCountOutputTypeArgsObjectSchema as ProfileCountOutputTypeArgsObjectSchema } from './ProfileCountOutputTypeArgs.schema'
 
 const makeSchema = () => z.object({
@@ -14,6 +15,7 @@ const makeSchema = () => z.object({
   conversationsInitiated: z.union([z.boolean(), z.lazy(() => ConversationFindManySchema)]).optional(),
   conversationsReceived: z.union([z.boolean(), z.lazy(() => ConversationFindManySchema)]).optional(),
   directMessages: z.union([z.boolean(), z.lazy(() => DirectMessageFindManySchema)]).optional(),
+  reactions: z.union([z.boolean(), z.lazy(() => MessageReactionFindManySchema)]).optional(),
   _count: z.union([z.boolean(), z.lazy(() => ProfileCountOutputTypeArgsObjectSchema)]).optional()
 }).strict();
 export const ProfileIncludeObjectSchema: z.ZodType<Prisma.ProfileInclude> = makeSchema() as unknown as z.ZodType<Prisma.ProfileInclude>;

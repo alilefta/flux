@@ -3,12 +3,12 @@ import * as z from 'zod';
 export const MessageReactionResultSchema = z.object({
     id: z.string(),
     emoji: z.string(),
-    messageId: z.string(),
-    message: z.unknown(),
+    messageId: z.string().nullable(),
+    message: z.unknown().nullable(),
     directMessageId: z.string().nullable(),
     directMessage: z.unknown().nullable(),
-    memberId: z.string(),
     profileId: z.string(),
+    profile: z.unknown(),
     createdAt: z.date()
 }).strict();
 

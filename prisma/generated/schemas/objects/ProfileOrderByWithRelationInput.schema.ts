@@ -6,7 +6,8 @@ import { ServerOrderByRelationAggregateInputObjectSchema as ServerOrderByRelatio
 import { MemberOrderByRelationAggregateInputObjectSchema as MemberOrderByRelationAggregateInputObjectSchema } from './MemberOrderByRelationAggregateInput.schema';
 import { ChannelOrderByRelationAggregateInputObjectSchema as ChannelOrderByRelationAggregateInputObjectSchema } from './ChannelOrderByRelationAggregateInput.schema';
 import { ConversationOrderByRelationAggregateInputObjectSchema as ConversationOrderByRelationAggregateInputObjectSchema } from './ConversationOrderByRelationAggregateInput.schema';
-import { DirectMessageOrderByRelationAggregateInputObjectSchema as DirectMessageOrderByRelationAggregateInputObjectSchema } from './DirectMessageOrderByRelationAggregateInput.schema'
+import { DirectMessageOrderByRelationAggregateInputObjectSchema as DirectMessageOrderByRelationAggregateInputObjectSchema } from './DirectMessageOrderByRelationAggregateInput.schema';
+import { MessageReactionOrderByRelationAggregateInputObjectSchema as MessageReactionOrderByRelationAggregateInputObjectSchema } from './MessageReactionOrderByRelationAggregateInput.schema'
 
 const makeSchema = () => z.object({
   id: SortOrderSchema.optional(),
@@ -22,7 +23,8 @@ const makeSchema = () => z.object({
   channels: z.lazy(() => ChannelOrderByRelationAggregateInputObjectSchema).optional(),
   conversationsInitiated: z.lazy(() => ConversationOrderByRelationAggregateInputObjectSchema).optional(),
   conversationsReceived: z.lazy(() => ConversationOrderByRelationAggregateInputObjectSchema).optional(),
-  directMessages: z.lazy(() => DirectMessageOrderByRelationAggregateInputObjectSchema).optional()
+  directMessages: z.lazy(() => DirectMessageOrderByRelationAggregateInputObjectSchema).optional(),
+  reactions: z.lazy(() => MessageReactionOrderByRelationAggregateInputObjectSchema).optional()
 }).strict();
 export const ProfileOrderByWithRelationInputObjectSchema: z.ZodType<Prisma.ProfileOrderByWithRelationInput> = makeSchema() as unknown as z.ZodType<Prisma.ProfileOrderByWithRelationInput>;
 export const ProfileOrderByWithRelationInputObjectZodSchema = makeSchema();

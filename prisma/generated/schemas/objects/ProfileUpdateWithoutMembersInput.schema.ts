@@ -7,7 +7,8 @@ import { ServerUpdateManyWithoutProfileNestedInputObjectSchema as ServerUpdateMa
 import { ChannelUpdateManyWithoutProfileNestedInputObjectSchema as ChannelUpdateManyWithoutProfileNestedInputObjectSchema } from './ChannelUpdateManyWithoutProfileNestedInput.schema';
 import { ConversationUpdateManyWithoutMemberOneNestedInputObjectSchema as ConversationUpdateManyWithoutMemberOneNestedInputObjectSchema } from './ConversationUpdateManyWithoutMemberOneNestedInput.schema';
 import { ConversationUpdateManyWithoutMemberTwoNestedInputObjectSchema as ConversationUpdateManyWithoutMemberTwoNestedInputObjectSchema } from './ConversationUpdateManyWithoutMemberTwoNestedInput.schema';
-import { DirectMessageUpdateManyWithoutMemberNestedInputObjectSchema as DirectMessageUpdateManyWithoutMemberNestedInputObjectSchema } from './DirectMessageUpdateManyWithoutMemberNestedInput.schema'
+import { DirectMessageUpdateManyWithoutMemberNestedInputObjectSchema as DirectMessageUpdateManyWithoutMemberNestedInputObjectSchema } from './DirectMessageUpdateManyWithoutMemberNestedInput.schema';
+import { MessageReactionUpdateManyWithoutProfileNestedInputObjectSchema as MessageReactionUpdateManyWithoutProfileNestedInputObjectSchema } from './MessageReactionUpdateManyWithoutProfileNestedInput.schema'
 
 const makeSchema = () => z.object({
   id: z.union([z.string(), z.lazy(() => StringFieldUpdateOperationsInputObjectSchema)]).optional(),
@@ -22,7 +23,8 @@ const makeSchema = () => z.object({
   channels: z.lazy(() => ChannelUpdateManyWithoutProfileNestedInputObjectSchema).optional(),
   conversationsInitiated: z.lazy(() => ConversationUpdateManyWithoutMemberOneNestedInputObjectSchema).optional(),
   conversationsReceived: z.lazy(() => ConversationUpdateManyWithoutMemberTwoNestedInputObjectSchema).optional(),
-  directMessages: z.lazy(() => DirectMessageUpdateManyWithoutMemberNestedInputObjectSchema).optional()
+  directMessages: z.lazy(() => DirectMessageUpdateManyWithoutMemberNestedInputObjectSchema).optional(),
+  reactions: z.lazy(() => MessageReactionUpdateManyWithoutProfileNestedInputObjectSchema).optional()
 }).strict();
 export const ProfileUpdateWithoutMembersInputObjectSchema: z.ZodType<Prisma.ProfileUpdateWithoutMembersInput> = makeSchema() as unknown as z.ZodType<Prisma.ProfileUpdateWithoutMembersInput>;
 export const ProfileUpdateWithoutMembersInputObjectZodSchema = makeSchema();

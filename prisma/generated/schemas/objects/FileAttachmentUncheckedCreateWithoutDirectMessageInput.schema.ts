@@ -8,7 +8,7 @@ const makeSchema = () => z.object({
   name: z.string(),
   type: z.string(),
   size: z.number().int().optional().nullable(),
-  messageId: z.string(),
+  messageId: z.string().optional().nullable(),
   createdAt: z.coerce.date().optional()
 }).strict();
 export const FileAttachmentUncheckedCreateWithoutDirectMessageInputObjectSchema: z.ZodType<Prisma.FileAttachmentUncheckedCreateWithoutDirectMessageInput> = makeSchema() as unknown as z.ZodType<Prisma.FileAttachmentUncheckedCreateWithoutDirectMessageInput>;

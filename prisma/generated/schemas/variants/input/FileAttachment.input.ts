@@ -6,8 +6,8 @@ export const FileAttachmentInputSchema = z.object({
     name: z.string(),
     type: z.string(),
     size: z.number().int().optional().nullable(),
-    messageId: z.string(),
-    message: z.unknown(),
+    messageId: z.string().optional().nullable(),
+    message: z.unknown().optional().nullable(),
     directMessageId: z.string().optional().nullable(),
     directMessage: z.unknown().optional().nullable(),
     createdAt: z.date()

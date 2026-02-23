@@ -10,7 +10,7 @@ const makeSchema = () => z.object({
   type: z.string(),
   size: z.number().int().optional().nullable(),
   createdAt: z.coerce.date().optional(),
-  message: z.lazy(() => MessageCreateNestedOneWithoutAttachmentsInputObjectSchema),
+  message: z.lazy(() => MessageCreateNestedOneWithoutAttachmentsInputObjectSchema).optional(),
   directMessage: z.lazy(() => DirectMessageCreateNestedOneWithoutAttachmentsInputObjectSchema).optional()
 }).strict();
 export const FileAttachmentCreateInputObjectSchema: z.ZodType<Prisma.FileAttachmentCreateInput> = makeSchema() as unknown as z.ZodType<Prisma.FileAttachmentCreateInput>;

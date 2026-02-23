@@ -1,11 +1,15 @@
 "use client";
 
-import { ChannelMessage } from "@/schemas/message";
+import { ReplyMessage } from "@/schemas/message";
 import { UserAvatar } from "../user/user-avatar";
 import { Ban, ImageIcon } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { ReplyDirectMessage } from "@/schemas/composed/direct-message.details";
 
-export function ReplyToMessage({ replyTo, onNavigateToReply }: { replyTo: ChannelMessage; onNavigateToReply: () => void }) {
+type MessageWithReply = ReplyMessage | ReplyDirectMessage;
+
+export function ReplyToMessage({ replyTo, onNavigateToReply }: { replyTo: MessageWithReply; onNavigateToReply: () => void }) {
+	const author = "profile" in replyTo.member ? replyTo.member.profile : replyTo.member;
 	return (
 		<div className="flex items-center gap-2 mb-1 relative">
 			{/* The "Elbow" Line */}
@@ -15,9 +19,9 @@ export function ReplyToMessage({ replyTo, onNavigateToReply }: { replyTo: Channe
 				onClick={replyTo.deleted ? undefined : onNavigateToReply}
 				className={cn("ml-10 flex items-center gap-1.5 cursor-pointer transition-opacity group/reply", replyTo.deleted ? "opacity-50 cursor-not-allowed" : "hover:opacity-80")}
 			>
-				<UserAvatar src={replyTo.member.profile.imageUrl ?? undefined} className="h-4 w-4" />
+				<UserAvatar src={author.imageUrl ?? undefined} className="h-4 w-4" />
 
-				<span className="text-[11px] text-zinc-400 font-bold hover:underline">{replyTo.member.profile.name}</span>
+				<span className="text-[11px] text-zinc-400 font-bold hover:underline">{author.name}</span>
 
 				{/* Smart Content Preview */}
 				<span className="text-[11px] text-zinc-500 truncate max-w-75 group-hover/reply:text-zinc-400 transition-colors">

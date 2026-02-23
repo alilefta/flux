@@ -61,7 +61,7 @@ export const addReactionAction = actionClientWithProfile
 					messageId,
 					emoji,
 					profileId: ctx.profile.id,
-					memberId: message.member.id,
+					// memberId: message.member.id,
 				},
 			});
 
@@ -160,6 +160,7 @@ export const addDirectReactionAction = actionClientWithProfile
 			data: {
 				emoji,
 				directMessageId: messageId,
+				profileId: ctx.profile.id,
 			},
 		});
 

@@ -13,7 +13,7 @@ import { useAction } from "next-safe-action/hooks";
 import { markMessageAsDeletedAction, pinMessageAction } from "@/actions/message";
 import { toast } from "sonner";
 import { useModal } from "@/hooks/use-modal-store";
-import { ChannelMessage, FileAttachment, MessageReaction } from "@/schemas/message";
+import { ChannelMessage, ReplyMessage } from "@/schemas/message";
 import Link from "next/link";
 import { addReactionAction } from "@/actions/reaction";
 import { MessageReactions } from "./message-reactions";
@@ -21,21 +21,35 @@ import { useChatStore } from "@/hooks/use-chat-store";
 import { ReplyToMessage } from "./reply-to-message";
 import { ChatItemActions } from "./chat-item-actions";
 import { ChatEditForm } from "./chat-edit-form";
+import { FileAttachment } from "@/schemas/file-attachement.base";
+import { MessageReaction } from "@/schemas/message-reaction.base";
+import { DirectChatMessage, ReplyDirectMessage } from "@/schemas/composed/direct-message.details";
+import { ChatType } from "@/schemas/composed/shared.base";
+import { ProfileBase } from "@/schemas/profile";
 
+type MessageSender = {
+	id: string;
+	profileId: string;
+	name: string;
+	imageUrl: string | null;
+	email: string;
+	role: "ADMIN" | "MODERATOR" | "GUEST";
+};
 interface ChatItemProps {
 	id: string;
 	content: string;
 	member: MemberProfile;
+	currentMember: MemberProfile;
 	timestamp: string;
 	fileUrl: string | null; // deprecated
 	attachments: FileAttachment[];
 	deleted: boolean;
-	currentMember: MemberProfile;
 	isUpdated: boolean;
-	channelId: string;
+	contextId: string;
 	reactions: MessageReaction[];
-	replyTo?: ChannelMessage | null;
+	replyTo?: ReplyMessage | ReplyDirectMessage | null;
 	pinned: boolean;
+	chatType: ChatType; // channel | conversation
 }
 
 const roleIconMap = {
@@ -45,7 +59,7 @@ const roleIconMap = {
 };
 
 export const ChatItem = React.memo(
-	function ChatItem({ id, content, member, timestamp, fileUrl, deleted, currentMember, isUpdated, attachments = [], reactions, replyTo, pinned }: ChatItemProps) {
+	function ChatItem({ id, content, member, timestamp, fileUrl, deleted, currentMember, isUpdated, attachments = [], reactions, replyTo, pinned, chatType, contextId }: ChatItemProps) {
 		const [isEditing, setIsEditing] = useState(false);
 		// const [editedContent, setEditedContent] = useState(content);
 
@@ -54,7 +68,7 @@ export const ChatItem = React.memo(
 		const onOpen = useModal((state) => state.onOpen);
 		const setReplyingTo = useChatStore((state) => state.setReplyingTo);
 		const isAdmin = currentMember.role === "ADMIN";
-		const isOwner = currentMember.profileId === member.profile.id;
+		const isOwner = currentMember.profileId === member.profileId;
 		const canDeleteMessage = !deleted && (isAdmin || isOwner);
 
 		const canEditMessage = !deleted && isOwner && !fileUrl;
@@ -63,10 +77,9 @@ export const ChatItem = React.memo(
 		const canPinMessage = currentMember.role === "ADMIN" || currentMember.role === "MODERATOR";
 
 		const handleReply = () => {
-			const messageObject: ChannelMessage = {
+			const baseMessage: Omit<ChannelMessage, "member" | "memberId" | "channelId"> | Omit<DirectChatMessage, "member" | "memberId" | "conversationId"> = {
 				id,
 				content,
-				member,
 				attachments: attachments || [],
 				reactions: [], // Reactions aren't critical for the "Reply Preview" UI
 				createdAt: new Date(), // These dates aren't used in preview, but required by type
@@ -76,12 +89,56 @@ export const ChatItem = React.memo(
 				pinned: false,
 				replyToId: null,
 				replyTo: null,
-				channelId: "", // Not used in preview
-				memberId: member.id,
+
 				fileUrl: null,
 			};
 
-			setReplyingTo(messageObject);
+			if (chatType === "channel") {
+				const channelMessage: ChannelMessage = {
+					...baseMessage,
+					channelId: contextId,
+					memberId: member.id,
+
+					member: {
+						id: member.id,
+						role: member.role as "ADMIN" | "MODERATOR" | "GUEST",
+						profileId: member.profileId,
+						serverId: "ignored", // ✅ Safe to fake: UI doesn't use it
+						createdAt: new Date(),
+						updatedAt: new Date(),
+						profile: {
+							id: member.profileId,
+							name: member.name,
+							imageUrl: member.imageUrl,
+							email: member.email,
+							// Fake fields unused by UI
+							clerkId: "hidden",
+							createdAt: new Date(),
+							updatedAt: new Date(),
+						},
+					},
+				};
+				setReplyingTo(channelMessage);
+			} else {
+				// 2b. Construct DM Object (Flat Profile)
+				const dmMessage: DirectChatMessage = {
+					...baseMessage,
+					// Ensure you pass contextId (conversationId) to ChatItem
+					memberId: member.profileId, // In DMs, this is ProfileID
+					member: {
+						id: member.profileId,
+						name: member.name,
+						imageUrl: member.imageUrl,
+						email: member.email,
+						// Fake fields unused by UI
+						clerkId: "hidden",
+						createdAt: new Date(),
+						updatedAt: new Date(),
+					},
+					conversationId: contextId,
+				};
+				setReplyingTo(dmMessage);
+			}
 		};
 
 		// const { executeAsync: editMessage } = useAction(editMessageAction, {
@@ -241,7 +298,7 @@ export const ChatItem = React.memo(
 				<div className="relative group flex items-start gap-x-3 py-1 px-4 hover:bg-white/2 transition-colors w-full mt-0.5">
 					{/* Avatar */}
 					<div className="cursor-pointer hover:drop-shadow-md transition shrink-0 mt-0.5" onClick={() => onOpen("userProfile", { member })}>
-						<UserAvatar name={member.profile.name} src={member.profile.imageUrl ?? undefined} className="h-8 w-8" />
+						<UserAvatar name={member.name} src={member.imageUrl ?? undefined} className="h-8 w-8" />
 					</div>
 
 					{/* Content Column */}
@@ -250,7 +307,7 @@ export const ChatItem = React.memo(
 						<div className="flex items-center gap-x-2">
 							<div className="flex items-center gap-x-1">
 								<span className="font-bold text-sm text-white hover:underline cursor-pointer" onClick={() => onOpen("userProfile", { member })}>
-									{member.profile.name}
+									{member.name}
 								</span>
 								<TooltipProvider>
 									<Tooltip>

@@ -4,7 +4,8 @@ import { ServerCreateNestedManyWithoutProfileInputObjectSchema as ServerCreateNe
 import { MemberCreateNestedManyWithoutProfileInputObjectSchema as MemberCreateNestedManyWithoutProfileInputObjectSchema } from './MemberCreateNestedManyWithoutProfileInput.schema';
 import { ChannelCreateNestedManyWithoutProfileInputObjectSchema as ChannelCreateNestedManyWithoutProfileInputObjectSchema } from './ChannelCreateNestedManyWithoutProfileInput.schema';
 import { ConversationCreateNestedManyWithoutMemberOneInputObjectSchema as ConversationCreateNestedManyWithoutMemberOneInputObjectSchema } from './ConversationCreateNestedManyWithoutMemberOneInput.schema';
-import { DirectMessageCreateNestedManyWithoutMemberInputObjectSchema as DirectMessageCreateNestedManyWithoutMemberInputObjectSchema } from './DirectMessageCreateNestedManyWithoutMemberInput.schema'
+import { DirectMessageCreateNestedManyWithoutMemberInputObjectSchema as DirectMessageCreateNestedManyWithoutMemberInputObjectSchema } from './DirectMessageCreateNestedManyWithoutMemberInput.schema';
+import { MessageReactionCreateNestedManyWithoutProfileInputObjectSchema as MessageReactionCreateNestedManyWithoutProfileInputObjectSchema } from './MessageReactionCreateNestedManyWithoutProfileInput.schema'
 
 const makeSchema = () => z.object({
   id: z.string().optional(),
@@ -19,7 +20,8 @@ const makeSchema = () => z.object({
   members: z.lazy(() => MemberCreateNestedManyWithoutProfileInputObjectSchema).optional(),
   channels: z.lazy(() => ChannelCreateNestedManyWithoutProfileInputObjectSchema).optional(),
   conversationsInitiated: z.lazy(() => ConversationCreateNestedManyWithoutMemberOneInputObjectSchema).optional(),
-  directMessages: z.lazy(() => DirectMessageCreateNestedManyWithoutMemberInputObjectSchema).optional()
+  directMessages: z.lazy(() => DirectMessageCreateNestedManyWithoutMemberInputObjectSchema).optional(),
+  reactions: z.lazy(() => MessageReactionCreateNestedManyWithoutProfileInputObjectSchema).optional()
 }).strict();
 export const ProfileCreateWithoutConversationsReceivedInputObjectSchema: z.ZodType<Prisma.ProfileCreateWithoutConversationsReceivedInput> = makeSchema() as unknown as z.ZodType<Prisma.ProfileCreateWithoutConversationsReceivedInput>;
 export const ProfileCreateWithoutConversationsReceivedInputObjectZodSchema = makeSchema();

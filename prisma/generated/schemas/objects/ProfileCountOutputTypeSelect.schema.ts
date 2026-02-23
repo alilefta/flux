@@ -5,7 +5,8 @@ import { ProfileCountOutputTypeCountMembersArgsObjectSchema as ProfileCountOutpu
 import { ProfileCountOutputTypeCountChannelsArgsObjectSchema as ProfileCountOutputTypeCountChannelsArgsObjectSchema } from './ProfileCountOutputTypeCountChannelsArgs.schema';
 import { ProfileCountOutputTypeCountConversationsInitiatedArgsObjectSchema as ProfileCountOutputTypeCountConversationsInitiatedArgsObjectSchema } from './ProfileCountOutputTypeCountConversationsInitiatedArgs.schema';
 import { ProfileCountOutputTypeCountConversationsReceivedArgsObjectSchema as ProfileCountOutputTypeCountConversationsReceivedArgsObjectSchema } from './ProfileCountOutputTypeCountConversationsReceivedArgs.schema';
-import { ProfileCountOutputTypeCountDirectMessagesArgsObjectSchema as ProfileCountOutputTypeCountDirectMessagesArgsObjectSchema } from './ProfileCountOutputTypeCountDirectMessagesArgs.schema'
+import { ProfileCountOutputTypeCountDirectMessagesArgsObjectSchema as ProfileCountOutputTypeCountDirectMessagesArgsObjectSchema } from './ProfileCountOutputTypeCountDirectMessagesArgs.schema';
+import { ProfileCountOutputTypeCountReactionsArgsObjectSchema as ProfileCountOutputTypeCountReactionsArgsObjectSchema } from './ProfileCountOutputTypeCountReactionsArgs.schema'
 
 const makeSchema = () => z.object({
   servers: z.union([z.boolean(), z.lazy(() => ProfileCountOutputTypeCountServersArgsObjectSchema)]).optional(),
@@ -13,7 +14,8 @@ const makeSchema = () => z.object({
   channels: z.union([z.boolean(), z.lazy(() => ProfileCountOutputTypeCountChannelsArgsObjectSchema)]).optional(),
   conversationsInitiated: z.union([z.boolean(), z.lazy(() => ProfileCountOutputTypeCountConversationsInitiatedArgsObjectSchema)]).optional(),
   conversationsReceived: z.union([z.boolean(), z.lazy(() => ProfileCountOutputTypeCountConversationsReceivedArgsObjectSchema)]).optional(),
-  directMessages: z.union([z.boolean(), z.lazy(() => ProfileCountOutputTypeCountDirectMessagesArgsObjectSchema)]).optional()
+  directMessages: z.union([z.boolean(), z.lazy(() => ProfileCountOutputTypeCountDirectMessagesArgsObjectSchema)]).optional(),
+  reactions: z.union([z.boolean(), z.lazy(() => ProfileCountOutputTypeCountReactionsArgsObjectSchema)]).optional()
 }).strict();
 export const ProfileCountOutputTypeSelectObjectSchema: z.ZodType<Prisma.ProfileCountOutputTypeSelect> = makeSchema() as unknown as z.ZodType<Prisma.ProfileCountOutputTypeSelect>;
 export const ProfileCountOutputTypeSelectObjectZodSchema = makeSchema();

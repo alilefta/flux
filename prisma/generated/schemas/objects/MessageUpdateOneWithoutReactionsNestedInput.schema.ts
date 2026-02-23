@@ -4,6 +4,7 @@ import { MessageCreateWithoutReactionsInputObjectSchema as MessageCreateWithoutR
 import { MessageUncheckedCreateWithoutReactionsInputObjectSchema as MessageUncheckedCreateWithoutReactionsInputObjectSchema } from './MessageUncheckedCreateWithoutReactionsInput.schema';
 import { MessageCreateOrConnectWithoutReactionsInputObjectSchema as MessageCreateOrConnectWithoutReactionsInputObjectSchema } from './MessageCreateOrConnectWithoutReactionsInput.schema';
 import { MessageUpsertWithoutReactionsInputObjectSchema as MessageUpsertWithoutReactionsInputObjectSchema } from './MessageUpsertWithoutReactionsInput.schema';
+import { MessageWhereInputObjectSchema as MessageWhereInputObjectSchema } from './MessageWhereInput.schema';
 import { MessageWhereUniqueInputObjectSchema as MessageWhereUniqueInputObjectSchema } from './MessageWhereUniqueInput.schema';
 import { MessageUpdateToOneWithWhereWithoutReactionsInputObjectSchema as MessageUpdateToOneWithWhereWithoutReactionsInputObjectSchema } from './MessageUpdateToOneWithWhereWithoutReactionsInput.schema';
 import { MessageUpdateWithoutReactionsInputObjectSchema as MessageUpdateWithoutReactionsInputObjectSchema } from './MessageUpdateWithoutReactionsInput.schema';
@@ -13,8 +14,10 @@ const makeSchema = () => z.object({
   create: z.union([z.lazy(() => MessageCreateWithoutReactionsInputObjectSchema), z.lazy(() => MessageUncheckedCreateWithoutReactionsInputObjectSchema)]).optional(),
   connectOrCreate: z.lazy(() => MessageCreateOrConnectWithoutReactionsInputObjectSchema).optional(),
   upsert: z.lazy(() => MessageUpsertWithoutReactionsInputObjectSchema).optional(),
+  disconnect: z.union([z.boolean(), z.lazy(() => MessageWhereInputObjectSchema)]).optional(),
+  delete: z.union([z.boolean(), z.lazy(() => MessageWhereInputObjectSchema)]).optional(),
   connect: z.lazy(() => MessageWhereUniqueInputObjectSchema).optional(),
   update: z.union([z.lazy(() => MessageUpdateToOneWithWhereWithoutReactionsInputObjectSchema), z.lazy(() => MessageUpdateWithoutReactionsInputObjectSchema), z.lazy(() => MessageUncheckedUpdateWithoutReactionsInputObjectSchema)]).optional()
 }).strict();
-export const MessageUpdateOneRequiredWithoutReactionsNestedInputObjectSchema: z.ZodType<Prisma.MessageUpdateOneRequiredWithoutReactionsNestedInput> = makeSchema() as unknown as z.ZodType<Prisma.MessageUpdateOneRequiredWithoutReactionsNestedInput>;
-export const MessageUpdateOneRequiredWithoutReactionsNestedInputObjectZodSchema = makeSchema();
+export const MessageUpdateOneWithoutReactionsNestedInputObjectSchema: z.ZodType<Prisma.MessageUpdateOneWithoutReactionsNestedInput> = makeSchema() as unknown as z.ZodType<Prisma.MessageUpdateOneWithoutReactionsNestedInput>;
+export const MessageUpdateOneWithoutReactionsNestedInputObjectZodSchema = makeSchema();

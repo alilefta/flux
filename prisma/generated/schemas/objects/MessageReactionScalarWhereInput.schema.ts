@@ -10,9 +10,8 @@ const messagereactionscalarwhereinputSchema = z.object({
   NOT: z.union([z.lazy(() => MessageReactionScalarWhereInputObjectSchema), z.lazy(() => MessageReactionScalarWhereInputObjectSchema).array()]).optional(),
   id: z.union([z.lazy(() => StringFilterObjectSchema), z.string()]).optional(),
   emoji: z.union([z.lazy(() => StringFilterObjectSchema), z.string()]).optional(),
-  messageId: z.union([z.lazy(() => StringFilterObjectSchema), z.string()]).optional(),
+  messageId: z.union([z.lazy(() => StringNullableFilterObjectSchema), z.string()]).optional().nullable(),
   directMessageId: z.union([z.lazy(() => StringNullableFilterObjectSchema), z.string()]).optional().nullable(),
-  memberId: z.union([z.lazy(() => StringFilterObjectSchema), z.string()]).optional(),
   profileId: z.union([z.lazy(() => StringFilterObjectSchema), z.string()]).optional(),
   createdAt: z.union([z.lazy(() => DateTimeFilterObjectSchema), z.coerce.date()]).optional()
 }).strict();

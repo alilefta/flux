@@ -3,18 +3,19 @@ import type { Prisma } from '../../../../generated/prisma/client';
 import { SortOrderSchema } from '../enums/SortOrder.schema';
 import { SortOrderInputObjectSchema as SortOrderInputObjectSchema } from './SortOrderInput.schema';
 import { MessageOrderByWithRelationInputObjectSchema as MessageOrderByWithRelationInputObjectSchema } from './MessageOrderByWithRelationInput.schema';
-import { DirectMessageOrderByWithRelationInputObjectSchema as DirectMessageOrderByWithRelationInputObjectSchema } from './DirectMessageOrderByWithRelationInput.schema'
+import { DirectMessageOrderByWithRelationInputObjectSchema as DirectMessageOrderByWithRelationInputObjectSchema } from './DirectMessageOrderByWithRelationInput.schema';
+import { ProfileOrderByWithRelationInputObjectSchema as ProfileOrderByWithRelationInputObjectSchema } from './ProfileOrderByWithRelationInput.schema'
 
 const makeSchema = () => z.object({
   id: SortOrderSchema.optional(),
   emoji: SortOrderSchema.optional(),
-  messageId: SortOrderSchema.optional(),
+  messageId: z.union([SortOrderSchema, z.lazy(() => SortOrderInputObjectSchema)]).optional(),
   directMessageId: z.union([SortOrderSchema, z.lazy(() => SortOrderInputObjectSchema)]).optional(),
-  memberId: SortOrderSchema.optional(),
   profileId: SortOrderSchema.optional(),
   createdAt: SortOrderSchema.optional(),
   message: z.lazy(() => MessageOrderByWithRelationInputObjectSchema).optional(),
-  directMessage: z.lazy(() => DirectMessageOrderByWithRelationInputObjectSchema).optional()
+  directMessage: z.lazy(() => DirectMessageOrderByWithRelationInputObjectSchema).optional(),
+  profile: z.lazy(() => ProfileOrderByWithRelationInputObjectSchema).optional()
 }).strict();
 export const MessageReactionOrderByWithRelationInputObjectSchema: z.ZodType<Prisma.MessageReactionOrderByWithRelationInput> = makeSchema() as unknown as z.ZodType<Prisma.MessageReactionOrderByWithRelationInput>;
 export const MessageReactionOrderByWithRelationInputObjectZodSchema = makeSchema();

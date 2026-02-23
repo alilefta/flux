@@ -9,9 +9,8 @@ import { MessageReactionMinOrderByAggregateInputObjectSchema as MessageReactionM
 const makeSchema = () => z.object({
   id: SortOrderSchema.optional(),
   emoji: SortOrderSchema.optional(),
-  messageId: SortOrderSchema.optional(),
+  messageId: z.union([SortOrderSchema, z.lazy(() => SortOrderInputObjectSchema)]).optional(),
   directMessageId: z.union([SortOrderSchema, z.lazy(() => SortOrderInputObjectSchema)]).optional(),
-  memberId: SortOrderSchema.optional(),
   profileId: SortOrderSchema.optional(),
   createdAt: SortOrderSchema.optional(),
   _count: z.lazy(() => MessageReactionCountOrderByAggregateInputObjectSchema).optional(),

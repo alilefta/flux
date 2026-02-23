@@ -21,6 +21,7 @@ export const ProfileGroupByResultSchema = z.array(z.object({
     conversationsInitiated: z.number(),
     conversationsReceived: z.number(),
     directMessages: z.number(),
+    reactions: z.number(),
     createdAt: z.number(),
     updatedAt: z.number()
   }).optional(),

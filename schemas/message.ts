@@ -27,13 +27,11 @@ export const ReplyMessageDTO = MessageBaseSchema.extend({
 			id: true,
 			name: true,
 			imageUrl: true,
-			clerkId: true,
 			email: true,
-			createdAt: true,
-			updatedAt: true,
 		}),
 	}),
 	attachments: z.array(FileAttachmentSchema).optional(),
+	reactions: z.array(MessageReactionSchema),
 });
 
 export type ReplyMessage = z.infer<typeof ReplyMessageDTO>;

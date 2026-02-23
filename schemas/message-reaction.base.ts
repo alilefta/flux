@@ -1,11 +1,10 @@
+import { MessageReactionModelSchema } from "@/prisma/generated/schemas";
 import z from "zod";
 
-export const MessageReactionSchema = z.object({
-	id: z.uuid(),
-	emoji: z.string().min(1),
-	messageId: z.uuid(),
-	profileId: z.uuid(),
-	createdAt: z.date(),
+export const MessageReactionSchema = MessageReactionModelSchema.omit({
+	directMessage: true,
+	message: true,
+	profile: true,
 });
 
 export type MessageReaction = z.infer<typeof MessageReactionSchema>;

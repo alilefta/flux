@@ -9,7 +9,7 @@ const makeSchema = () => z.object({
   type: z.string(),
   size: z.number().int().optional().nullable(),
   createdAt: z.coerce.date().optional(),
-  message: z.lazy(() => MessageCreateNestedOneWithoutAttachmentsInputObjectSchema)
+  message: z.lazy(() => MessageCreateNestedOneWithoutAttachmentsInputObjectSchema).optional()
 }).strict();
 export const FileAttachmentCreateWithoutDirectMessageInputObjectSchema: z.ZodType<Prisma.FileAttachmentCreateWithoutDirectMessageInput> = makeSchema() as unknown as z.ZodType<Prisma.FileAttachmentCreateWithoutDirectMessageInput>;
 export const FileAttachmentCreateWithoutDirectMessageInputObjectZodSchema = makeSchema();

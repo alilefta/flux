@@ -14,6 +14,7 @@ import { useChatQuery } from "@/hooks/use-chat-query";
 import { InfiniteData, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { MessageReaction } from "@/schemas/message-reaction.base";
+import { ChatType } from "@/schemas/composed/shared.base";
 
 const DATE_FORMAT = "d MMM yyyy, HH:mm";
 
@@ -22,7 +23,7 @@ interface ChatMessagesProps {
 	member: MemberProfile;
 	channelId: string;
 	serverId: string;
-	type?: "channel" | "conversation";
+	type: ChatType;
 }
 
 type QueryDataShape = InfiniteData<ChannelMessage[], Date | undefined>;
@@ -59,9 +60,7 @@ export interface ChatMessagesHandle {
 // 	});
 // }
 export const ChatMessages = memo(
-	forwardRef<ChatMessagesHandle, ChatMessagesProps>((props, ref) => {
-		const { name, member, channelId, serverId } = props;
-
+	forwardRef<ChatMessagesHandle, ChatMessagesProps>(({ type = "channel", name, member, channelId, serverId }, ref) => {
 		console.log("🔄 ChatMessages rendered");
 
 		// ✅ Track what causes re-renders
@@ -94,8 +93,9 @@ export const ChatMessages = memo(
 				serverId,
 				mode: jumpMode.active ? ("around" as const) : ("chronological" as const),
 				targetMessageId: jumpMode.targetMessageId,
+				type,
 			}),
-			[channelId, serverId, jumpMode.active, jumpMode.targetMessageId],
+			[channelId, serverId, jumpMode, type],
 		);
 
 		const { data, isLoading, error, fetchNextPage, hasNextPage, isFetchingNextPage } = useChatQuery(queryProps);
@@ -545,10 +545,11 @@ export const ChatMessages = memo(
 									deleted={message.deleted}
 									timestamp={format(currentDate, DATE_FORMAT)}
 									isUpdated={message.edited}
-									channelId={channelId}
+									contextId={channelId}
 									reactions={message.reactions}
 									replyTo={message.replyTo}
 									pinned={message.pinned}
+									chatType="channel"
 								/>
 							</Fragment>
 						);

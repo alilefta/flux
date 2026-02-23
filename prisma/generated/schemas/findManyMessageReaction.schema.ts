@@ -16,8 +16,8 @@ export const MessageReactionFindManySelectSchema: z.ZodType<Prisma.MessageReacti
     message: z.boolean().optional(),
     directMessageId: z.boolean().optional(),
     directMessage: z.boolean().optional(),
-    memberId: z.boolean().optional(),
     profileId: z.boolean().optional(),
+    profile: z.boolean().optional(),
     createdAt: z.boolean().optional()
   }).strict() as unknown as z.ZodType<Prisma.MessageReactionSelect>;
 
@@ -28,8 +28,8 @@ export const MessageReactionFindManySelectZodSchema = z.object({
     message: z.boolean().optional(),
     directMessageId: z.boolean().optional(),
     directMessage: z.boolean().optional(),
-    memberId: z.boolean().optional(),
     profileId: z.boolean().optional(),
+    profile: z.boolean().optional(),
     createdAt: z.boolean().optional()
   }).strict();
 

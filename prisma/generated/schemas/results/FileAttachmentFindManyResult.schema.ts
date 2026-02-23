@@ -6,8 +6,8 @@ export const FileAttachmentFindManyResultSchema = z.object({
   name: z.string(),
   type: z.string(),
   size: z.number().int().optional(),
-  messageId: z.string(),
-  message: z.unknown(),
+  messageId: z.string().optional(),
+  message: z.unknown().optional(),
   directMessageId: z.string().optional(),
   directMessage: z.unknown().optional(),
   createdAt: z.date()

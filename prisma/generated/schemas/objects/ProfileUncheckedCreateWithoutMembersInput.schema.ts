@@ -4,7 +4,8 @@ import { ServerUncheckedCreateNestedManyWithoutProfileInputObjectSchema as Serve
 import { ChannelUncheckedCreateNestedManyWithoutProfileInputObjectSchema as ChannelUncheckedCreateNestedManyWithoutProfileInputObjectSchema } from './ChannelUncheckedCreateNestedManyWithoutProfileInput.schema';
 import { ConversationUncheckedCreateNestedManyWithoutMemberOneInputObjectSchema as ConversationUncheckedCreateNestedManyWithoutMemberOneInputObjectSchema } from './ConversationUncheckedCreateNestedManyWithoutMemberOneInput.schema';
 import { ConversationUncheckedCreateNestedManyWithoutMemberTwoInputObjectSchema as ConversationUncheckedCreateNestedManyWithoutMemberTwoInputObjectSchema } from './ConversationUncheckedCreateNestedManyWithoutMemberTwoInput.schema';
-import { DirectMessageUncheckedCreateNestedManyWithoutMemberInputObjectSchema as DirectMessageUncheckedCreateNestedManyWithoutMemberInputObjectSchema } from './DirectMessageUncheckedCreateNestedManyWithoutMemberInput.schema'
+import { DirectMessageUncheckedCreateNestedManyWithoutMemberInputObjectSchema as DirectMessageUncheckedCreateNestedManyWithoutMemberInputObjectSchema } from './DirectMessageUncheckedCreateNestedManyWithoutMemberInput.schema';
+import { MessageReactionUncheckedCreateNestedManyWithoutProfileInputObjectSchema as MessageReactionUncheckedCreateNestedManyWithoutProfileInputObjectSchema } from './MessageReactionUncheckedCreateNestedManyWithoutProfileInput.schema'
 
 const makeSchema = () => z.object({
   id: z.string().optional(),
@@ -19,7 +20,8 @@ const makeSchema = () => z.object({
   channels: z.lazy(() => ChannelUncheckedCreateNestedManyWithoutProfileInputObjectSchema).optional(),
   conversationsInitiated: z.lazy(() => ConversationUncheckedCreateNestedManyWithoutMemberOneInputObjectSchema).optional(),
   conversationsReceived: z.lazy(() => ConversationUncheckedCreateNestedManyWithoutMemberTwoInputObjectSchema).optional(),
-  directMessages: z.lazy(() => DirectMessageUncheckedCreateNestedManyWithoutMemberInputObjectSchema).optional()
+  directMessages: z.lazy(() => DirectMessageUncheckedCreateNestedManyWithoutMemberInputObjectSchema).optional(),
+  reactions: z.lazy(() => MessageReactionUncheckedCreateNestedManyWithoutProfileInputObjectSchema).optional()
 }).strict();
 export const ProfileUncheckedCreateWithoutMembersInputObjectSchema: z.ZodType<Prisma.ProfileUncheckedCreateWithoutMembersInput> = makeSchema() as unknown as z.ZodType<Prisma.ProfileUncheckedCreateWithoutMembersInput>;
 export const ProfileUncheckedCreateWithoutMembersInputObjectZodSchema = makeSchema();

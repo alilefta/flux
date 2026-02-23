@@ -2,8 +2,6 @@ import z from "zod";
 import { MemberModelSchema, MemberRoleSchema } from "@/prisma/generated/schemas";
 import { ProfileBaseSchema } from "./profile";
 
-const memberRoleSchema = z.enum(["ADMIN", "MODERATOR", "GUEST"]);
-
 export const MemberBaseSchema = MemberModelSchema.omit({
 	profile: true,
 	server: true,
@@ -53,7 +51,7 @@ export type AddMemberInput = z.infer<typeof AddMemberInput>;
 export const UpdateMemberRoleSchema = z.object({
 	memberId: z.uuid(),
 	serverId: z.uuid(),
-	role: memberRoleSchema,
+	role: MemberRoleSchema,
 });
 
 export type UpdateMemberRoleInput = z.infer<typeof UpdateMemberRoleSchema>;

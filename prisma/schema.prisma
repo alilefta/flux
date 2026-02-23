@@ -51,6 +51,9 @@ model Profile {
   conversationsInitiated Conversation[] @relation("MemberOne")
   conversationsReceived  Conversation[] @relation("MemberTwo")
   directMessages         DirectMessage[]
+
+  // ✅ Reactions (Made by this profile)
+  reactions              MessageReaction[] 
   
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -227,7 +230,7 @@ model FileAttachment {
   createdAt DateTime @default(now())
 
   @@index([messageId])
-  @@index([directMessageId]) // Add index
+  @@index([directMessageId])
 
 }
 
@@ -236,24 +239,30 @@ model MessageReaction {
   id    String @id @default(uuid())
   emoji String // Emoji unicode or custom emoji ID
 
-  messageId String
-  message   Message @relation(fields: [messageId], references: [id], onDelete: Cascade)
+  messageId String?
+  message   Message? @relation(fields: [messageId], references: [id], onDelete: Cascade)
 
     // ✅ ADD DirectMessage Relation
   directMessageId String?
   directMessage   DirectMessage? @relation(fields: [directMessageId], references: [id], onDelete: Cascade)
 
 
-  memberId String
+  // memberId String
   // Note: Not using Member relation to allow reactions from any profile
   profileId String // Who reacted
+    profile   Profile @relation(fields: [profileId], references: [id], onDelete: Cascade)
+
 
   createdAt DateTime @default(now())
 
-  @@unique([messageId, profileId, emoji]) // One reaction per emoji per user
   @@index([messageId])
   @@index([profileId])
   @@index([directMessageId]) // Add index
+
+    // ✅ CONSTRAINT: User can only react once per emoji per message
+  // We need two separate constraints because one ID will always be null
+  @@unique([messageId, profileId, emoji]) 
+  @@unique([directMessageId, profileId, emoji])
 
 }
 
@@ -300,16 +309,18 @@ model DirectMessage {
   attachments FileAttachment[]
   reactions   MessageReaction[]
 
-  // Update Reply Relation if you want threading in DMs too
+ // ✅ Threading for DMs
   replyToId   String?
-  replyTo     DirectMessage?  @relation("ReplyTo", fields: [replyToId], references: [id], onDelete: NoAction, onUpdate: NoAction)
-  replies     DirectMessage[] @relation("ReplyTo")
+  replyTo     DirectMessage?  @relation("DirectMessageReplies", fields: [replyToId], references: [id], onDelete: SetNull)
+  replies     DirectMessage[] @relation("DirectMessageReplies")
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
   @@index([memberId])
   @@index([conversationId])
+  @@index([replyToId])
+
 }
 
 // ============================= OPTIONAL ENHANCEMENTS ======================================
