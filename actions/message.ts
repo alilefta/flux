@@ -6,7 +6,17 @@ import { MessageEvent } from "@/lib/events";
 import prisma from "@/lib/prisma";
 import { pusherServer } from "@/lib/pusher";
 import { actionClientWithProfile } from "@/lib/safe-action";
-import { CreateMessageSchema, DeleteMessageSchema, EditMessageSchema, GetMessageInputSchema, GetPinMessageSchema, PinMessageSchema, SearchMessagesSchema } from "@/schemas/message";
+import {
+	ChannelMessage,
+	ChannelMessageUI,
+	CreateMessageSchema,
+	DeleteMessageSchema,
+	EditMessageSchema,
+	GetMessageInputSchema,
+	GetPinMessageSchema,
+	PinMessageSchema,
+	SearchMessagesSchema,
+} from "@/schemas/message";
 
 // ============================= SEND MESSAGE ======================================
 
@@ -108,6 +118,79 @@ export const sendMessageAction = actionClientWithProfile
 
 // ============================= GET MESSAGES ======================================
 
+// function mapToChannelMessageDTO(message: ChannelMessage): any {
+// 	return {
+// 		id: message.id,
+// 		content: message.content,
+// 		fileUrl: message.fileUrl,
+// 		channelId: message.channelId,
+// 		memberId: message.memberId,
+// 		deleted: message.deleted,
+// 		edited: message.edited,
+// 		pinned: message.pinned,
+// 		replyToId: message.replyToId,
+// 		createdAt: message.createdAt,
+// 		updatedAt: message.updatedAt,
+
+// 		// ✅ Map member with profile
+// 		member: {
+// 			id: message.member.id,
+// 			role: message.member.role,
+// 			profileId: message.member.profileId,
+// 			serverId: message.member.serverId,
+// 			createdAt: message.member.createdAt,
+// 			updatedAt: message.member.updatedAt,
+// 			profile: {
+// 				id: message.member.profile.id,
+// 				clerkId: message.member.profile.clerkId,
+// 				name: message.member.profile.name,
+// 				imageUrl: message.member.profile.imageUrl,
+// 				email: message.member.profile.email,
+// 				createdAt: message.member.profile.createdAt,
+// 				updatedAt: message.member.profile.updatedAt,
+// 			},
+// 		},
+
+// 		// ✅ Map attachments
+// 		attachments: message.attachments || [],
+
+// 		// ✅ Map reactions
+// 		reactions: message.reactions || [],
+
+// 		// ✅ Map replyTo (if exists)
+// 		replyTo: message.replyTo
+// 			? {
+// 					id: message.replyTo.id,
+// 					content: message.replyTo.content,
+// 					channelId: message.replyTo.channelId,
+// 					memberId: message.replyTo.memberId,
+// 					deleted: message.replyTo.deleted,
+// 					edited: message.replyTo.edited,
+// 					pinned: message.replyTo.pinned,
+// 					replyToId: message.replyTo.replyToId,
+// 					createdAt: message.replyTo.createdAt,
+// 					updatedAt: message.replyTo.updatedAt,
+// 					member: {
+// 						id: message.replyTo.member.id,
+// 						role: message.replyTo.member.role,
+// 						profileId: message.replyTo.member.profileId,
+// 						serverId: message.replyTo.member.serverId,
+// 						createdAt: message.replyTo.member.createdAt,
+// 						updatedAt: message.replyTo.member.updatedAt,
+// 						profile: {
+// 							id: message.replyTo.member.profile.id,
+// 							name: message.replyTo.member.profile.name,
+// 							imageUrl: message.replyTo.member.profile.imageUrl,
+// 							email: message.replyTo.member.profile.email,
+// 						},
+// 					},
+// 					attachments: message.replyTo.attachments || [],
+// 					reactions: [], // Don't need reactions in reply preview
+// 				}
+// 			: null,
+// 	};
+// }
+
 export const getMessagesAction = actionClientWithProfile
 	.metadata({ actionName: "get-messages-action" })
 	.inputSchema(GetMessageInputSchema)
@@ -181,7 +264,6 @@ export const getMessagesAction = actionClientWithProfile
 			// If we fetched a full page, the last item is the cursor for the next fetch
 			nextCursor = messages[messages.length - 1].createdAt;
 		}
-
 		return {
 			success: true,
 			messages,
