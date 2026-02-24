@@ -10,6 +10,10 @@ import { Separator } from "@/components/ui/separator";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
+import { getProfileDetailsAction } from "@/actions/profile";
+import { useAction } from "next-safe-action/hooks";
+import { useQuery } from "@tanstack/react-query";
+import { Skeleton } from "../ui/skeleton";
 
 const roleIconMap = {
 	GUEST: <User className="w-3.5 h-3.5" />,
@@ -29,20 +33,43 @@ export const UserProfileModal = () => {
 	const type = useModal((state) => state.type);
 	const data = useModal((state) => state.data);
 	const isModalOpen = isOpen && type === "userProfile";
-	const { member } = data;
+	const { sender } = data;
 
-	if (!member) return null;
+	const { executeAsync: getProfile } = useAction(getProfileDetailsAction, {
+		onSuccess: () => {},
+		onError: () => {},
+	});
+
+	// ✅ Fetch rich details
+	const { data: member, isLoading } = useQuery({
+		queryKey: ["profile-details", sender?.profileId, sender?.serverId],
+		queryFn: async () => {
+			if (!sender) return null;
+			const res = await getProfile({
+				profileId: sender.profileId,
+				serverId: sender.serverId, // Pass if it exists (Channel mode)
+			});
+			return res?.data?.data;
+		},
+		enabled: isModalOpen && !!sender,
+		staleTime: 1000 * 60 * 5, // Cache for 5 mins
+	});
+
+	if (!sender) return null;
 
 	const onCopyId = () => {
-		navigator.clipboard.writeText(member.id);
+		navigator.clipboard.writeText(sender.id);
 		toast.success("ID Copied to clipboard");
 	};
+
+	// Determine date to show: Server Join Date (if member) OR Global Join Date
+	const joinDate = member?.member?.createdAt || member?.createdAt;
 
 	return (
 		<Dialog open={isModalOpen} onOpenChange={onClose}>
 			<DialogContent className="bg-[#09090b] border border-white/10 text-white p-0 overflow-hidden shadow-2xl sm:max-w-md gap-0 rounded-[24px]">
 				<DialogHeader className="sr-only">
-					<DialogTitle>{member.profile.name}</DialogTitle>
+					<DialogTitle>{sender.name}</DialogTitle>
 					<DialogDescription>User Profile Details</DialogDescription>
 				</DialogHeader>
 
@@ -62,7 +89,7 @@ export const UserProfileModal = () => {
 					{/* FLOATING AVATAR + STATUS */}
 					<div className="absolute -top-16 left-6">
 						<div className="relative">
-							<UserAvatar src={member.profile.imageUrl ?? undefined} name={member.profile.name} className="h-32! w-32! border-[6px] border-[#09090b] bg-[#09090b] shadow-2xl" />
+							<UserAvatar src={sender.imageUrl ?? undefined} name={sender.name} className="h-32! w-32! border-[6px] border-[#09090b] bg-[#09090b] shadow-2xl" />
 							{/* Status Indicator (Positioned carefully on the ring) */}
 							<TooltipProvider>
 								<Tooltip>
@@ -92,19 +119,19 @@ export const UserProfileModal = () => {
 					{/* USER INFO */}
 					<div className="mt-12 space-y-1">
 						<div className="flex items-center gap-3">
-							<h2 className="text-2xl font-bold text-white truncate">{member.profile.name}</h2>
+							<h2 className="text-2xl font-bold text-white truncate">{sender.name}</h2>
 							{/* Role Badge */}
 							<div
 								className={cn(
 									"flex items-center gap-1 px-2 py-0.5 rounded-md text-[10px] font-bold uppercase tracking-wider border",
-									roleColorMap[member.role as keyof typeof roleColorMap],
+									roleColorMap[sender.role as keyof typeof roleColorMap],
 								)}
 							>
-								{roleIconMap[member.role as keyof typeof roleIconMap]}
-								{member.role}
+								{roleIconMap[sender.role as keyof typeof roleIconMap]}
+								{sender.role}
 							</div>
 						</div>
-						<p className="text-sm text-zinc-400 font-medium">{member.profile.email}</p>
+						<p className="text-sm text-zinc-400 font-medium">{sender.email}</p>
 					</div>
 
 					<Separator className="bg-white/10 my-6" />
@@ -116,16 +143,22 @@ export const UserProfileModal = () => {
 							<span className="text-[10px] uppercase tracking-widest text-zinc-500 font-bold flex items-center gap-2">
 								<CalendarDays className="w-3 h-3" /> Member Since
 							</span>
-							<span className="text-sm font-medium text-zinc-200">{format(new Date(member.createdAt), "MMM d, yyyy")}</span>
+							{isLoading ? (
+								<Skeleton className="h-4 w-20 bg-white/5 mt-1" />
+							) : (
+								<span className="text-sm font-medium text-zinc-200">{joinDate ? format(new Date(joinDate), "MMM d, yyyy") : "Unknown"}</span>
+							)}{" "}
 						</div>
 
 						{/* Mutual Servers (Placeholder for V2) */}
-						<div className="bg-white/3 border border-white/5 rounded-2xl p-4 flex flex-col gap-1 hover:bg-white/5 transition-colors">
-							<span className="text-[10px] uppercase tracking-widest text-zinc-500 font-bold flex items-center gap-2">
-								<Shield className="w-3 h-3" /> Server ID
-							</span>
-							<span className="text-sm font-medium text-zinc-200 truncate">{member.serverId.substring(0, 12)}...</span>
-						</div>
+						{sender.serverId && (
+							<div className="bg-white/3 border border-white/5 rounded-2xl p-4 flex flex-col gap-1 hover:bg-white/5 transition-colors">
+								<span className="text-[10px] uppercase tracking-widest text-zinc-500 font-bold flex items-center gap-2">
+									<Shield className="w-3 h-3" /> Server ID
+								</span>
+								<span className="text-sm font-medium text-zinc-200 truncate">{sender.serverId.substring(0, 12)}...</span>
+							</div>
+						)}
 					</div>
 
 					{/* 4. FOOTER ACTIONS */}

@@ -16,3 +16,8 @@ export const ProfileSchema = ProfileBaseSchema.extend(
 		conversationsReceived: z.array(ConversationBaseSchema),
 	}).shape,
 );
+
+export const GetProfileDetailsSchema = z.object({
+	profileId: z.string(),
+	serverId: z.string().optional(), // Optional: only if viewing from a server
+});

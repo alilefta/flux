@@ -10,11 +10,12 @@ import { ChannelMessage } from "@/schemas/message";
 import { MessageEvent } from "@/lib/events";
 import { ChatDateSeparator } from "./chat-date-seperator";
 import { useChatScroll } from "@/hooks/use-chat-scroll";
-import { useChatQuery } from "@/hooks/use-chat-query";
 import { InfiniteData, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { MessageReaction } from "@/schemas/message-reaction.base";
-import { ChatType } from "@/schemas/composed/shared.base";
+import { ChatType, ReplyMessageUI } from "@/schemas/composed/shared.base";
+import { memberToSender } from "@/lib/chat-adapters";
+import { useChannelMessagesQuery } from "@/hooks/use-chat-query";
 
 const DATE_FORMAT = "d MMM yyyy, HH:mm";
 
@@ -23,7 +24,6 @@ interface ChatMessagesProps {
 	member: MemberProfile;
 	channelId: string;
 	serverId: string;
-	type: ChatType;
 }
 
 type QueryDataShape = InfiniteData<ChannelMessage[], Date | undefined>;
@@ -60,8 +60,9 @@ export interface ChatMessagesHandle {
 // 	});
 // }
 export const ChatMessages = memo(
-	forwardRef<ChatMessagesHandle, ChatMessagesProps>(({ type = "channel", name, member, channelId, serverId }, ref) => {
+	forwardRef<ChatMessagesHandle, ChatMessagesProps>(({ name, member, channelId, serverId }, ref) => {
 		console.log("🔄 ChatMessages rendered");
+		const type: ChatType = "channel";
 
 		// ✅ Track what causes re-renders
 		// useWhyDidYouRender("ChatMessages", props);
@@ -98,7 +99,7 @@ export const ChatMessages = memo(
 			[channelId, serverId, jumpMode, type],
 		);
 
-		const { data, isLoading, error, fetchNextPage, hasNextPage, isFetchingNextPage } = useChatQuery(queryProps);
+		const { data, isLoading, error, fetchNextPage, hasNextPage, isFetchingNextPage } = useChannelMessagesQuery(queryProps);
 
 		const messages = useMemo(() => {
 			return data?.pages.flat().reverse() || [];
@@ -531,6 +532,16 @@ export const ChatMessages = memo(
 
 						const showSeparator = !prevDate || differenceInCalendarDays(currentDate, prevDate) > 0;
 
+						const replyTo = message.replyTo
+							? ({
+									id: message.replyTo.id,
+									content: message.replyTo.content,
+									attachments: message.replyTo.attachments,
+									sender: memberToSender(message.member),
+									deleted: message.replyTo.deleted,
+								} as ReplyMessageUI)
+							: null;
+
 						return (
 							<Fragment key={message.id}>
 								{showSeparator && <ChatDateSeparator date={currentDate} />}
@@ -539,15 +550,15 @@ export const ChatMessages = memo(
 									id={message.id}
 									currentMember={member}
 									attachments={message.attachments}
-									member={message.member}
+									sender={memberToSender(message.member)}
 									content={message.content}
 									fileUrl={message.fileUrl}
 									deleted={message.deleted}
 									timestamp={format(currentDate, DATE_FORMAT)}
 									isUpdated={message.edited}
 									contextId={channelId}
-									reactions={message.reactions}
-									replyTo={message.replyTo}
+									reactions={message.reactions ?? []}
+									replyTo={replyTo}
 									pinned={message.pinned}
 									chatType="channel"
 								/>

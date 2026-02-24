@@ -1,11 +1,11 @@
 import z from "zod";
 import { DirectMessageBaseSchema } from "../direct-message.base";
-import { ConversationBaseSchema } from "../conversation.base";
-import { MemberBaseSchema } from "../member";
+
 import { ProfileBaseSchema } from "../profile";
 import { FileAttachmentModelSchema } from "@/prisma/generated/schemas";
 import { MessageReactionSchema } from "../message-reaction.base";
 import { FileUploadSchema } from "../file-attachement.base";
+import { MessageSenderSchema } from "./shared.base";
 
 //  File Attachment Schema
 export const FileAttachmentSchema = FileAttachmentModelSchema.omit({
@@ -16,23 +16,40 @@ export const FileAttachmentSchema = FileAttachmentModelSchema.omit({
 export type FileAttachment = z.infer<typeof FileAttachmentSchema>;
 
 export const ReplyDirectMessageDTO = DirectMessageBaseSchema.extend({
-	member: ProfileBaseSchema.pick({
-		id: true,
-		name: true,
-		imageUrl: true,
-		email: true,
-	}),
+	member: ProfileBaseSchema,
 	attachments: z.array(FileAttachmentSchema).optional(),
 });
 
 export type ReplyDirectMessage = z.infer<typeof ReplyDirectMessageDTO>;
 
+export const DirectMessageUISchema = DirectMessageBaseSchema.extend({
+	sender: MessageSenderSchema,
+	replyTo: z
+		.lazy(() =>
+			z
+				.object({
+					sender: MessageSenderSchema,
+					attachments: z.array(FileAttachmentSchema),
+				})
+				.extend(
+					DirectMessageBaseSchema.pick({
+						id: true,
+						content: true,
+					}).shape,
+				),
+		)
+		.nullable()
+		.optional(),
+	attachments: z.array(FileAttachmentSchema),
+	reactions: z.array(MessageReactionSchema).optional(),
+});
+
+export type DirectMessageUI = z.infer<typeof DirectMessageUISchema>;
+
 export const DirectChatMessageSchema = DirectMessageBaseSchema.extend(
 	z.object({
 		// conversation: ConversationBaseSchema,
-		member: ProfileBaseSchema.omit({
-			bio: true,
-		}),
+		member: ProfileBaseSchema,
 		replyTo: ReplyDirectMessageDTO.nullable().optional(),
 		attachments: z.array(FileAttachmentSchema),
 		reactions: z.array(MessageReactionSchema).optional(),

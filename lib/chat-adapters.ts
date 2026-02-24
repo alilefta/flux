@@ -1,7 +1,7 @@
 import { MemberProfile } from "@/schemas/member";
 import { ProfileBase } from "@/schemas/profile";
 import { MemberRole } from "@/generated/prisma/enums";
-import { MessageSender } from "@/schemas/message-member.base";
+import { MessageSender } from "@/schemas/composed/shared.base";
 
 /**
  * ADAPTER: Channel Member -> UI Sender
@@ -15,6 +15,7 @@ export function memberToSender(member: MemberProfile): MessageSender {
 		imageUrl: member.profile.imageUrl,
 		email: member.profile.email,
 		role: member.role,
+		serverId: member.serverId,
 	};
 }
 

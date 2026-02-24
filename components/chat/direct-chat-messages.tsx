@@ -9,20 +9,20 @@ import { pusherClient } from "@/lib/pusher-client";
 import { MessageEvent } from "@/lib/events";
 import { ChatDateSeparator } from "./chat-date-seperator";
 import { useChatScroll } from "@/hooks/use-chat-scroll";
-import { useChatQuery } from "@/hooks/use-chat-query";
 import { InfiniteData, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { DirectChatMessage } from "@/schemas/composed/direct-message.details";
 import { MessageReaction } from "@/schemas/message-reaction.base";
-import { MessagesType } from "@/schemas/composed/shared.base";
+import { ChatType, ReplyMessageUI } from "@/schemas/composed/shared.base";
+import { useDirectMessagesQuery } from "@/hooks/use-chat-query";
+import { memberToSender, profileToSender } from "@/lib/chat-adapters";
 
 const DATE_FORMAT = "d MMM yyyy, HH:mm";
 
-interface ChatMessagesProps {
+interface DirectChatMessagesProps {
 	name: string;
 	member: MemberProfile;
-	channelId: string;
-	serverId: string;
+	conversationId: string;
 	type?: "channel" | "conversation";
 }
 
@@ -33,10 +33,10 @@ export interface ChatMessagesHandle {
 	jumpToMessage: (messageId: string) => void;
 }
 
-export const ChatMessages = memo(
-	forwardRef<ChatMessagesHandle, ChatMessagesProps>((props, ref) => {
-		const { name, member, channelId, serverId } = props;
-		const type: MessagesType = "conversation";
+export const DirectChatMessages = memo(
+	forwardRef<ChatMessagesHandle, DirectChatMessagesProps>(({ name, member, conversationId }, ref) => {
+		const type: ChatType = "conversation";
+		const currentMemberSender = useMemo(() => memberToSender(member), [member]);
 
 		// ✅ Track what causes re-renders
 		// useWhyDidYouRender("ChatMessages", props);
@@ -64,16 +64,15 @@ export const ChatMessages = memo(
 
 		const queryProps = useMemo(
 			() => ({
-				channelId,
-				serverId,
+				conversationId,
 				mode: jumpMode.active ? ("around" as const) : ("chronological" as const),
 				targetMessageId: jumpMode.targetMessageId,
 				type,
 			}),
-			[channelId, serverId, jumpMode, type],
+			[conversationId, jumpMode, type],
 		);
 
-		const { data, isLoading, error, fetchNextPage, hasNextPage, isFetchingNextPage } = useChatQuery(queryProps);
+		const { data, isLoading, error, fetchNextPage, hasNextPage, isFetchingNextPage } = useDirectMessagesQuery(queryProps);
 
 		const messages = useMemo(() => {
 			return data?.pages.flat().reverse() || [];
@@ -135,11 +134,11 @@ export const ChatMessages = memo(
 			setJumpMode({ active: false });
 
 			queryClient.cancelQueries({
-				queryKey: ["messages", channelId, "jump"],
+				queryKey: ["messages", conversationId, "jump"],
 			});
 
 			queryClient.removeQueries({
-				queryKey: ["messages", channelId, "jump"],
+				queryKey: ["messages", conversationId, "jump"],
 			});
 
 			setTimeout(() => {
@@ -150,7 +149,7 @@ export const ChatMessages = memo(
 			}, 100);
 
 			toast.info("Returned to latest messages");
-		}, [channelId, queryClient]);
+		}, [conversationId, queryClient]);
 
 		// --- EFFECTS: Jump Mode Handling ---
 		useEffect(() => {
@@ -261,7 +260,7 @@ export const ChatMessages = memo(
 			console.log("📡 Pusher subscribed");
 
 			// Subscribe to channel
-			const channelName = `channel-${channelId}`;
+			const channelName = `conversation-${conversationId}`;
 			const channel = pusherClient.subscribe(channelName);
 
 			const handleNewMessage = (newMessage: DirectChatMessage & { optimisticClientId?: string }) => {
@@ -278,7 +277,7 @@ export const ChatMessages = memo(
 					content: newMessage.content.slice(0, 50),
 				});
 
-				queryClient.setQueryData<QueryDataShape>(["messages", channelId], (oldData: QueryDataShape | undefined) => {
+				queryClient.setQueryData<QueryDataShape>(["messages", conversationId], (oldData: QueryDataShape | undefined) => {
 					if (!oldData || !oldData.pages) return oldData;
 
 					let replaced = false;
@@ -365,7 +364,7 @@ export const ChatMessages = memo(
 				});
 			};
 			const handleMessageUpdate = (updatedMessage: DirectChatMessage) => {
-				queryClient.setQueryData<QueryDataShape>(["messages", channelId], (oldData: QueryDataShape | undefined) => {
+				queryClient.setQueryData<QueryDataShape>(["messages", conversationId], (oldData: QueryDataShape | undefined) => {
 					if (!oldData?.pages) return oldData;
 
 					const newPages = oldData.pages.map((page: DirectChatMessage[]) => page.map((msg) => (msg.id === updatedMessage.id ? updatedMessage : msg)));
@@ -378,7 +377,7 @@ export const ChatMessages = memo(
 			};
 
 			const handleMessageDelete = (deletedMessage: DirectChatMessage) => {
-				queryClient.setQueryData<QueryDataShape>(["messages", channelId], (oldData: QueryDataShape | undefined) => {
+				queryClient.setQueryData<QueryDataShape>(["messages", conversationId], (oldData: QueryDataShape | undefined) => {
 					if (!oldData?.pages) return oldData;
 
 					const newPages = oldData.pages.map((page: DirectChatMessage[]) => page.map((msg) => (msg.id === deletedMessage.id ? deletedMessage : msg)));
@@ -391,7 +390,7 @@ export const ChatMessages = memo(
 			};
 
 			const handleAddReaction = (reaction: MessageReaction) => {
-				queryClient.setQueryData<QueryDataShape>(["messages", channelId], (oldData: QueryDataShape | undefined) => {
+				queryClient.setQueryData<QueryDataShape>(["messages", conversationId], (oldData: QueryDataShape | undefined) => {
 					if (!oldData?.pages) return oldData;
 
 					const newPages = oldData.pages.map((page) =>
@@ -410,7 +409,7 @@ export const ChatMessages = memo(
 				});
 			};
 			const handleRemoveReaction = (data: { messageId: string; emoji: string; profileId: string }) => {
-				queryClient.setQueryData<QueryDataShape>(["messages", channelId], (oldData: QueryDataShape | undefined) => {
+				queryClient.setQueryData<QueryDataShape>(["messages", conversationId], (oldData: QueryDataShape | undefined) => {
 					if (!oldData?.pages) return oldData;
 
 					const newPages = oldData.pages.map((page) =>
@@ -441,7 +440,7 @@ export const ChatMessages = memo(
 				channel.unbind_all();
 				pusherClient.unsubscribe(channelName);
 			};
-		}, [channelId, queryClient, jumpMode.active, scrollToBottomCallback]);
+		}, [conversationId, queryClient, jumpMode.active, scrollToBottomCallback]);
 
 		if (isLoading) {
 			return (
@@ -506,6 +505,17 @@ export const ChatMessages = memo(
 
 						const showSeparator = !prevDate || differenceInCalendarDays(currentDate, prevDate) > 0;
 
+						const replyTo: ReplyMessageUI | null = message.replyTo
+							? {
+									id: message.replyTo.id,
+									content: message.replyTo.content,
+									attachments: message.replyTo.attachments,
+									// In DMs, member IS profile, so use profileToSender
+									sender: profileToSender(message.replyTo.member),
+									deleted: message.replyTo.deleted,
+								}
+							: null;
+
 						return (
 							<Fragment key={message.id}>
 								{showSeparator && <ChatDateSeparator date={currentDate} />}
@@ -514,16 +524,17 @@ export const ChatMessages = memo(
 									id={message.id}
 									currentMember={member}
 									attachments={message.attachments}
-									member={message.member}
+									sender={profileToSender(message.member)}
 									content={message.content}
 									fileUrl={message.fileUrl}
 									deleted={message.deleted}
 									timestamp={format(currentDate, DATE_FORMAT)}
 									isUpdated={message.edited}
-									channelId={channelId}
-									reactions={message.reactions}
-									replyTo={message.replyTo}
+									contextId={conversationId}
+									reactions={message.reactions ?? []}
+									replyTo={replyTo}
 									pinned={message.pinned}
+									chatType="conversation"
 								/>
 							</Fragment>
 						);
@@ -549,14 +560,13 @@ export const ChatMessages = memo(
 			</div>
 		);
 	}),
-	(prevProps: ChatMessagesProps, nextProps: ChatMessagesProps) => {
+	(prevProps: DirectChatMessagesProps, nextProps: DirectChatMessagesProps) => {
 		// ✅ Log memo comparison
-		const shouldSkip = prevProps.channelId === nextProps.channelId && prevProps.serverId === nextProps.serverId && prevProps.name === nextProps.name && prevProps.member.id === nextProps.member.id;
+		const shouldSkip = prevProps.conversationId === nextProps.conversationId && prevProps.name === nextProps.name && prevProps.member.id === nextProps.member.id;
 
 		if (!shouldSkip) {
 			console.log("❌ React.memo did NOT skip re-render. Changed props:", {
-				channelId: prevProps.channelId !== nextProps.channelId,
-				serverId: prevProps.serverId !== nextProps.serverId,
+				conversationId: prevProps.conversationId !== nextProps.conversationId,
 				name: prevProps.name !== nextProps.name,
 				memberId: prevProps.member.id !== nextProps.member.id,
 			});
@@ -568,4 +578,4 @@ export const ChatMessages = memo(
 	},
 );
 
-ChatMessages.displayName = "ChatMessages";
+DirectChatMessages.displayName = "DirectChatMessages";

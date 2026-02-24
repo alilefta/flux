@@ -6,6 +6,7 @@ import { ProfileBaseSchema } from "./profile";
 import { MemberBaseSchema } from "./member";
 import { FileAttachmentSchema, FileUploadSchema } from "./file-attachement.base";
 import { MessageReactionSchema } from "./message-reaction.base";
+import { MessageSenderSchema } from "./composed/shared.base";
 
 // ============================= BASE SCHEMAS ======================================
 export const MessageBaseSchema = MessageModelSchema.omit({
@@ -47,6 +48,7 @@ export const ChannelMessageDTO = MessageBaseSchema.extend({
 			email: true,
 			createdAt: true,
 			updatedAt: true,
+			bio: true,
 		}),
 	}),
 	replyTo: ReplyMessageDTO.nullable().optional(),
@@ -55,6 +57,31 @@ export const ChannelMessageDTO = MessageBaseSchema.extend({
 });
 
 export type ChannelMessage = z.infer<typeof ChannelMessageDTO>;
+
+export const ChannelMessageUISchema = MessageBaseSchema.extend({
+	sender: MessageSenderSchema,
+	replyTo: z
+		.lazy(() =>
+			z
+				.object({
+					sender: MessageSenderSchema,
+					attachments: z.array(FileAttachmentSchema),
+				})
+				.extend(
+					MessageBaseSchema.pick({
+						id: true,
+						content: true,
+					}).shape,
+				),
+		)
+		.nullable()
+		.optional(),
+
+	attachments: z.array(FileAttachmentSchema),
+	reactions: z.array(MessageReactionSchema).optional(),
+});
+
+export type ChannelMessageUI = z.infer<typeof ChannelMessageUISchema>;
 
 // Message Preview (for sidebar/notifications)
 export const MessagePreviewDTO = MessageBaseSchema.pick({

@@ -1,6 +1,6 @@
 import { ChannelType } from "@/generated/prisma/enums";
 import { ChannelBase } from "@/schemas/channel";
-import { MemberProfile } from "@/schemas/member";
+import { MessageSender } from "@/schemas/composed/shared.base";
 import { PublicProfile } from "@/schemas/profile";
 import { ServerBase } from "@/schemas/server.base";
 import { create } from "zustand";
@@ -27,7 +27,7 @@ interface ModalData {
 	channelType?: ChannelType;
 	apiUrl?: string;
 	query?: Record<string, unknown>;
-	member?: MemberProfile;
+	sender?: MessageSender;
 	profile?: PublicProfile;
 }
 

@@ -13,17 +13,19 @@ import { EmojiPopover } from "./emoji-popover";
 import { useModal } from "@/hooks/use-modal-store";
 import { useChatStore } from "@/hooks/use-chat-store";
 import { cn } from "@/lib/utils";
+import { sendDirectMessageAction } from "@/actions/direct-message";
+import { DirectChatMessage } from "@/schemas/composed/direct-message.details";
 
-interface ChatInputProps {
+interface DirectChatInputProps {
 	placeholder?: string;
-	channelId: string;
+	conversationId: string;
 	name: string;
 	member: MemberProfile;
 }
 
-type QueryDataShape = InfiniteData<ChannelMessage[], (Date | undefined)[]>;
+type QueryDataShape = InfiniteData<DirectChatMessage[], (Date | undefined)[]>;
 
-export const ChatInput = ({ placeholder, channelId, name, member }: ChatInputProps) => {
+export const DirectChatInput = ({ placeholder, conversationId, name, member }: DirectChatInputProps) => {
 	const onOpen = useModal((state) => state.onOpen);
 	const replyingTo = useChatStore((state) => state.replyingTo);
 	const setReplyingTo = useChatStore((state) => state.setReplyingTo);
@@ -33,7 +35,7 @@ export const ChatInput = ({ placeholder, channelId, name, member }: ChatInputPro
 
 	const [openEmojiPicker, setOpenEmojiPicker] = useState(false);
 
-	const { executeAsync: sendMessage } = useAction(sendMessageAction, {
+	const { executeAsync: sendMessage } = useAction(sendDirectMessageAction, {
 		onError: ({ error }) => {
 			if (error.validationErrors) {
 				toast.error("Please check your message and try again");
@@ -49,7 +51,7 @@ export const ChatInput = ({ placeholder, channelId, name, member }: ChatInputPro
 		mutationFn: async ({ content, optimisticId }: { content: string; optimisticId: string }) => {
 			const result = await sendMessage({
 				content,
-				channelId,
+				conversationId: conversationId,
 				replyToId: replyingTo?.id,
 				optimisticClientId: optimisticId,
 			});
@@ -63,14 +65,14 @@ export const ChatInput = ({ placeholder, channelId, name, member }: ChatInputPro
 		// optimistic UI update
 		onMutate: async ({ content, optimisticId }, context) => {
 			// Cancel outgoing queries
-			await context.client.cancelQueries({ queryKey: ["messages", channelId] });
+			await context.client.cancelQueries({ queryKey: ["messages", conversationId] });
 
 			// Snapshot previous state
-			const previousMessages = queryClient.getQueryData<QueryDataShape>(["messages", channelId]);
+			const previousMessages = queryClient.getQueryData<QueryDataShape>(["messages", conversationId]);
 
-			const replyingToPayload: ChannelMessage["replyTo"] | null = replyingTo
+			const replyingToPayload: DirectChatMessage["replyTo"] | null = replyingTo
 				? {
-						channelId,
+						conversationId,
 						content: replyingTo.content,
 						attachments: replyingTo.attachments,
 						deleted: replyingTo.deleted ?? false,
@@ -79,21 +81,16 @@ export const ChatInput = ({ placeholder, channelId, name, member }: ChatInputPro
 						createdAt: new Date(),
 						updatedAt: new Date(),
 						id: replyingTo.id,
-						reactions: [],
 						fileUrl: null,
 						member: {
 							id: replyingTo.sender.id,
 							createdAt: new Date(),
-							role: replyingTo.sender.role,
 							updatedAt: new Date(),
-							profileId: replyingTo.sender.profileId,
-							serverId: replyingTo.sender.serverId ?? "",
-							profile: {
-								name: replyingTo.sender.name,
-								email: replyingTo.sender.email,
-								id: replyingTo.sender.profileId,
-								imageUrl: replyingTo.sender.imageUrl,
-							},
+							name: replyingTo.sender.name,
+							email: replyingTo.sender.email,
+							imageUrl: replyingTo.sender.imageUrl,
+							bio: "unknown",
+							clerkId: "unknown",
 						},
 						memberId: replyingTo.sender.id,
 						replyToId: replyingTo?.id ?? null,
@@ -101,9 +98,9 @@ export const ChatInput = ({ placeholder, channelId, name, member }: ChatInputPro
 				: null;
 
 			// const optimisticId = `optimistic-${crypto.randomUUID()}`;
-			const optimisticMessage: ChannelMessage = {
+			const optimisticMessage: DirectChatMessage = {
 				id: optimisticId,
-				channelId,
+				conversationId,
 				content: content,
 				createdAt: new Date(),
 				updatedAt: new Date(),
@@ -114,13 +111,24 @@ export const ChatInput = ({ placeholder, channelId, name, member }: ChatInputPro
 				fileUrl: null,
 				attachments: [],
 				reactions: [],
-				member,
+
+				// should be replaced with the current profile
+				member: {
+					id: "test",
+					createdAt: new Date(),
+					updatedAt: new Date(),
+					clerkId: "unknown",
+					name: "unknown",
+					imageUrl: "unknown",
+					email: "",
+					bio: "",
+				},
 				memberId: member.id,
 				replyTo: replyingToPayload,
 			};
 
 			// Add optimistic message
-			queryClient.setQueryData<QueryDataShape>(["messages", channelId], (oldData) => {
+			queryClient.setQueryData<QueryDataShape>(["messages", conversationId], (oldData) => {
 				if (!oldData?.pages) return oldData;
 
 				// const firstPage = oldData.pages[0];
@@ -155,7 +163,7 @@ export const ChatInput = ({ placeholder, channelId, name, member }: ChatInputPro
 
 			// Rollback
 			if (context?.previousMessages) {
-				queryClient.setQueryData(["messages", channelId], context.previousMessages);
+				queryClient.setQueryData(["messages", conversationId], context.previousMessages);
 			}
 		},
 	});
@@ -219,7 +227,7 @@ export const ChatInput = ({ placeholder, channelId, name, member }: ChatInputPro
 					disabled={mutation.isPending}
 					onClick={() =>
 						onOpen("messageFile", {
-							query: { channelId, member }, // Pass context
+							query: { conversationId, member }, // Pass context
 						})
 					}
 					title="Attach File"

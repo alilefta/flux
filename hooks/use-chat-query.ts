@@ -2,73 +2,63 @@
 
 import { useInfiniteQuery } from "@tanstack/react-query";
 import { getMessagesAction } from "@/actions/message";
-import { InferSafeActionFnResult } from "next-safe-action";
-import { QUERY_KEYS } from "@/lib/query-keys";
 import { getDirectMessagesAction } from "@/actions/direct-message";
+import { QUERY_KEYS } from "@/lib/query-keys";
 import { handleSafeActionError } from "@/lib/safe-action-helpers";
-import { ChatType } from "@/schemas/composed/shared.base";
+import { ChannelMessage } from "@/schemas/message";
+import { DirectChatMessage } from "@/schemas/composed/direct-message.details";
 
-interface UseChatQueryProps {
+// ✅ OPTION 1: Separate hooks (RECOMMENDED)
+// This gives you perfect type safety with no unions
+
+interface UseChannelMessagesQueryProps {
 	channelId: string;
 	serverId: string;
-	type: ChatType;
+	type: "channel";
 	mode?: "chronological" | "around";
 	targetMessageId?: string;
 }
 
-type GetMessagesResults = InferSafeActionFnResult<typeof getMessagesAction>;
-type GetDirectMessagesResults = InferSafeActionFnResult<typeof getDirectMessagesAction>;
+interface UseDirectMessagesQueryProps {
+	conversationId: string;
+	type: "conversation";
+	mode?: "chronological" | "around";
+	targetMessageId?: string;
+}
 
-export function useChatQuery({ channelId, serverId, mode = "chronological", targetMessageId, type }: UseChatQueryProps) {
-	// ✅ 1. Generate Key using Factory
-	let queryKey: readonly unknown[];
+// ✅ Hook for Channel Messages
+export function useChannelMessagesQuery({ channelId, serverId, mode = "chronological", targetMessageId }: Omit<UseChannelMessagesQueryProps, "type">) {
+	const queryKey = mode === "around" && targetMessageId ? QUERY_KEYS.channel.jump(channelId, targetMessageId) : QUERY_KEYS.channel.messages(channelId);
 
-	if (type === "channel") {
-		queryKey = mode === "around" && targetMessageId ? QUERY_KEYS.channel.jump(channelId, targetMessageId) : QUERY_KEYS.channel.messages(channelId);
-	} else {
-		queryKey = mode === "around" && targetMessageId ? QUERY_KEYS.dm.jump(channelId, targetMessageId) : QUERY_KEYS.dm.messages(channelId);
-	}
-
-	console.log("🔑 Query Key:", queryKey, { mode, targetMessageId });
+	console.log("🔑 Channel Query Key:", queryKey, { mode, targetMessageId });
 
 	return useInfiniteQuery({
-		queryKey: queryKey,
+		queryKey,
 		queryFn: async ({ pageParam }) => {
-			console.log("📡 Fetching messages:", { mode, targetMessageId, cursor: pageParam });
-			let result: GetMessagesResults | GetDirectMessagesResults;
+			console.log("📡 Fetching channel messages:", { mode, targetMessageId, cursor: pageParam });
 
-			if (type === "conversation") {
-				// ✅ Direct Message Fetch
-				result = await getDirectMessagesAction({
-					conversationId: channelId, // Reuse channelId prop as conversationId
-					cursor: pageParam as Date | undefined,
-					mode,
-					targetMessageId,
-				});
-			} else {
-				// ✅ Channel Message Fetch
-				if (!serverId) throw new Error("Server ID missing for channel fetch");
-
-				result = await getMessagesAction({
-					channelId,
-					serverId,
-					cursor: pageParam as Date | undefined,
-					mode,
-					targetMessageId,
-				});
-			}
+			const result = await getMessagesAction({
+				channelId,
+				serverId,
+				cursor: pageParam as Date | undefined,
+				mode,
+				targetMessageId,
+			});
 
 			if (!result?.data?.success) {
-				handleSafeActionError<typeof getMessagesAction | typeof getDirectMessagesAction>({ serverError: result.serverError, validationErrors: result.validationErrors });
-				throw new Error(result?.serverError || "Failed");
+				handleSafeActionError<typeof getMessagesAction>({
+					serverError: result.serverError,
+					validationErrors: result.validationErrors,
+				});
+				throw new Error(result?.serverError || "Failed to fetch messages");
 			}
 
-			return result.data.messages;
+			// ✅ Type is guaranteed to be ChannelMessage[]
+			return result.data.messages as ChannelMessage[];
 		},
 		initialPageParam: undefined as Date | undefined,
 		getNextPageParam: (lastPage) => {
 			if (!lastPage || lastPage.length === 0) return undefined;
-
 			const oldestMessage = lastPage[lastPage.length - 1];
 			return oldestMessage.createdAt;
 		},
@@ -78,3 +68,98 @@ export function useChatQuery({ channelId, serverId, mode = "chronological", targ
 		staleTime: mode === "around" ? Infinity : 0,
 	});
 }
+
+// ✅ Hook for Direct Messages
+export function useDirectMessagesQuery({ conversationId, mode = "chronological", targetMessageId }: Omit<UseDirectMessagesQueryProps, "type">) {
+	const queryKey = mode === "around" && targetMessageId ? QUERY_KEYS.dm.jump(conversationId, targetMessageId) : QUERY_KEYS.dm.messages(conversationId);
+
+	console.log("🔑 DM Query Key:", queryKey, { mode, targetMessageId });
+
+	return useInfiniteQuery({
+		queryKey,
+		queryFn: async ({ pageParam }) => {
+			console.log("📡 Fetching direct messages:", { mode, targetMessageId, cursor: pageParam });
+
+			const result = await getDirectMessagesAction({
+				conversationId,
+				cursor: pageParam as Date | undefined,
+				mode,
+				targetMessageId,
+			});
+
+			if (!result?.data?.success) {
+				handleSafeActionError<typeof getDirectMessagesAction>({
+					serverError: result.serverError,
+					validationErrors: result.validationErrors,
+				});
+				throw new Error(result?.serverError || "Failed to fetch messages");
+			}
+
+			// ✅ Type is guaranteed to be DirectChatMessage[]
+			return result.data.messages as DirectChatMessage[];
+		},
+		initialPageParam: undefined as Date | undefined,
+		getNextPageParam: (lastPage) => {
+			if (!lastPage || lastPage.length === 0) return undefined;
+			const oldestMessage = lastPage[lastPage.length - 1];
+			return oldestMessage.createdAt;
+		},
+		notifyOnChangeProps: ["data", "error", "status", "hasNextPage", "isFetchingNextPage"],
+		refetchOnMount: mode === "chronological",
+		refetchOnWindowFocus: mode === "chronological",
+		staleTime: mode === "around" ? Infinity : 0,
+	});
+}
+
+// ===================================================================
+// ✅ OPTION 2: Single unified hook with discriminated union (if you prefer)
+// ===================================================================
+
+// type UseChatQueryProps = UseChannelMessagesQueryProps | UseDirectMessagesQueryProps;
+
+// export function useChatQuery(props: UseChatQueryProps) {
+// 	if (props.type === "channel") {
+// 		// ✅ TypeScript knows serverId exists here
+// 		return useChannelMessagesQuery({
+// 			channelId: props.channelId,
+// 			serverId: props.serverId,
+// 			mode: props.mode,
+// 			targetMessageId: props.targetMessageId,
+// 		});
+// 	} else {
+// 		// ✅ TypeScript knows conversationId exists here
+// 		return useDirectMessagesQuery({
+// 			conversationId: props.conversationId,
+// 			mode: props.mode,
+// 			targetMessageId: props.targetMessageId,
+// 		});
+// 	}
+// }
+
+// ===================================================================
+// Usage Examples:
+// ===================================================================
+
+// In ChatMessages (Channel):
+// const { data, isLoading, ... } = useChannelMessagesQuery({
+//   channelId,
+//   serverId,
+//   mode: jumpMode.active ? "around" : "chronological",
+//   targetMessageId: jumpMode.targetMessageId,
+// });
+
+// In DirectChatMessages (DM):
+// const { data, isLoading, ... } = useDirectMessagesQuery({
+//   conversationId,
+//   mode: jumpMode.active ? "around" : "chronological",
+//   targetMessageId: jumpMode.targetMessageId,
+// });
+
+// OR use the unified hook:
+// const { data, isLoading, ... } = useChatQuery({
+//   type: "channel",
+//   channelId,
+//   serverId,
+//   mode,
+//   targetMessageId,
+// });
