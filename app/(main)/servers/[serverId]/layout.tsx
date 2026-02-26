@@ -3,8 +3,7 @@ import { ServerSidebar } from "@/components/server/server-sidebar";
 import { getServersByProfileId, getServerWithDetails } from "@/data/server";
 import { notFound, redirect } from "next/navigation";
 import { getCurrentProfile } from "@/data/profile";
-import { QueryProvider } from "@/providers/query-provider";
-import { ModalProvider } from "@/providers/modal-provider";
+import { getMemberByProfileId } from "@/data/member";
 interface ServerLayoutProps {
 	children: React.ReactNode;
 	params: Promise<{ serverId: string }>;
@@ -18,11 +17,13 @@ export default async function ServerLayout({ children, params }: ServerLayoutPro
 		return redirect("/sign-in");
 	}
 
+	const member = await getMemberByProfileId(profile.id);
+
 	// 1. Fetch the specific server securely using Data Layer
 	const server = await getServerWithDetails(serverId, profile.id);
 
 	// 2. Handle "Not Found" Logic
-	if (!server) {
+	if (!server || !member) {
 		// Check if they have ANY servers to decide redirect vs 404
 		const userServersCheck = await getServersByProfileId(profile.id);
 
@@ -47,7 +48,7 @@ export default async function ServerLayout({ children, params }: ServerLayoutPro
 			<div className="shrink-0 z-10 h-full">
 				<ServerSidebar
 					server={server}
-					profile={profile}
+					currentMember={member}
 					role="ADMIN" // need to be changed to current member.role
 					// We pass undefined for activeChannelId here because the Layout
 					// doesn't know the channel. The Page will handle channel selection visually.
@@ -55,11 +56,7 @@ export default async function ServerLayout({ children, params }: ServerLayoutPro
 			</div>
 
 			{/* Zone C: Page Content */}
-			<QueryProvider>
-				<main className="flex-1 h-full min-w-0 overflow-hidden">{children}</main>
-
-				<ModalProvider />
-			</QueryProvider>
+			<main className="flex-1 h-full min-w-0 overflow-hidden">{children}</main>
 		</div>
 	);
 }

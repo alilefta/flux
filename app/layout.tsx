@@ -7,6 +7,8 @@ import { NextSSRPlugin } from "@uploadthing/react/next-ssr-plugin";
 import { extractRouterConfig } from "uploadthing/server";
 import { fluxUploadRouter } from "./api/uploadthing/core";
 import { dark } from "@clerk/themes";
+import { QueryProvider } from "@/providers/query-provider";
+import { ModalProvider } from "@/providers/modal-provider";
 const inter = Inter({
 	variable: "--font-inter",
 	subsets: ["latin"],
@@ -37,17 +39,12 @@ export default function RootLayout({
 		>
 			<html lang="en" className="dark" data-theme="dark" suppressHydrationWarning>
 				<body className={`${inter.variable} ${jetBrainsMono.variable} antialiased bg-background text-foreground`}>
-					<NextSSRPlugin
-						/**
-						 * The `extractRouterConfig` will extract **only** the route configs
-						 * from the router to prevent additional information from being
-						 * leaked to the client. The data passed to the client is the same
-						 * as if you were to fetch `/api/uploadthing` directly.
-						 */
-						routerConfig={extractRouterConfig(fluxUploadRouter)}
-					/>
-					{children}
-					<Toaster theme="dark" position="bottom-right" />
+					<QueryProvider>
+						<NextSSRPlugin routerConfig={extractRouterConfig(fluxUploadRouter)} />
+						<Toaster theme="dark" position="bottom-right" />
+						<ModalProvider />
+						{children}
+					</QueryProvider>
 				</body>
 			</html>
 		</ClerkProvider>
