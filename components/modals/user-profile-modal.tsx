@@ -14,6 +14,8 @@ import { getProfileDetailsAction } from "@/actions/profile";
 import { useAction } from "next-safe-action/hooks";
 import { useQuery } from "@tanstack/react-query";
 import { Skeleton } from "../ui/skeleton";
+import { handleSafeActionError } from "@/lib/safe-action-helpers";
+import { getOrCreateConversationAction } from "@/actions/conversation";
 
 const roleIconMap = {
 	GUEST: <User className="w-3.5 h-3.5" />,
@@ -40,6 +42,16 @@ export const UserProfileModal = () => {
 		onError: () => {},
 	});
 
+	const { executeAsync: sendMessage, isExecuting: isSendingMessage } = useAction(getOrCreateConversationAction, {
+		onSuccess: () => {
+			// 		onClose(); // Close modal
+			// 		router.push(`/conversations/${result.conversationId}`);
+		},
+		onError: ({ error }) => {
+			handleSafeActionError<typeof getOrCreateConversationAction>(error);
+		},
+	});
+
 	// ✅ Fetch rich details
 	const { data: member, isLoading } = useQuery({
 		queryKey: ["profile-details", sender?.profileId, sender?.serverId],
@@ -60,6 +72,28 @@ export const UserProfileModal = () => {
 	const onCopyId = () => {
 		navigator.clipboard.writeText(sender.id);
 		toast.success("ID Copied to clipboard");
+	};
+
+	const onSendMessage = async () => {
+		// try {
+		// 	// You need an action that wraps the data/conversation.ts logic
+		// 	const result = await getOrCreateConversationAction({
+		// 		memberId: sender.profileId, // The user we are looking at
+		// 	});
+
+		// 	if (result.success) {
+		// 		onClose(); // Close modal
+		// 		router.push(`/conversations/${result.conversationId}`);
+		// 	}
+		// } catch (error) {
+		// 	toast.error("Failed to start conversation");
+		// } finally {
+		// 	setIsLoading(false);
+		// }
+
+		await sendMessage({
+			memberId: sender.profileId,
+		});
 	};
 
 	// Determine date to show: Server Join Date (if member) OR Global Join Date
@@ -163,7 +197,11 @@ export const UserProfileModal = () => {
 
 					{/* 4. FOOTER ACTIONS */}
 					<div className="mt-8">
-						<Button className="w-full h-11 bg-indigo-600 hover:bg-indigo-700 text-white font-semibold rounded-xl shadow-[0_0_20px_rgba(79,70,229,0.2)] transition-all active:scale-[0.98]">
+						<Button
+							className="w-full h-11 bg-indigo-600 hover:bg-indigo-700 text-white font-semibold rounded-xl shadow-[0_0_20px_rgba(79,70,229,0.2)] transition-all active:scale-[0.98]"
+							onClick={onSendMessage}
+							disabled={isSendingMessage}
+						>
 							<MessageSquare className="w-4 h-4 mr-2" />
 							Send Message
 						</Button>
