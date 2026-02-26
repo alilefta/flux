@@ -2,51 +2,79 @@
 
 import { memo, useEffect, useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { useAction } from "next-safe-action/hooks";
 import { getPinnedMessageAction } from "@/actions/message";
+import { getPinnedDirectMessageAction } from "@/actions/direct-message"; // ✅ Import DM action
 import { pusherClient } from "@/lib/pusher-client";
 import { MessageEvent } from "@/lib/events";
-import { ChannelMessage } from "@/schemas/message";
 import { Pin, X, FileIcon } from "lucide-react";
+import { QUERY_KEYS } from "@/lib/query-keys"; // ✅ Import Keys
+import { ChatType } from "@/schemas/composed/shared.base";
+import { ChannelMessage } from "@/schemas/message";
+import { DirectChatMessage } from "@/schemas/composed/direct-message.details";
+import { handleSafeActionError } from "@/lib/safe-action-helpers";
 
 interface ChatPinnedMessageProps {
-	channelId: string;
+	contextId: string;
+	type: ChatType; // ✅ "channel" | "conversation"
 	onJumpToMessage: (messageId: string) => void;
 }
 
 export const ChatPinnedMessage = memo(
-	({ channelId, onJumpToMessage }: ChatPinnedMessageProps) => {
-		console.log("🔄 ChatPinnedMessage rendered");
-
+	({ contextId, type, onJumpToMessage }: ChatPinnedMessageProps) => {
 		const queryClient = useQueryClient();
 		const [isVisible, setIsVisible] = useState(true);
 
-		// 1. Fetch initial pinned message
+		// 1. Determine Dynamic Keys & Actions
+		const queryKey = type === "channel" ? QUERY_KEYS.channel.pinned(contextId) : QUERY_KEYS.dm.pinned(contextId);
+
+		// 2. Fetch Logic
 		const { data: message, isLoading } = useQuery({
-			queryKey: ["pinned-message", channelId],
+			queryKey: queryKey,
 			queryFn: async () => {
-				const res = await getPinnedMessageAction({ channelId });
-				return res?.data?.message || null;
+				if (type === "channel") {
+					const result = await getPinnedMessageAction({ channelId: contextId });
+
+					if (!result?.data?.success) {
+						handleSafeActionError<typeof getPinnedMessageAction>({
+							serverError: result.serverError,
+							validationErrors: result.validationErrors,
+						});
+						throw new Error(result?.serverError || "Failed to fetch pinned message");
+					}
+
+					return result.data.message as ChannelMessage;
+				} else {
+					const result = await getPinnedDirectMessageAction({ conversationId: contextId });
+					if (!result?.data?.success) {
+						handleSafeActionError<typeof getPinnedDirectMessageAction>({
+							serverError: result.serverError,
+							validationErrors: result.validationErrors,
+						});
+						throw new Error(result?.serverError || "Failed to fetch pinned message");
+					}
+
+					return result.data.message as DirectChatMessage;
+				}
 			},
-			staleTime: 30000,
-			notifyOnChangeProps: ["data"],
+			staleTime: Infinity, // Rely on Pusher for updates
 		});
 
-		// 2. Real-time Updates
+		// 3. Real-time Updates
 		useEffect(() => {
-			const channelName = `channel-${channelId}`;
-			const channel = pusherClient.subscribe(channelName);
+			// Logic for Pusher Channel Name
+			const pusherChannelName = type === "channel" ? `channel-${contextId}` : `conversation-${contextId}`;
 
-			const handleUpdate = (updatedMessage: ChannelMessage) => {
-				console.log("New Messaged Pinned!", updatedMessage);
+			const channel = pusherClient.subscribe(pusherChannelName);
+
+			const handleUpdate = (updatedMessage: ChannelMessage | DirectChatMessage) => {
 				// If the updated message is pinned, it becomes the new "Latest Pin"
 				if (updatedMessage.pinned) {
-					queryClient.setQueryData(["pinned-message", channelId], updatedMessage);
+					queryClient.setQueryData(queryKey, updatedMessage);
 					setIsVisible(true);
 				}
 				// If the currently shown message was unpinned, remove it
 				else {
-					queryClient.setQueryData(["pinned-message", channelId], (current: ChannelMessage | null) => {
+					queryClient.setQueryData(queryKey, (current: ChannelMessage | DirectChatMessage) => {
 						if (current?.id === updatedMessage.id) {
 							return null; // Remove from view
 						}
@@ -59,20 +87,23 @@ export const ChatPinnedMessage = memo(
 
 			return () => {
 				channel.unbind(MessageEvent.UPDATE, handleUpdate);
-				console.log("Pin event unbound!");
-
-				// Don't unsubscribe here if ChatMessages also uses this channel,
-				// but Pusher handles ref-counting so it's usually safe.
+				pusherClient.unsubscribe(pusherChannelName);
 			};
-		}, [channelId, queryClient]);
+		}, [contextId, type, queryClient, queryKey]);
 
-		// 3. Navigation Logic
+		// 4. Navigation Logic
 		const onNavigate = () => {
 			if (!message) return;
 			onJumpToMessage(message.id);
 		};
 
-		if (isLoading || !message || !isVisible) return null;
+		if (isLoading) return null; // Or a mini skeleton
+		if (!message || !isVisible) return null;
+
+		// 5. Data Normalization for Display
+		// Channel messages have `member.profile.name`
+		// Direct messages have `member.name` (because member IS the profile)
+		const authorName = "profile" in message.member ? message.member.profile.name : message.member.name;
 
 		return (
 			<div className="relative w-full bg-[#141417] border-b border-white/5 z-10 animate-in slide-in-from-top-2 fade-in duration-300">
@@ -85,7 +116,7 @@ export const ChatPinnedMessage = memo(
 					{/* Content Column */}
 					<div className="flex-1 min-w-0 flex flex-col justify-center">
 						<span className="text-[10px] font-bold text-indigo-400 uppercase tracking-wider mb-0.5">
-							Pinned Message <span className="text-[9px] text-neutral-500/70 ml-1">By {message.member.profile.name}</span>
+							Pinned Message <span className="text-[9px] text-zinc-500/70 ml-1">By {authorName}</span>
 						</span>
 
 						<div className="text-xs text-zinc-300 truncate font-medium flex items-center gap-1">
@@ -102,9 +133,9 @@ export const ChatPinnedMessage = memo(
 						</div>
 					</div>
 
-					{/* Close/Hide Button (Client side hide only) */}
+					{/* Close/Hide Button */}
 					<button
-						title="close or hide the pinned message"
+						title="Dismiss pinned message"
 						onClick={(e) => {
 							e.stopPropagation();
 							setIsVisible(false);
@@ -117,11 +148,7 @@ export const ChatPinnedMessage = memo(
 			</div>
 		);
 	},
-	(prevProps, nextProps) => {
-		// ✅ Only re-render if channelId changes
-		// onJumpToMessage is stable via useCallback in parent
-		return prevProps.channelId === nextProps.channelId;
-	},
+	(prev, next) => prev.contextId === next.contextId,
 );
 
 ChatPinnedMessage.displayName = "ChatPinnedMessage";

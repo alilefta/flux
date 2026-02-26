@@ -14,18 +14,19 @@ interface ChatWrapperProps {
 	member: MemberProfile;
 }
 
-export const ChatWrapper = memo(
+export const ChannelChatWrapper = memo(
 	({ serverId, channel, member }: ChatWrapperProps) => {
 		const chatMessagesRef = useRef<ChatMessagesHandle | null>(null);
 		console.log("ChatWrapper rendered!");
 		const handleJumpToMessage = useCallback((messageId: string) => {
 			chatMessagesRef.current?.jumpToMessage(messageId);
 		}, []);
+
 		return (
 			<>
-				<ChatHeader serverId={serverId} channel={channel} member={member} />
-				<ChatPinnedMessage channelId={channel.id} onJumpToMessage={handleJumpToMessage} />
-				<ChatMessages ref={chatMessagesRef} serverId={serverId} member={member} name={channel.name} channelId={channel.id} type="channel" />
+				<ChatHeader serverId={serverId} member={member} chatName={channel.name} contextId={channel.id} type="channel" />
+				<ChatPinnedMessage contextId={channel.id} onJumpToMessage={handleJumpToMessage} type="channel" />
+				<ChatMessages ref={chatMessagesRef} serverId={serverId} member={member} name={channel.name} channelId={channel.id} />
 				<ChatInput name={channel.name} channelId={channel.id} placeholder="Type..." member={member} />
 			</>
 		);
@@ -36,4 +37,4 @@ export const ChatWrapper = memo(
 	},
 );
 
-ChatWrapper.displayName = "ChatWrapper";
+ChannelChatWrapper.displayName = "ChannelChatWrapper";

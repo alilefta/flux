@@ -9,26 +9,25 @@ import { MemberProfile } from "@/schemas/member";
 import { ChannelBase } from "@/schemas/channel";
 import { ServerBase } from "@/schemas/server.base";
 import { MemberRole } from "@/generated/prisma/enums";
-
-type StreamType = "channel" | "conversation";
+import { ChatType } from "@/schemas/composed/shared.base";
 
 interface ChatHeaderProps {
-	serverId: string;
+	serverId?: string;
 	imageUrl?: string;
-	channel: ChannelBase;
+	contextId: string; // pass channelId or conversationId based on ChatType
 	member: MemberProfile;
-	type?: StreamType;
+	type?: ChatType;
+	chatName: string;
 }
 
-export const ChatHeader = ({ serverId, imageUrl, channel, member, type = "channel" }: ChatHeaderProps) => {
+export const ChatHeader = ({ serverId, imageUrl, member, type = "channel", chatName, contextId }: ChatHeaderProps) => {
 	const onOpen = useModal((state) => state.onOpen);
-	const { name, id: channelId } = channel;
 
 	const { role, profile } = member;
 
 	const isAdmin = role === MemberRole.ADMIN;
 	const isModerator = role === MemberRole.MODERATOR;
-	const isGeneral = name === "general";
+	const isGeneral = type === "channel" && chatName === "general";
 	const canManageChannel = (isAdmin || isModerator) && !isGeneral;
 
 	return (
@@ -45,7 +44,7 @@ export const ChatHeader = ({ serverId, imageUrl, channel, member, type = "channe
 
 				<div className="flex flex-col">
 					<p className="font-bold text-white text-sm leading-tight flex items-center gap-2">
-						{name}
+						{chatName}
 						{/* Optional: Add a subtle indicator if it's the general channel */}
 						{isGeneral && type === "channel" && <span className="text-[10px] bg-white/5 px-1.5 rounded text-zinc-500 font-mono font-normal">default</span>}
 					</p>
@@ -70,7 +69,7 @@ export const ChatHeader = ({ serverId, imageUrl, channel, member, type = "channe
 				{/* Search Bar */}
 				<div
 					className="hidden md:flex items-center gap-2 bg-black/20 px-2 py-1.5 rounded-md border border-white/5 text-zinc-500 text-xs hover:border-white/10 transition-colors cursor-text w-40 lg:w-56"
-					onClick={() => onOpen("searchMessages", { query: { channelId } })}
+					onClick={() => onOpen("searchMessages", { query: { contextId } })}
 				>
 					<Search className="w-3.5 h-3.5" />
 					<span className="truncate">Search...</span>
@@ -92,7 +91,7 @@ export const ChatHeader = ({ serverId, imageUrl, channel, member, type = "channe
 							<DropdownMenuItem
 								onClick={() =>
 									onOpen("editChannel", {
-										channel: { id: channelId, name, type: "TEXT" } as ChannelBase, // Mock object for modal
+										channel: { id: contextId, name: chatName, type: "TEXT" } as ChannelBase, // Mock object for modal
 										server: { id: serverId } as ServerBase,
 									})
 								}
@@ -109,7 +108,7 @@ export const ChatHeader = ({ serverId, imageUrl, channel, member, type = "channe
 									<DropdownMenuItem
 										onClick={() =>
 											onOpen("deleteChannel", {
-												channel: { id: channelId, name, type: "TEXT" } as ChannelBase,
+												channel: { id: contextId, name: chatName, type: "TEXT" } as ChannelBase,
 												server: { id: serverId } as ServerBase,
 											})
 										}

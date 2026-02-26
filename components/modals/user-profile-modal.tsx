@@ -16,6 +16,7 @@ import { useQuery } from "@tanstack/react-query";
 import { Skeleton } from "../ui/skeleton";
 import { handleSafeActionError } from "@/lib/safe-action-helpers";
 import { getOrCreateConversationAction } from "@/actions/conversation";
+import { useRouter } from "next/navigation";
 
 const roleIconMap = {
 	GUEST: <User className="w-3.5 h-3.5" />,
@@ -37,15 +38,17 @@ export const UserProfileModal = () => {
 	const isModalOpen = isOpen && type === "userProfile";
 	const { sender } = data;
 
+	const router = useRouter();
+
 	const { executeAsync: getProfile } = useAction(getProfileDetailsAction, {
 		onSuccess: () => {},
 		onError: () => {},
 	});
 
 	const { executeAsync: sendMessage, isExecuting: isSendingMessage } = useAction(getOrCreateConversationAction, {
-		onSuccess: () => {
-			// 		onClose(); // Close modal
-			// 		router.push(`/conversations/${result.conversationId}`);
+		onSuccess: ({ data }) => {
+			onClose();
+			router.push(`/conversations/${data.conversationId}`);
 		},
 		onError: ({ error }) => {
 			handleSafeActionError<typeof getOrCreateConversationAction>(error);
@@ -75,22 +78,6 @@ export const UserProfileModal = () => {
 	};
 
 	const onSendMessage = async () => {
-		// try {
-		// 	// You need an action that wraps the data/conversation.ts logic
-		// 	const result = await getOrCreateConversationAction({
-		// 		memberId: sender.profileId, // The user we are looking at
-		// 	});
-
-		// 	if (result.success) {
-		// 		onClose(); // Close modal
-		// 		router.push(`/conversations/${result.conversationId}`);
-		// 	}
-		// } catch (error) {
-		// 	toast.error("Failed to start conversation");
-		// } finally {
-		// 	setIsLoading(false);
-		// }
-
 		await sendMessage({
 			memberId: sender.profileId,
 		});
