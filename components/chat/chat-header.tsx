@@ -23,7 +23,7 @@ interface ChatHeaderProps {
 export const ChatHeader = ({ serverId, imageUrl, member, type = "channel", chatName, contextId }: ChatHeaderProps) => {
 	const onOpen = useModal((state) => state.onOpen);
 
-	const { role, profile } = member;
+	const { role } = member;
 
 	const isAdmin = role === MemberRole.ADMIN;
 	const isModerator = role === MemberRole.MODERATOR;
@@ -130,12 +130,7 @@ export const ChatHeader = ({ serverId, imageUrl, member, type = "channel", chatN
 						onOpen("userSettings", {
 							// Construct a mock profile object from Clerk data
 							// OR pass the real Prisma profile down as a prop
-							profile: {
-								id: profile.id, // We need the Real Profile ID for the update action
-								name: profile.name,
-								imageUrl: profile.imageUrl,
-								email: profile.email,
-							},
+							profile: member.profile,
 						})
 					}
 					className="p-2 rounded-lg text-zinc-400 hover:text-white hover:bg-white/5 transition-colors"

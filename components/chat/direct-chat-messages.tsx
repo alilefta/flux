@@ -16,11 +16,13 @@ import { MessageReaction } from "@/schemas/message-reaction.base";
 import { ChatType, ReplyMessageUI } from "@/schemas/composed/shared.base";
 import { useDirectMessagesQuery } from "@/hooks/use-chat-query";
 import { memberToSender, profileToSender } from "@/lib/chat-adapters";
+import { UserAvatar } from "../user/user-avatar";
+import { ProfileBase } from "@/schemas/profile";
 
 const DATE_FORMAT = "d MMM yyyy, HH:mm";
 
 interface DirectChatMessagesProps {
-	name: string;
+	otherProfile: ProfileBase;
 	member: MemberProfile;
 	conversationId: string;
 	type?: "channel" | "conversation";
@@ -34,12 +36,9 @@ export interface ChatMessagesHandle {
 }
 
 export const DirectChatMessages = memo(
-	forwardRef<ChatMessagesHandle, DirectChatMessagesProps>(({ name, member, conversationId }, ref) => {
+	forwardRef<ChatMessagesHandle, DirectChatMessagesProps>(({ otherProfile, member, conversationId }, ref) => {
 		const type: ChatType = "conversation";
 		const currentMemberSender = useMemo(() => memberToSender(member), [member]);
-
-		// ✅ Track what causes re-renders
-		// useWhyDidYouRender("ChatMessages", props);
 
 		const chatRef = useRef<HTMLDivElement>(null);
 		const bottomRef = useRef<HTMLDivElement>(null);
@@ -132,6 +131,8 @@ export const DirectChatMessages = memo(
 		const returnToPresent = useCallback(() => {
 			// 1. Switch state back to Chronological
 			setJumpMode({ active: false });
+
+			//const queryKey = mode === "around" && targetMessageId ? QUERY_KEYS.dm.jump(conversationId, targetMessageId) : QUERY_KEYS.dm.messages(conversationId);
 
 			queryClient.cancelQueries({
 				queryKey: ["messages", conversationId, "jump"],
@@ -473,22 +474,24 @@ export const DirectChatMessages = memo(
 				{/* 1. Spacer to push messages to bottom if few */}
 				<div className="flex-1" />
 
-				{/* ✅ Welcome - only if no more pages */}
+				{/* ✅ DM WELCOME MESSAGE */}
 				{!hasNextPage && (
-					<>
-						<div className="px-6 pb-6 pt-10">
-							<div className="h-16 w-16 rounded-3xl bg-white/10 flex items-center justify-center mb-4 shadow-[0_0_20px_rgba(255,255,255,0.05)]">
-								<Hash className="h-8 w-8 text-white" />
-							</div>
-							<h3 className="text-3xl font-bold text-white tracking-tight">Welcome to #{name}</h3>
-							<p className="text-zinc-400 text-base mt-2">
-								This is the start of the <span className="text-indigo-400 font-bold">#{name}</span> channel.
-							</p>
+					<div className="px-6 pb-6 pt-10">
+						{/* Avatar instead of Hash */}
+						<div className="h-20 w-20 rounded-full bg-white/10 flex items-center justify-center mb-4 shadow-[0_0_20px_rgba(255,255,255,0.05)] overflow-hidden">
+							<UserAvatar
+								name={otherProfile.name} // "name" prop is the Other Person's name
+								className="h-20 w-20"
+								src={otherProfile.imageUrl ?? undefined}
+								// You might want to pass 'imageUrl' prop to DirectChatMessages for this
+							/>
 						</div>
-						<div className="w-full h-px bg-white/5 my-2 mx-6" />
-					</>
+						<h3 className="text-3xl font-bold text-white tracking-tight">{otherProfile.name}</h3>
+						<p className="text-zinc-400 text-base mt-2">
+							This is the start of your direct message history with <span className="text-indigo-400 font-bold">@{otherProfile.name}</span>.
+						</p>
+					</div>
 				)}
-
 				{isFetchingNextPage && (
 					<div className="flex justify-center py-2">
 						<Loader2 className="animate-spin w-4 h-4" />
@@ -562,12 +565,12 @@ export const DirectChatMessages = memo(
 	}),
 	(prevProps: DirectChatMessagesProps, nextProps: DirectChatMessagesProps) => {
 		// ✅ Log memo comparison
-		const shouldSkip = prevProps.conversationId === nextProps.conversationId && prevProps.name === nextProps.name && prevProps.member.id === nextProps.member.id;
+		const shouldSkip = prevProps.conversationId === nextProps.conversationId && prevProps.otherProfile.id === nextProps.otherProfile.id && prevProps.member.id === nextProps.member.id;
 
 		if (!shouldSkip) {
 			console.log("❌ React.memo did NOT skip re-render. Changed props:", {
 				conversationId: prevProps.conversationId !== nextProps.conversationId,
-				name: prevProps.name !== nextProps.name,
+				otherProfile: prevProps.otherProfile.id !== nextProps.otherProfile.id,
 				memberId: prevProps.member.id !== nextProps.member.id,
 			});
 		} else {

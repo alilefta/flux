@@ -1,11 +1,10 @@
 "use client";
 
 import { ChatHeader } from "./chat-header";
-import { ChatMessagesHandle } from "./chat-messages";
 import { ChatPinnedMessage } from "./chat-pinned-message";
 import { MemberProfile } from "@/schemas/member";
 import { memo, useCallback, useRef } from "react";
-import { DirectChatMessages } from "./direct-chat-messages";
+import { ChatMessagesHandle, DirectChatMessages } from "./direct-chat-messages";
 import { DirectChatInput } from "./direct-chat-input";
 import { ConversationBase } from "@/schemas/conversation.base";
 import { ProfileBase } from "@/schemas/profile";
@@ -24,11 +23,12 @@ export const DMChatWrapper = memo(
 			chatMessagesRef.current?.jumpToMessage(messageId);
 		}, []);
 
+		console.log("currentMember:", currentMember, "otherProfile:", otherProfile);
 		return (
 			<>
-				<ChatHeader member={currentMember} chatName={otherProfile.name} contextId={conversation.id} type="conversation" />
+				<ChatHeader member={currentMember} chatName={otherProfile.name} contextId={conversation.id} type="conversation" imageUrl={otherProfile.imageUrl ?? undefined} />
 				<ChatPinnedMessage contextId={conversation.id} onJumpToMessage={handleJumpToMessage} type="conversation" />
-				<DirectChatMessages ref={chatMessagesRef} conversationId={conversation.id} member={currentMember} name={otherProfile.name} />
+				<DirectChatMessages ref={chatMessagesRef} conversationId={conversation.id} member={currentMember} otherProfile={otherProfile} />
 				<DirectChatInput name={otherProfile.name} conversationId={conversation.id} placeholder="Type..." member={currentMember} />
 			</>
 		);
