@@ -13,6 +13,7 @@ import { useChatStore } from "@/hooks/use-chat-store";
 import { cn } from "@/lib/utils";
 import { sendDirectMessageAction } from "@/actions/direct-message";
 import { DirectChatMessage } from "@/schemas/composed/direct-message.details";
+import { QUERY_KEYS } from "@/lib/query-keys";
 
 interface DirectChatInputProps {
 	placeholder?: string;
@@ -27,6 +28,7 @@ export const DirectChatInput = ({ placeholder, conversationId, name, member }: D
 	const onOpen = useModal((state) => state.onOpen);
 	const replyingTo = useChatStore((state) => state.replyingTo);
 	const setReplyingTo = useChatStore((state) => state.setReplyingTo);
+	const queryKey = QUERY_KEYS.dm.messages(conversationId);
 
 	const [message, setMessage] = useState("");
 	const queryClient = useQueryClient();
@@ -63,10 +65,10 @@ export const DirectChatInput = ({ placeholder, conversationId, name, member }: D
 		// optimistic UI update
 		onMutate: async ({ content, optimisticId }, context) => {
 			// Cancel outgoing queries
-			await context.client.cancelQueries({ queryKey: ["messages", conversationId] });
+			await context.client.cancelQueries({ queryKey });
 
 			// Snapshot previous state
-			const previousMessages = queryClient.getQueryData<QueryDataShape>(["messages", conversationId]);
+			const previousMessages = queryClient.getQueryData<QueryDataShape>(queryKey);
 
 			const replyingToPayload: DirectChatMessage["replyTo"] | null = replyingTo
 				? {
@@ -117,7 +119,7 @@ export const DirectChatInput = ({ placeholder, conversationId, name, member }: D
 			};
 
 			// Add optimistic message
-			queryClient.setQueryData<QueryDataShape>(["messages", conversationId], (oldData) => {
+			queryClient.setQueryData<QueryDataShape>(queryKey, (oldData) => {
 				if (!oldData?.pages) return oldData;
 
 				// const firstPage = oldData.pages[0];
@@ -152,7 +154,7 @@ export const DirectChatInput = ({ placeholder, conversationId, name, member }: D
 
 			// Rollback
 			if (context?.previousMessages) {
-				queryClient.setQueryData(["messages", conversationId], context.previousMessages);
+				queryClient.setQueryData(queryKey, context.previousMessages);
 			}
 		},
 	});
