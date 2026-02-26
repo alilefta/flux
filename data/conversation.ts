@@ -1,5 +1,20 @@
 import prisma from "@/lib/prisma";
 
+export const getConversations = async (profileId: string) => {
+	return await prisma.conversation.findMany({
+		where: {
+			OR: [{ memberOneId: profileId }, { memberTwoId: profileId }],
+		},
+		include: {
+			memberOne: true,
+			memberTwo: true,
+		},
+		orderBy: {
+			updatedAt: "desc",
+		},
+	});
+};
+
 export const getOrCreateConversation = async (memberOneId: string, memberTwoId: string) => {
 	// 1. Try finding existing conversation (Order A -> B)
 	const conversation = (await findConversation(memberOneId, memberTwoId)) || (await findConversation(memberTwoId, memberOneId));
@@ -26,6 +41,25 @@ const findConversation = async (memberOneId: string, memberTwoId: string) => {
 
 		return conversation;
 	} catch {
+		return null;
+	}
+};
+
+export const findConversationById = async (conversationId: string) => {
+	try {
+		const conversation = await prisma.conversation.findFirst({
+			where: {
+				id: conversationId,
+			},
+			include: {
+				memberOne: true,
+				memberTwo: true,
+			},
+		});
+
+		return conversation;
+	} catch (e) {
+		console.info("[Find-Conversation-By-ID] Failes", e);
 		return null;
 	}
 };
