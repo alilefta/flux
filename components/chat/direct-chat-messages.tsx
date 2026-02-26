@@ -2,7 +2,7 @@
 
 import { differenceInCalendarDays, format } from "date-fns";
 import { ChatItem } from "@/components/chat/chat-item";
-import { ArrowDown, Hash, Loader2 } from "lucide-react";
+import { ArrowDown, Loader2 } from "lucide-react";
 import { MemberProfile } from "@/schemas/member";
 import { forwardRef, Fragment, memo, useCallback, useEffect, useImperativeHandle, useLayoutEffect, useMemo, useRef, useState } from "react";
 import { pusherClient } from "@/lib/pusher-client";
@@ -15,7 +15,7 @@ import { DirectChatMessage } from "@/schemas/composed/direct-message.details";
 import { MessageReaction } from "@/schemas/message-reaction.base";
 import { ChatType, ReplyMessageUI } from "@/schemas/composed/shared.base";
 import { useDirectMessagesQuery } from "@/hooks/use-chat-query";
-import { memberToSender, profileToSender } from "@/lib/chat-adapters";
+import { profileToSender } from "@/lib/chat-adapters";
 import { UserAvatar } from "../user/user-avatar";
 import { ProfileBase } from "@/schemas/profile";
 
@@ -38,7 +38,7 @@ export interface ChatMessagesHandle {
 export const DirectChatMessages = memo(
 	forwardRef<ChatMessagesHandle, DirectChatMessagesProps>(({ otherProfile, member, conversationId }, ref) => {
 		const type: ChatType = "conversation";
-		const currentMemberSender = useMemo(() => memberToSender(member), [member]);
+		// const currentMemberSender = useMemo(() => memberToSender(member), [member]);
 
 		const chatRef = useRef<HTMLDivElement>(null);
 		const bottomRef = useRef<HTMLDivElement>(null);

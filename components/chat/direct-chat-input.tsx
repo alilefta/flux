@@ -1,13 +1,11 @@
 "use client";
 
-import { sendMessageAction } from "@/actions/message";
 import { InfiniteData, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Plus, Send, Loader2, X } from "lucide-react";
 import { useAction } from "next-safe-action/hooks";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
 import TextareaAutosize from "react-textarea-autosize";
-import { ChannelMessage } from "@/schemas/message";
 import { MemberProfile } from "@/schemas/member";
 import { EmojiPopover } from "./emoji-popover";
 import { useModal } from "@/hooks/use-modal-store";
@@ -113,16 +111,7 @@ export const DirectChatInput = ({ placeholder, conversationId, name, member }: D
 				reactions: [],
 
 				// should be replaced with the current profile
-				member: {
-					id: "test",
-					createdAt: new Date(),
-					updatedAt: new Date(),
-					clerkId: "unknown",
-					name: "unknown",
-					imageUrl: "unknown",
-					email: "",
-					bio: "",
-				},
+				member: member.profile,
 				memberId: member.id,
 				replyTo: replyingToPayload,
 			};
