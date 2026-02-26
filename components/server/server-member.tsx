@@ -24,7 +24,7 @@ export const ServerMember = ({ member }: ServerMemberProps) => {
 	const onOpen = useModal((state) => state.onOpen);
 
 	return (
-		<button className={cn("group px-2 py-2 rounded-md flex items-center gap-x-2 w-full hover:bg-white/5 transition-all mb-1")} onClick={() => onOpen("userProfile", { member })}>
+		<button className={cn("group px-2 py-2 rounded-md flex items-center gap-x-2 w-full hover:bg-white/5 transition-all mb-1")} onClick={() => onOpen("userProfile", { profile: member.profile })}>
 			<UserAvatar src={member.profile.imageUrl ?? undefined} className="h-6 w-6 md:h-6 md:w-6" />
 			<p className={cn("font-medium text-xs text-zinc-400 group-hover:text-zinc-300 transition-colors")}>{member.profile.name}</p>
 			{icon}

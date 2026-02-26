@@ -25,7 +25,7 @@ export const ConversationSidebar = ({ conversations, currentProfileId }: Convers
 	};
 
 	return (
-		<div className="flex flex-col h-full w-64 bg-[#141417]/60 backdrop-blur-xl border border-white/5 rounded-3xl shadow-2xl overflow-hidden flex-shrink-0">
+		<div className="flex flex-col h-full w-64 bg-[#141417]/60 backdrop-blur-xl border border-white/5 rounded-3xl shadow-2xl overflow-hidden shrink-0">
 			{/* Header */}
 			<div className="h-12 flex items-center px-4 border-b border-white/5 bg-white/2">
 				<button

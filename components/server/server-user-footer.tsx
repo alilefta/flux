@@ -4,16 +4,17 @@ import { Mic, MicOff, Headphones, HeadphoneOff, Settings, LucideIcon } from "luc
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { useState } from "react";
 import { cn } from "@/lib/utils";
-import { UserButton, useUser } from "@clerk/nextjs";
-import { ProfileBase } from "@/schemas/profile";
 import { useModal } from "@/hooks/use-modal-store";
 import { useIsMounted } from "@/hooks/use-is-mounted";
+import { UserAvatar } from "../user/user-avatar";
+import { MemberProfile } from "@/schemas/member";
+import { useUser } from "@clerk/nextjs";
 
 interface ServerUserFooterProps {
-	profile: ProfileBase;
+	currentMember: MemberProfile;
 }
 
-export const ServerUserFooter = ({ profile }: ServerUserFooterProps) => {
+export const ServerUserFooter = ({ currentMember }: ServerUserFooterProps) => {
 	const { user, isLoaded } = useUser(); // 1. Fetch real user
 	const onOpen = useModal((state) => state.onOpen);
 	const [isMuted, setIsMuted] = useState(false);
@@ -38,8 +39,7 @@ export const ServerUserFooter = ({ profile }: ServerUserFooterProps) => {
 	return (
 		<div className="h-14 bg-black/20 px-3 flex items-center justify-between border-t border-white/5 mt-auto">
 			{/* 1. Clerk User Button & Info */}
-			<div className="flex items-center gap-x-3 hover:bg-white/5 p-1 rounded-md transition-colors">
-				{/* We use Clerk's button but style it to fit */}
+			{/* <div className="flex items-center gap-x-3 hover:bg-white/5 p-1 rounded-md transition-colors">
 				<div className="relative h-8 w-8">
 					<UserButton
 						appearance={{
@@ -53,6 +53,23 @@ export const ServerUserFooter = ({ profile }: ServerUserFooterProps) => {
 				<div className="flex flex-col max-w-20">
 					<span className="text-xs font-semibold text-white truncate">{user.username || user.firstName || "User"}</span>
 					<span className="text-[10px] text-zinc-400 truncate font-mono">Online</span>
+				</div>
+			</div> */}
+			{/* ✅ CUSTOM USER BUTTON */}
+			<div
+				onClick={() =>
+					onOpen("userSettings", {
+						// We pass the prisma profile to the settings modal
+						profile: currentMember.profile,
+					})
+				}
+				className="flex items-center gap-x-2 hover:bg-white/5 p-1.5 rounded-md transition-colors cursor-pointer group max-w-30"
+			>
+				<UserAvatar src={currentMember.profile.imageUrl ?? undefined} className="h-8 w-8 border border-white/10" />
+
+				<div className="flex flex-col min-w-0">
+					<span className="text-[13px] font-semibold text-white truncate group-hover:text-zinc-200 transition">{currentMember.profile.name}</span>
+					<span className="text-[10px] text-zinc-400 truncate">Online</span>
 				</div>
 			</div>
 
@@ -74,12 +91,7 @@ export const ServerUserFooter = ({ profile }: ServerUserFooterProps) => {
 						onOpen("userSettings", {
 							// Construct a mock profile object from Clerk data
 							// OR pass the real Prisma profile down as a prop
-							profile: {
-								id: profile.id, // We need the Real Profile ID for the update action
-								name: profile.name,
-								imageUrl: profile.imageUrl,
-								email: profile.email,
-							},
+							profile: currentMember.profile,
 						})
 					}
 				/>

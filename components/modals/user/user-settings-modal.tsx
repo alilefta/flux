@@ -9,7 +9,7 @@ import { z } from "zod";
 import { toast } from "sonner";
 import { useEffect, useState } from "react";
 import { User, Palette, Bell, LogOut, Loader2, LucideIcon } from "lucide-react";
-import { SignOutButton } from "@clerk/nextjs";
+import { useClerk } from "@clerk/nextjs";
 
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
@@ -33,13 +33,14 @@ export const UserSettingsModal = () => {
 	const type = useModal((state) => state.type);
 	const data = useModal((state) => state.data);
 	const isModalOpen = isOpen && type === "userSettings";
+	const { signOut } = useClerk();
 
 	// We define tabs for future scalability
 	const [activeTab, setActiveTab] = useState("account");
 
 	// In a real app, you'd pass the profile in `data` when opening the modal
 	// or fetch it via a hook. Let's assume `data.profile` is passed.
-	const profile = data?.member?.profile || data?.profile;
+	const profile = data?.profile || data?.profile;
 
 	const methods = useForm<FormData>({
 		resolver: zodResolver(formSchema),
@@ -95,12 +96,13 @@ export const UserSettingsModal = () => {
 					<Separator className="bg-white/5 my-2" />
 
 					<div className="mt-auto">
-						<SignOutButton>
-							<button className="flex items-center gap-2 w-full px-2 py-2 rounded-md text-rose-500 hover:bg-rose-500/10 transition-colors text-sm font-medium">
-								<LogOut className="w-4 h-4" />
-								Log Out
-							</button>
-						</SignOutButton>
+						<button
+							onClick={() => signOut(() => router.push("/"))}
+							className="flex items-center gap-2 w-full px-2 py-2 rounded-md text-rose-500 hover:bg-rose-500/10 transition-colors text-sm font-medium"
+						>
+							<LogOut className="w-4 h-4" />
+							Log Out
+						</button>
 					</div>
 				</div>
 

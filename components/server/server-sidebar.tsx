@@ -7,18 +7,17 @@ import { ServerChannel } from "./server-channel";
 import { ServerUserFooter } from "@/components/server/server-user-footer";
 import { ServerDetails } from "@/schemas/composed/server.details";
 import { ChannelType, MemberRole } from "@/generated/prisma/enums"; // Import Enums
-import { Hash, Mic, Video, ShieldAlert, ShieldCheck } from "lucide-react";
 import { ServerMember } from "@/components/server/server-member";
 import { useParams } from "next/navigation";
-import { ProfileBase } from "@/schemas/profile";
+import { MemberProfile } from "@/schemas/member";
 
 interface ServerSidebarProps {
 	server: ServerDetails;
 	role?: MemberRole; // Pass the current user's role from Layout
-	profile: ProfileBase;
+	currentMember: MemberProfile;
 }
 
-export const ServerSidebar = ({ server, role, profile }: ServerSidebarProps) => {
+export const ServerSidebar = ({ server, role, currentMember }: ServerSidebarProps) => {
 	const params = useParams();
 	const activeChannelId = params?.channelId as string;
 
@@ -39,7 +38,7 @@ export const ServerSidebar = ({ server, role, profile }: ServerSidebarProps) => 
 	// };
 
 	return (
-		<div className="flex flex-col h-full w-64 bg-[#141417]/60 backdrop-blur-xl border border-white/5 rounded-3xl shadow-2xl overflow-hidden flex-shrink-0">
+		<div className="flex flex-col h-full w-64 bg-[#141417]/60 backdrop-blur-xl border border-white/5 rounded-3xl shadow-2xl overflow-hidden shrink-0">
 			<ServerHeader server={server} role={role} />
 
 			<ScrollArea className="flex-1 px-3">
@@ -94,7 +93,7 @@ export const ServerSidebar = ({ server, role, profile }: ServerSidebarProps) => 
 				</div>
 			</ScrollArea>
 
-			<ServerUserFooter profile={profile} />
+			<ServerUserFooter currentMember={currentMember} />
 		</div>
 	);
 };

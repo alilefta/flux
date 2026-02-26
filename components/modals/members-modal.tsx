@@ -116,7 +116,7 @@ export const MembersModal = () => {
 							<div
 								key={member.id}
 								className="group flex items-center gap-x-3 p-3 rounded-xl hover:bg-white/5 transition-all cursor-pointer border border-transparent hover:border-white/5"
-								onClick={() => onOpen("userProfile", { member })}
+								onClick={() => onOpen("userProfile", { profile: member.profile })}
 							>
 								{/* 1. Avatar */}
 								<UserAvatar src={member.profile.imageUrl ?? undefined} className="h-10 w-10 border border-white/10" />
