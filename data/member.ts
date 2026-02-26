@@ -14,6 +14,9 @@ export async function getMemberByProfileId(profileId: string) {
 		where: {
 			profileId,
 		},
+		include: {
+			profile: true,
+		},
 	});
 }
 
