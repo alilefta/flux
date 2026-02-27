@@ -12,8 +12,8 @@ import { Button } from "@/components/ui/button";
 import { CreateServerInput, UpdateServerInput } from "@/schemas/composed/server.details";
 
 export function ServerImageUpload() {
-	const { setValue, control } = useFormContext<CreateServerInput | UpdateServerInput>();
-	const imageUrl = useWatch({ control, name: "imageUrl" });
+	const { setValue, watch } = useFormContext<CreateServerInput | UpdateServerInput>();
+	const imageUrl = watch("imageUrl");
 	const [preview, setPreview] = useState<string | null>(imageUrl);
 
 	// 1. UPLOADTHING LOGIC

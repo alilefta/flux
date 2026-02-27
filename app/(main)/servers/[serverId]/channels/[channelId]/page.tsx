@@ -24,7 +24,11 @@ export default async function ChannelPage({ params }: ChannelPageProps) {
 	// Fetch Member (Current User)
 	const member = await getCurrentMemberByServerAndProfileId(serverId, profile.id);
 
-	if (!channel || !member) return redirect(`/servers/${serverId}`);
+	// 3. ✅ CRITICAL SECURITY CHECK
+	// Ensure the channel exists, the member exists, AND the channel belongs to this server
+	if (!channel || !member || channel.serverId !== serverId) {
+		return redirect(`/servers/${serverId}`);
+	}
 
 	return (
 		<div className="bg-[#141417]/60 backdrop-blur-xl border border-white/5 rounded-3xl shadow-2xl flex flex-col h-full overflow-hidden w-full relative z-0">

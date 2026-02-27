@@ -11,12 +11,51 @@ export async function getServerById(serverId: string) {
 	return server;
 }
 
+export async function getServerWithAnyChannel(serverId: string) {
+	const server = await prisma.server.findFirst({
+		where: {
+			id: serverId,
+		},
+		orderBy: {
+			createdAt: "asc",
+		},
+	});
+
+	return server;
+}
+
 export async function getServersByProfileId(profileId: string) {
 	return await prisma.server.findMany({
 		where: {
 			members: { some: { profileId } },
 		},
 	});
+}
+
+export async function getServerByIdWithDefaultChannel(serverId: string, profileId: string) {
+	const server = await prisma.server.findUnique({
+		where: {
+			id: serverId,
+			// Security: Ensure user is actually a member of this new server
+			members: {
+				some: {
+					profileId: profileId,
+				},
+			},
+		},
+		include: {
+			channels: {
+				where: {
+					name: "general",
+				},
+				orderBy: {
+					createdAt: "asc",
+				},
+			},
+		},
+	});
+
+	return server;
 }
 
 export async function getServerWithDetails(serverId: string, profileId: string): Promise<ServerDetails | null> {

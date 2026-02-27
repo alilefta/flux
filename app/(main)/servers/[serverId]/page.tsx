@@ -1,6 +1,5 @@
 import { redirect } from "next/navigation";
-import { getFirstServerForProfileId } from "@/data/server";
-import { getFirstChannelByServerId } from "@/data/channel";
+import { getServerByIdWithDefaultChannel, getServerWithAnyChannel } from "@/data/server";
 import { getCurrentProfile } from "@/data/profile";
 
 interface ServerPageProps {
@@ -15,18 +14,20 @@ export default async function ServerPage({ params }: ServerPageProps) {
 		return redirect("/sign-in");
 	}
 
-	const server = await getFirstServerForProfileId(profile.id);
+	const server = await getServerByIdWithDefaultChannel(serverId, profile.id);
 
 	// 1. If we found "general", go there
-	const initialChannel = server?.channels[0];
+	const generalChannel = server?.channels[0];
 
-	if (initialChannel?.name === "general") {
-		return redirect(`/servers/${serverId}/channels/${initialChannel.id}`);
+	if (generalChannel) {
+		return redirect(`/servers/${serverId}/channels/${generalChannel.id}`);
 	}
 
 	// 2. If no "general" (edge case), find ANY channel
-	if (!initialChannel) {
-		const anyChannel = await getFirstChannelByServerId(serverId);
+	if (server) {
+		// Ensure server exists
+		const anyChannel = await getServerWithAnyChannel(server.id);
+
 		if (anyChannel) {
 			return redirect(`/servers/${serverId}/channels/${anyChannel.id}`);
 		}
