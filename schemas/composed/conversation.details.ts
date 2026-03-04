@@ -12,3 +12,13 @@ export const ConversationDetailsSchema = ConversationBaseSchema.extend(
 );
 
 export type ConversationDetailsBase = z.infer<typeof ConversationDetailsSchema>;
+
+export const DirctMessageNotificationSchema = z.object({
+	conversationId: z.uuid(),
+	senderId: z.uuid(),
+	senderName: z.string(),
+	senderImage: z.string(),
+	content: z.string().default("Sent an attachment"),
+});
+
+export type DirectMessageNotification = z.infer<typeof DirctMessageNotificationSchema>;

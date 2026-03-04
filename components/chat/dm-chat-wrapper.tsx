@@ -3,11 +3,12 @@
 import { ChatHeader } from "./chat-header";
 import { ChatPinnedMessage } from "./chat-pinned-message";
 import { MemberProfile } from "@/schemas/member";
-import { memo, useCallback, useRef } from "react";
+import { memo, useCallback, useEffect, useRef } from "react";
 import { ChatMessagesHandle, DirectChatMessages } from "./direct-chat-messages";
 import { DirectChatInput } from "./direct-chat-input";
 import { ConversationBase } from "@/schemas/conversation.base";
 import { ProfileBase } from "@/schemas/profile";
+import { useNotificationStore } from "@/hooks/use-notification-store";
 
 interface ChatWrapperProps {
 	conversation: ConversationBase;
@@ -19,9 +20,16 @@ export const DMChatWrapper = memo(
 	({ conversation, otherProfile, currentMember }: ChatWrapperProps) => {
 		const chatMessagesRef = useRef<ChatMessagesHandle | null>(null);
 		console.log("ChatWrapper rendered!");
+		const clearUnread = useNotificationStore((state) => state.clearUnread);
+
 		const handleJumpToMessage = useCallback((messageId: string) => {
 			chatMessagesRef.current?.jumpToMessage(messageId);
 		}, []);
+
+		// ✅ Clear notification when this page mounts
+		useEffect(() => {
+			clearUnread(conversation.id);
+		}, [conversation.id, clearUnread]);
 
 		console.log("currentMember:", currentMember, "otherProfile:", otherProfile);
 		return (

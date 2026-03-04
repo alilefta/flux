@@ -6,6 +6,7 @@ import { MessageEvent } from "@/lib/events";
 import prisma from "@/lib/prisma";
 import { pusherServer } from "@/lib/pusher";
 import { actionClientWithProfile } from "@/lib/safe-action";
+import { DirectMessageNotification } from "@/schemas/composed/conversation.details";
 import {
 	CreateDirectMessageSchema,
 	DeleteDirectMessageSchema,
@@ -91,6 +92,18 @@ export const sendDirectMessageAction = actionClientWithProfile
 				...message,
 				optimisticClientId,
 			});
+
+			// Find who the recipient is
+			const recipientId = conversation.memberOneId === ctx.profile.id ? conversation.memberTwoId : conversation.memberOneId;
+
+			const userChannel = `user-${recipientId}`;
+			await pusherServer.trigger(userChannel, "notification:new", {
+				conversationId: conversationId,
+				senderId: ctx.profile.id,
+				senderName: ctx.profile.name,
+				senderImage: ctx.profile.imageUrl,
+				content: content || "Sent an attachment",
+			} as DirectMessageNotification);
 
 			return { success: true, data: { message } };
 		} catch (e) {

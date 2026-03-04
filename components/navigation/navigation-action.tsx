@@ -18,8 +18,8 @@ export const NavigationAction = ({ icon, label, isActive, onClick }: NavigationA
 					<button onClick={onClick} className="group flex items-center justify-center">
 						<div
 							className={cn(
-								"flex mx-3 h-[48px] w-[48px] rounded-[24px] group-hover:rounded-[16px] transition-all overflow-hidden items-center justify-center bg-background/50 group-hover:bg-green-500/10 border border-white/5 group-hover:border-green-500/50",
-								isActive && "bg-primary rounded-[16px]",
+								"flex mx-3 h-12 w-12 rounded-[24px] group-hover:rounded-3xl transition-all overflow-hidden items-center justify-center bg-background/50 group-hover:bg-green-500/10 border border-white/5 group-hover:border-green-500/50",
+								isActive && "bg-primary rounded-3xl",
 							)}
 						>
 							{icon}

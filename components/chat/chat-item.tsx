@@ -176,7 +176,7 @@ export const ChatItem = React.memo(
 				{/* ======================= 2. MAIN MESSAGE ROW ======================= */}
 				<div className="relative group flex items-start gap-x-3 py-1 px-4 hover:bg-white/2 transition-colors w-full mt-0.5">
 					{/* Avatar */}
-					<div className="cursor-pointer hover:drop-shadow-md transition shrink-0 mt-0.5" onClick={() => onOpen("userProfile", { sender })}>
+					<div className="cursor-pointer hover:drop-shadow-md transition shrink-0 mt-0.5" onClick={() => onOpen("userProfile", { sender, isOwnProfile: isOwner })}>
 						<UserAvatar name={sender.name} src={sender.imageUrl ?? undefined} className="h-8 w-8" />
 					</div>
 
@@ -185,7 +185,7 @@ export const ChatItem = React.memo(
 						{/* Header Metadata */}
 						<div className="flex items-center gap-x-2">
 							<div className="flex items-center gap-x-1">
-								<span className="font-bold text-sm text-white hover:underline cursor-pointer" onClick={() => onOpen("userProfile", { sender })}>
+								<span className="font-bold text-sm text-white hover:underline cursor-pointer" onClick={() => onOpen("userProfile", { sender, isOwnProfile: isOwner })}>
 									{sender.name}
 								</span>
 								<TooltipProvider>

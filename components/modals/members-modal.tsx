@@ -25,6 +25,7 @@ import {
 	DropdownMenuSubTrigger,
 	DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { memberToSender } from "@/lib/chat-adapters";
 
 // Professional Badges for Roles
 const RoleBadge = ({ role }: { role: MemberRole }) => {
@@ -55,7 +56,7 @@ export const MembersModal = () => {
 	const [loadingId, setLoadingId] = useState("");
 
 	const isModalOpen = isOpen && type === "members";
-	const { server } = data as { server: ServerDetails };
+	const { server, currentProfileId } = data;
 
 	// --- ACTIONS ---
 	const { execute: kickMember } = useAction(kickMemberAction, {
@@ -88,6 +89,8 @@ export const MembersModal = () => {
 		},
 	});
 
+	if (!server) return null;
+
 	const onKick = (memberId: string) => {
 		setLoadingId(memberId);
 		kickMember({ serverId: server?.id, memberId });
@@ -116,7 +119,7 @@ export const MembersModal = () => {
 							<div
 								key={member.id}
 								className="group flex items-center gap-x-3 p-3 rounded-xl hover:bg-white/5 transition-all cursor-pointer border border-transparent hover:border-white/5"
-								onClick={() => onOpen("userProfile", { profile: member.profile })}
+								onClick={() => onOpen("userProfile", { sender: memberToSender(member), isOwnProfile: currentProfileId === member.profile.id })}
 							>
 								{/* 1. Avatar */}
 								<UserAvatar src={member.profile.imageUrl ?? undefined} className="h-10 w-10 border border-white/10" />

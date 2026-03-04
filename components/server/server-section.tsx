@@ -1,20 +1,22 @@
 "use client";
 
 import { ChannelType, MemberRole } from "@/generated/prisma/enums";
-import { ServerBase } from "@/schemas/server.base";
 import { Plus, Settings } from "lucide-react";
 import { useModal } from "@/hooks/use-modal-store"; // Assuming you have this
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
+import { MemberProfile } from "@/schemas/member";
+import { ServerDetails } from "@/schemas/composed/server.details";
 
 interface ServerSectionProps {
 	label: string;
 	role?: MemberRole;
 	sectionType: "channels" | "members";
 	channelType?: ChannelType;
-	server?: ServerBase;
+	server?: ServerDetails;
+	currentMember: MemberProfile;
 }
 
-export const ServerSection = ({ label, role, sectionType, channelType, server }: ServerSectionProps) => {
+export const ServerSection = ({ label, role, sectionType, channelType, server, currentMember }: ServerSectionProps) => {
 	const onOpen = useModal((state) => state.onOpen);
 
 	return (
@@ -46,7 +48,11 @@ export const ServerSection = ({ label, role, sectionType, channelType, server }:
 				<TooltipProvider delayDuration={50}>
 					<Tooltip>
 						<TooltipTrigger asChild>
-							<button title="Show Members" onClick={() => onOpen("members", { server })} className="text-zinc-500 hover:text-white transition-colors opacity-0 group-hover:opacity-100">
+							<button
+								title="Show Members"
+								onClick={() => onOpen("members", { server, currentProfileId: currentMember.profile.id })}
+								className="text-zinc-500 hover:text-white transition-colors opacity-0 group-hover:opacity-100"
+							>
 								<Settings className="h-3 w-3" />
 							</button>
 						</TooltipTrigger>

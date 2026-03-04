@@ -39,14 +39,14 @@ export const ServerSidebar = ({ server, role, currentMember }: ServerSidebarProp
 
 	return (
 		<div className="flex flex-col h-full w-64 bg-[#141417]/60 backdrop-blur-xl border border-white/5 rounded-3xl shadow-2xl overflow-hidden shrink-0">
-			<ServerHeader server={server} role={role} />
+			<ServerHeader server={server} role={role} currentMember={currentMember} />
 
 			<ScrollArea className="flex-1 px-3">
 				<div className="mt-2 space-y-4">
 					{/* GROUP 1: TEXT CHANNELS */}
 					{!!textChannels?.length && (
 						<div className="mb-2">
-							<ServerSection sectionType="channels" channelType={ChannelType.TEXT} role={role} label="Text Channels" />
+							<ServerSection currentMember={currentMember} sectionType="channels" channelType={ChannelType.TEXT} role={role} label="Text Channels" />
 							<div className="space-y-0.5">
 								{textChannels.map((channel) => (
 									<ServerChannel key={channel.id} channel={channel} server={server} role={role} isActive={activeChannelId === channel.id} />
@@ -58,7 +58,7 @@ export const ServerSidebar = ({ server, role, currentMember }: ServerSidebarProp
 					{/* GROUP 2: AUDIO CHANNELS */}
 					{!!audioChannels?.length && (
 						<div className="mb-2">
-							<ServerSection sectionType="channels" channelType={ChannelType.AUDIO} role={role} label="Voice Channels" />
+							<ServerSection currentMember={currentMember} sectionType="channels" channelType={ChannelType.AUDIO} role={role} label="Voice Channels" />
 							<div className="space-y-0.5">
 								{audioChannels.map((channel) => (
 									<ServerChannel key={channel.id} channel={channel} server={server} role={role} isActive={activeChannelId === channel.id} />
@@ -70,7 +70,7 @@ export const ServerSidebar = ({ server, role, currentMember }: ServerSidebarProp
 					{/* GROUP 3: VIDEO CHANNELS */}
 					{!!videoChannels?.length && (
 						<div className="mb-2">
-							<ServerSection sectionType="channels" channelType={ChannelType.VIDEO} role={role} label="Video Channels" />
+							<ServerSection currentMember={currentMember} sectionType="channels" channelType={ChannelType.VIDEO} role={role} label="Video Channels" />
 							<div className="space-y-0.5">
 								{videoChannels.map((channel) => (
 									<ServerChannel key={channel.id} channel={channel} server={server} role={role} isActive={activeChannelId === channel.id} />
@@ -82,7 +82,7 @@ export const ServerSidebar = ({ server, role, currentMember }: ServerSidebarProp
 					{/* GROUP 4: MEMBERS */}
 					{!!server.members?.length && (
 						<div className="mb-2">
-							<ServerSection sectionType="members" role={role} label="Members" server={server} />
+							<ServerSection currentMember={currentMember} sectionType="members" role={role} label="Members" server={server} />
 							<div className="space-y-0.5">
 								{server.members.map((member) => (
 									<ServerMember key={member.id} member={member} server={server} />

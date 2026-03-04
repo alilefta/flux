@@ -36,7 +36,7 @@ export const UserProfileModal = () => {
 	const type = useModal((state) => state.type);
 	const data = useModal((state) => state.data);
 	const isModalOpen = isOpen && type === "userProfile";
-	const { sender } = data;
+	const { sender, isOwnProfile } = data;
 
 	const router = useRouter();
 
@@ -183,16 +183,18 @@ export const UserProfileModal = () => {
 					</div>
 
 					{/* 4. FOOTER ACTIONS */}
-					<div className="mt-8">
-						<Button
-							className="w-full h-11 bg-indigo-600 hover:bg-indigo-700 text-white font-semibold rounded-xl shadow-[0_0_20px_rgba(79,70,229,0.2)] transition-all active:scale-[0.98]"
-							onClick={onSendMessage}
-							disabled={isSendingMessage}
-						>
-							<MessageSquare className="w-4 h-4 mr-2" />
-							Send Message
-						</Button>
-					</div>
+					{!isOwnProfile && (
+						<div className="mt-8">
+							<Button
+								className="w-full h-11 bg-indigo-600 hover:bg-indigo-700 text-white font-semibold rounded-xl shadow-[0_0_20px_rgba(79,70,229,0.2)] transition-all active:scale-[0.98]"
+								onClick={onSendMessage}
+								disabled={isSendingMessage}
+							>
+								<MessageSquare className="w-4 h-4 mr-2" />
+								Send Message
+							</Button>
+						</div>
+					)}
 				</div>
 			</DialogContent>
 		</Dialog>

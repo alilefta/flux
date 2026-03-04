@@ -6,13 +6,15 @@ import { ChevronDown, LogOut, PlusCircle, Settings, Trash, UserPlus, Users } fro
 
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { useModal } from "@/hooks/use-modal-store";
+import { MemberProfile } from "@/schemas/member";
 
 interface ServerHeaderProps {
 	server: ServerDetails;
 	role?: MemberRole;
+	currentMember: MemberProfile;
 }
 
-export const ServerHeader = ({ server, role }: ServerHeaderProps) => {
+export const ServerHeader = ({ server, role, currentMember }: ServerHeaderProps) => {
 	const onOpen = useModal((state) => state.onOpen);
 
 	const isAdmin = role === MemberRole.ADMIN;
@@ -46,7 +48,10 @@ export const ServerHeader = ({ server, role }: ServerHeaderProps) => {
 				)}
 
 				{isAdmin && (
-					<DropdownMenuItem onClick={() => onOpen("members", { server })} className="px-3 py-2 text-sm cursor-pointer hover:bg-white/5 focus:bg-white/5 text-zinc-400 hover:text-white">
+					<DropdownMenuItem
+						onClick={() => onOpen("members", { server, currentProfileId: currentMember.profile.id })}
+						className="px-3 py-2 text-sm cursor-pointer hover:bg-white/5 focus:bg-white/5 text-zinc-400 hover:text-white"
+					>
 						Manage Members
 						<Users className="h-4 w-4 ml-auto" />
 					</DropdownMenuItem>

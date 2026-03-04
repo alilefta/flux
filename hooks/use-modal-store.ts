@@ -1,8 +1,8 @@
 import { ChannelType } from "@/generated/prisma/enums";
 import { ChannelBase } from "@/schemas/channel";
+import { ServerDetails } from "@/schemas/composed/server.details";
 import { MessageSender } from "@/schemas/composed/shared.base";
-import { ProfileBase, PublicProfile } from "@/schemas/profile";
-import { ServerBase } from "@/schemas/server.base";
+import { ProfileBase } from "@/schemas/profile";
 import { create } from "zustand";
 
 export type ModalType =
@@ -22,13 +22,15 @@ export type ModalType =
 	| "userSettings";
 
 interface ModalData {
-	server?: ServerBase;
+	server?: ServerDetails;
 	channel?: ChannelBase;
 	channelType?: ChannelType;
 	apiUrl?: string;
 	query?: Record<string, unknown>;
 	sender?: MessageSender;
 	profile?: ProfileBase;
+	isOwnProfile?: boolean;
+	currentProfileId?: string;
 }
 
 interface ModalStore {
