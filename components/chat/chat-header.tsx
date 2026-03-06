@@ -7,9 +7,9 @@ import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSepara
 import { useModal } from "@/hooks/use-modal-store";
 import { MemberProfile } from "@/schemas/member";
 import { ChannelBase } from "@/schemas/channel";
-import { ServerBase } from "@/schemas/server.base";
 import { MemberRole } from "@/generated/prisma/enums";
 import { ChatType } from "@/schemas/composed/shared.base";
+import { SocketIndicator } from "../shared/socket-indicator";
 
 interface ChatHeaderProps {
 	serverId?: string;
@@ -18,9 +18,10 @@ interface ChatHeaderProps {
 	member: MemberProfile;
 	type?: ChatType;
 	chatName: string;
+	toggle?: React.ReactNode;
 }
 
-export const ChatHeader = ({ serverId, imageUrl, member, type = "channel", chatName, contextId }: ChatHeaderProps) => {
+export const ChatHeader = ({ serverId, imageUrl, member, type = "channel", chatName, contextId, toggle }: ChatHeaderProps) => {
 	const onOpen = useModal((state) => state.onOpen);
 
 	const { role } = member;
@@ -32,10 +33,12 @@ export const ChatHeader = ({ serverId, imageUrl, member, type = "channel", chatN
 
 	return (
 		<div className="text-md font-semibold px-4 flex items-center h-12 border-b border-white/5 bg-white/2 shrink-0 backdrop-blur-sm z-10">
+			{/* 1. Mobile Toggle Slot */}
+			{toggle && <div className="md:hidden mr-2">{toggle}</div>}
 			{/* 1. Mobile Toggle */}
-			<button title="Show menu" className="md:hidden mr-2 text-zinc-400 hover:text-white transition-colors">
+			{/* <button title="Show menu" className="md:hidden mr-2 text-zinc-400 hover:text-white transition-colors">
 				<Menu className="w-5 h-5" />
-			</button>
+			</button> */}
 
 			{/* 2. Channel Info */}
 			<div className="flex items-center gap-x-2 mr-auto">
@@ -55,16 +58,7 @@ export const ChatHeader = ({ serverId, imageUrl, member, type = "channel", chatN
 			{/* 3. Actions Area */}
 			<div className="flex items-center gap-x-3">
 				{/* Connection Status */}
-				<TooltipProvider>
-					<Tooltip>
-						<TooltipTrigger>
-							<div className="flex items-center justify-center w-6 h-6 rounded-full bg-emerald-500/10 text-emerald-500 cursor-help">
-								<Wifi className="w-3 h-3" />
-							</div>
-						</TooltipTrigger>
-						<TooltipContent className="bg-black border-white/10 text-xs text-zinc-500">Real-time connection: Stable</TooltipContent>
-					</Tooltip>
-				</TooltipProvider>
+				<SocketIndicator />
 
 				{/* Search Bar */}
 				<div
@@ -92,7 +86,7 @@ export const ChatHeader = ({ serverId, imageUrl, member, type = "channel", chatN
 								onClick={() =>
 									onOpen("editChannel", {
 										channel: { id: contextId, name: chatName, type: "TEXT" } as ChannelBase, // Mock object for modal
-										server: { id: serverId } as ServerBase,
+										serverId: serverId,
 									})
 								}
 								className="cursor-pointer hover:bg-white/5 focus:bg-white/5 focus:text-white"
@@ -109,7 +103,7 @@ export const ChatHeader = ({ serverId, imageUrl, member, type = "channel", chatN
 										onClick={() =>
 											onOpen("deleteChannel", {
 												channel: { id: contextId, name: chatName, type: "TEXT" } as ChannelBase,
-												server: { id: serverId } as ServerBase,
+												serverId: serverId,
 											})
 										}
 										className="text-rose-500 hover:bg-rose-500/10 cursor-pointer focus:bg-rose-500/10 focus:text-rose-400"

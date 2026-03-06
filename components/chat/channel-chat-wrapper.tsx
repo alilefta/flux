@@ -7,15 +7,17 @@ import { ChatPinnedMessage } from "./chat-pinned-message";
 import { MemberProfile } from "@/schemas/member";
 import { memo, useCallback, useRef } from "react";
 import { ChatInput } from "./chat-input";
+import { MobileToggle } from "../mobile/mobile-toggle";
 
 interface ChatWrapperProps {
 	serverId: string;
 	channel: ChannelBase;
 	member: MemberProfile;
+	mobileToggle: React.ReactNode;
 }
 
 export const ChannelChatWrapper = memo(
-	({ serverId, channel, member }: ChatWrapperProps) => {
+	({ serverId, channel, member, mobileToggle }: ChatWrapperProps) => {
 		const chatMessagesRef = useRef<ChatMessagesHandle | null>(null);
 		console.log("ChatWrapper rendered!");
 		const handleJumpToMessage = useCallback((messageId: string) => {
@@ -24,7 +26,8 @@ export const ChannelChatWrapper = memo(
 
 		return (
 			<>
-				<ChatHeader serverId={serverId} member={member} chatName={channel.name} contextId={channel.id} type="channel" />
+				<ChatHeader serverId={serverId} member={member} chatName={channel.name} contextId={channel.id} type="channel" toggle={mobileToggle} />{" "}
+				{/* toggle={<MobileToggle serverId={serverId} />}*/}
 				<ChatPinnedMessage contextId={channel.id} onJumpToMessage={handleJumpToMessage} type="channel" />
 				<ChatMessages ref={chatMessagesRef} serverId={serverId} member={member} name={channel.name} channelId={channel.id} />
 				<ChatInput name={channel.name} channelId={channel.id} placeholder="Type..." member={member} />

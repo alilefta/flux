@@ -14,10 +14,11 @@ interface ChatWrapperProps {
 	conversation: ConversationBase;
 	currentMember: MemberProfile;
 	otherProfile: ProfileBase;
+	mobileToggle: React.ReactNode;
 }
 
 export const DMChatWrapper = memo(
-	({ conversation, otherProfile, currentMember }: ChatWrapperProps) => {
+	({ conversation, otherProfile, currentMember, mobileToggle }: ChatWrapperProps) => {
 		const chatMessagesRef = useRef<ChatMessagesHandle | null>(null);
 		console.log("ChatWrapper rendered!");
 		const clearUnread = useNotificationStore((state) => state.clearUnread);
@@ -34,7 +35,7 @@ export const DMChatWrapper = memo(
 		console.log("currentMember:", currentMember, "otherProfile:", otherProfile);
 		return (
 			<>
-				<ChatHeader member={currentMember} chatName={otherProfile.name} contextId={conversation.id} type="conversation" imageUrl={otherProfile.imageUrl ?? undefined} />
+				<ChatHeader member={currentMember} chatName={otherProfile.name} contextId={conversation.id} type="conversation" imageUrl={otherProfile.imageUrl ?? undefined} toggle={mobileToggle} />
 				<ChatPinnedMessage contextId={conversation.id} onJumpToMessage={handleJumpToMessage} type="conversation" />
 				<DirectChatMessages ref={chatMessagesRef} conversationId={conversation.id} member={currentMember} otherProfile={otherProfile} />
 				<DirectChatInput name={otherProfile.name} conversationId={conversation.id} placeholder="Type..." member={currentMember} />
