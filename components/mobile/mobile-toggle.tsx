@@ -7,7 +7,6 @@ import { ConversationSidebar } from "@/components/conversation/conversation-side
 import { getCurrentProfile } from "@/data/profile";
 import { getServersByProfileId, getServerWithDetails } from "@/data/server";
 import { getConversations } from "@/data/conversation";
-import prisma from "@/lib/prisma";
 import { getCurrentMemberByServerAndProfileId } from "@/data/member";
 
 interface MobileToggleProps {
