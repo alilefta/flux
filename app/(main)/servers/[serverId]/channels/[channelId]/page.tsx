@@ -3,6 +3,7 @@ import { getCurrentProfile } from "@/data/profile";
 import { getChannelById } from "@/data/channel";
 import { getCurrentMemberByServerAndProfileId } from "@/data/member";
 import { ChannelChatWrapper } from "@/components/chat/channel-chat-wrapper";
+import { MobileToggle } from "@/components/mobile/mobile-toggle";
 
 interface ChannelPageProps {
 	params: Promise<{
@@ -32,7 +33,7 @@ export default async function ChannelPage({ params }: ChannelPageProps) {
 
 	return (
 		<div className="bg-[#141417]/60 backdrop-blur-xl border border-white/5 rounded-3xl shadow-2xl flex flex-col h-full overflow-hidden w-full relative z-0">
-			<ChannelChatWrapper channel={channel} member={member} serverId={serverId} />
+			<ChannelChatWrapper channel={channel} member={member} serverId={serverId} mobileToggle={<MobileToggle serverId={serverId} />} />
 		</div>
 	);
 }

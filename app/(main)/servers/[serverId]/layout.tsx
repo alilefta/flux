@@ -40,12 +40,12 @@ export default async function ServerLayout({ children, params }: ServerLayoutPro
 	return (
 		<div className="h-screen w-full flex gap-3 py-4 px-2 bg-background overflow-hidden relative">
 			{/* Zone A: Navigation Rail */}
-			<div className="shrink-0 z-20">
-				<NavigationSidebar servers={userServers} activeServerId={server.id} />
+			<div className="shrink-0 z-20 hidden md:flex">
+				<NavigationSidebar servers={userServers} activeServerId={server.id} currentProfileId={profile.id} />
 			</div>
 
 			{/* Zone B: Server Sidebar */}
-			<div className="shrink-0 z-10 h-full">
+			<div className="shrink-0 z-10 h-full hidden md:flex">
 				<ServerSidebar
 					server={server}
 					currentMember={member}

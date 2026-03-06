@@ -3,6 +3,7 @@ import { getCurrentProfile } from "@/data/profile";
 import { MemberProfile } from "@/schemas/member";
 import { DMChatWrapper } from "@/components/chat/dm-chat-wrapper";
 import { findConversationById } from "@/data/conversation";
+import { MobileToggle } from "@/components/mobile/mobile-toggle";
 
 interface ConversationIdPageProps {
 	params: Promise<{
@@ -42,7 +43,7 @@ export default async function ConversationIdPage({ params }: ConversationIdPageP
 
 	return (
 		<div className="bg-[#141417]/60 backdrop-blur-xl border border-white/5 rounded-3xl shadow-2xl flex flex-col h-full overflow-hidden w-full relative z-0">
-			<DMChatWrapper conversation={conversation} currentMember={currentMember} otherProfile={otherProfile} />;
+			<DMChatWrapper conversation={conversation} currentMember={currentMember} otherProfile={otherProfile} mobileToggle={<MobileToggle />} />;
 		</div>
 	);
 }

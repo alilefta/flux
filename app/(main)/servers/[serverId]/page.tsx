@@ -1,6 +1,7 @@
 import { redirect } from "next/navigation";
 import { getServerByIdWithDefaultChannel, getServerWithAnyChannel } from "@/data/server";
 import { getCurrentProfile } from "@/data/profile";
+import { MobileToggle } from "@/components/mobile/mobile-toggle";
 
 interface ServerPageProps {
 	params: Promise<{ serverId: string }>;
@@ -36,9 +37,17 @@ export default async function ServerPage({ params }: ServerPageProps) {
 	// 3. If server has NO channels, we stay on this page.
 	// We should render an "Empty State" here so the user isn't staring at a blank screen.
 	return (
-		<div className="bg-[#141417]/60 backdrop-blur-xl border border-white/5 rounded-3xl shadow-2xl flex flex-col items-center justify-center h-full text-center p-8">
-			<p className="text-zinc-400">No channels found.</p>
-			<p className="text-xs text-zinc-500 mt-2">Create a channel to get started.</p>
+		<div className="bg-[#141417]/60 backdrop-blur-xl border border-white/5 rounded-3xl shadow-2xl flex flex-col h-full relative z-0">
+			{/* ✅ ADD HEADER FOR MOBILE TOGGLE */}
+			<div className="md:hidden h-12 flex items-center px-4 border-b border-white/5">
+				<MobileToggle serverId={serverId} />
+			</div>
+
+			{/* Empty State Content */}
+			<div className="flex-1 flex flex-col items-center justify-center text-center p-8">
+				<p className="text-zinc-400">No channels found.</p>
+				<p className="text-xs text-zinc-500 mt-2">Create a channel to get started.</p>
+			</div>
 		</div>
 	);
 }

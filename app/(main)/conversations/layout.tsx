@@ -21,15 +21,16 @@ export default async function ConversationsLayout({ children }: { children: Reac
 	return (
 		<div className="h-screen w-full flex gap-3 py-4 px-2 bg-background overflow-hidden relative">
 			{/* Zone A: Navigation Rail (Always present) */}
-			<div className="shrink-0 z-20">
+			<div className="shrink-0 z-20 hidden md:flex">
 				<NavigationSidebar
 					servers={servers}
+					currentProfileId={profile.id}
 					// activeServerId is undefined here because we are in DM mode
 				/>
 			</div>
 
 			{/* Zone B: DM Sidebar */}
-			<div className="shrink-0 z-10 h-full">
+			<div className="shrink-0 z-10 h-full hidden md:flex">
 				<ConversationSidebar conversations={conversations} currentProfileId={profile.id} />
 			</div>
 
