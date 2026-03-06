@@ -18,14 +18,14 @@ export const DeleteChannelModal = () => {
 	const router = useRouter();
 
 	const isModalOpen = isOpen && type === "deleteChannel";
-	const { channel, server } = data;
+	const { channel, serverId } = data;
 
 	const { execute, status } = useAction(deleteChannelAction, {
 		onSuccess: ({ data }) => {
 			if (data?.success) {
 				onClose();
 				router.refresh();
-				router.push(`/servers/${server?.id}`); // Redirect to server root (which redirects to default channel)
+				router.push(`/servers/${serverId}`); // Redirect to server root (which redirects to default channel)
 				toast.success("Channel Deleted");
 			}
 		},
@@ -37,8 +37,8 @@ export const DeleteChannelModal = () => {
 	const isLoading = status === "executing";
 
 	const onConfirm = () => {
-		if (!channel || !server) return;
-		execute({ channelId: channel.id, serverId: server.id });
+		if (!channel || !serverId) return;
+		execute({ channelId: channel.id, serverId: serverId });
 	};
 
 	return (

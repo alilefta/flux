@@ -23,7 +23,7 @@ export const EditChannelModal = () => {
 	const router = useRouter();
 
 	const isModalOpen = isOpen && type === "editChannel";
-	const { channel, server } = data;
+	const { channel, serverId } = data;
 
 	const { control, handleSubmit, reset, setValue } = useForm<UpdateChannelInput>({
 		resolver: zodResolver(UpdateChannelInput),
@@ -36,12 +36,12 @@ export const EditChannelModal = () => {
 
 	// Pre-fill form
 	useEffect(() => {
-		if (channel && server) {
+		if (channel && serverId) {
 			setValue("name", channel.name);
 			setValue("channelId", channel.id);
-			setValue("serverId", server.id);
+			setValue("serverId", serverId);
 		}
-	}, [channel, server, isModalOpen, setValue]);
+	}, [channel, serverId, isModalOpen, setValue]);
 
 	const { execute, status } = useAction(updateChannelAction, {
 		onSuccess: ({ data }) => {

@@ -1,8 +1,7 @@
 "use client";
 
-import { Hash, Menu, Search, Settings, Trash, Edit, Wifi, User } from "lucide-react";
+import { Hash, Search, Settings, Trash, Edit, User } from "lucide-react";
 import { UserAvatar } from "@/components/user/user-avatar";
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { useModal } from "@/hooks/use-modal-store";
 import { MemberProfile } from "@/schemas/member";

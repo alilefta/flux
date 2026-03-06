@@ -1,7 +1,6 @@
 "use client";
 
 import { useModal } from "@/hooks/use-modal-store";
-import { ServerDetails } from "@/schemas/composed/server.details";
 import { MemberRole } from "@/generated/prisma/enums";
 import { Check, Gavel, Loader2, MoreVertical, Shield, ShieldAlert, ShieldCheck, ShieldQuestion, User } from "lucide-react";
 import { useState } from "react";
@@ -56,7 +55,7 @@ export const MembersModal = () => {
 	const [loadingId, setLoadingId] = useState("");
 
 	const isModalOpen = isOpen && type === "members";
-	const { server, currentProfileId } = data;
+	const { server } = data;
 
 	// --- ACTIONS ---
 	const { execute: kickMember } = useAction(kickMemberAction, {
@@ -119,7 +118,7 @@ export const MembersModal = () => {
 							<div
 								key={member.id}
 								className="group flex items-center gap-x-3 p-3 rounded-xl hover:bg-white/5 transition-all cursor-pointer border border-transparent hover:border-white/5"
-								onClick={() => onOpen("userProfile", { sender: memberToSender(member), isOwnProfile: currentProfileId === member.profile.id })}
+								onClick={() => onOpen("userProfile", { sender: memberToSender(member) })}
 							>
 								{/* 1. Avatar */}
 								<UserAvatar src={member.profile.imageUrl ?? undefined} className="h-10 w-10 border border-white/10" />

@@ -1,17 +1,17 @@
 "use client";
 
 import { ChannelBase } from "@/schemas/channel";
-import { ServerBase } from "@/schemas/server.base";
 import { MemberRole } from "@/generated/prisma/enums";
 import { cn } from "@/lib/utils";
 import { Hash, Mic, Video, Lock, Edit, Trash, Megaphone } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { ModalType, useModal } from "@/hooks/use-modal-store";
 import { ActionTooltip } from "@/components/custom-ui/tooltip/action-tooltip"; // Assuming you have this helper or reuse the tooltips
+import { ServerDetails } from "@/schemas/composed/server.details";
 
 interface ServerChannelProps {
 	channel: ChannelBase;
-	server: ServerBase;
+	server: ServerDetails;
 	isActive?: boolean;
 	role?: MemberRole;
 }

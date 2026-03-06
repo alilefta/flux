@@ -5,29 +5,27 @@ import { cn } from "@/lib/utils";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 
 interface NavigationItemProps {
-	id: string;
+	serverId: string;
 	imageUrl: string;
 	name: string;
 	isActive?: boolean;
 	onClick?: () => void;
 }
 
-export const NavigationItem = ({ id, imageUrl, name, isActive, onClick }: NavigationItemProps) => {
+export const NavigationItem = ({ serverId, imageUrl, name, isActive, onClick }: NavigationItemProps) => {
 	return (
 		<TooltipProvider delayDuration={50}>
 			<Tooltip>
 				<TooltipTrigger asChild>
 					<button onClick={onClick} className="group relative flex items-center justify-center">
 						{/* Active Left Pill */}
-						<div
-							className={cn("absolute left-0 bg-white rounded-r-full transition-all w-[4px]", isActive ? "h-[36px]" : "h-[8px] opacity-0 group-hover:opacity-100 group-hover:h-[20px]")}
-						/>
+						<div className={cn("absolute left-0 bg-white rounded-r-full transition-all w-1", isActive ? "h-9" : "h-2 opacity-0 group-hover:opacity-100 group-hover:h-5")} />
 
 						{/* The Icon Container */}
 						<div
 							className={cn(
-								"relative flex mx-3 h-[48px] w-[48px] rounded-[24px] group-hover:rounded-[16px] transition-all overflow-hidden items-center justify-center bg-background/50 group-hover:bg-primary/10 border border-white/5 group-hover:border-white/10",
-								isActive && "bg-primary/20 text-primary border-primary/20 rounded-[16px]",
+								"relative flex mx-3 h-12 w-12 rounded-[24px] group-hover:rounded-3xl transition-all overflow-hidden items-center justify-center bg-background/50 group-hover:bg-primary/10 border border-white/5 group-hover:border-white/10",
+								isActive && "bg-primary/20 text-primary border-primary/20 rounded-3xl",
 							)}
 						>
 							{imageUrl ? (

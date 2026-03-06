@@ -21,6 +21,8 @@ export const ConversationSidebar = ({ conversations, currentProfileId }: Convers
 	const router = useRouter();
 
 	const onClick = (id: string) => {
+		if (params?.conversationId === id) return;
+
 		router.push(`/conversations/${id}`);
 	};
 

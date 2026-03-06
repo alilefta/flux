@@ -14,7 +14,7 @@ interface ServerHeaderProps {
 	currentMember: MemberProfile;
 }
 
-export const ServerHeader = ({ server, role, currentMember }: ServerHeaderProps) => {
+export const ServerHeader = ({ server, role }: ServerHeaderProps) => {
 	const onOpen = useModal((state) => state.onOpen);
 
 	const isAdmin = role === MemberRole.ADMIN;
@@ -48,10 +48,7 @@ export const ServerHeader = ({ server, role, currentMember }: ServerHeaderProps)
 				)}
 
 				{isAdmin && (
-					<DropdownMenuItem
-						onClick={() => onOpen("members", { server, currentProfileId: currentMember.profile.id })}
-						className="px-3 py-2 text-sm cursor-pointer hover:bg-white/5 focus:bg-white/5 text-zinc-400 hover:text-white"
-					>
+					<DropdownMenuItem onClick={() => onOpen("members", { server })} className="px-3 py-2 text-sm cursor-pointer hover:bg-white/5 focus:bg-white/5 text-zinc-400 hover:text-white">
 						Manage Members
 						<Users className="h-4 w-4 ml-auto" />
 					</DropdownMenuItem>

@@ -17,6 +17,7 @@ import { Skeleton } from "../ui/skeleton";
 import { handleSafeActionError } from "@/lib/safe-action-helpers";
 import { getOrCreateConversationAction } from "@/actions/conversation";
 import { useRouter } from "next/navigation";
+import { useCurrentProfile } from "@/providers/current-profile-provider";
 
 const roleIconMap = {
 	GUEST: <User className="w-3.5 h-3.5" />,
@@ -36,7 +37,9 @@ export const UserProfileModal = () => {
 	const type = useModal((state) => state.type);
 	const data = useModal((state) => state.data);
 	const isModalOpen = isOpen && type === "userProfile";
-	const { sender, isOwnProfile } = data;
+	const { sender } = data;
+
+	const currentProfile = useCurrentProfile();
 
 	const router = useRouter();
 
@@ -64,6 +67,14 @@ export const UserProfileModal = () => {
 				profileId: sender.profileId,
 				serverId: sender.serverId, // Pass if it exists (Channel mode)
 			});
+
+			if (!res?.data?.success) {
+				handleSafeActionError<typeof getOrCreateConversationAction>({
+					serverError: res.serverError,
+					validationErrors: res.validationErrors,
+				});
+				throw new Error(res?.serverError || "Failed to fetch messages");
+			}
 			return res?.data?.data;
 		},
 		enabled: isModalOpen && !!sender,
@@ -71,6 +82,9 @@ export const UserProfileModal = () => {
 	});
 
 	if (!sender) return null;
+
+	// ✅ CALCULATE IDENTITY HERE
+	const isOwnProfile = currentProfile?.id === sender.profileId;
 
 	const onCopyId = () => {
 		navigator.clipboard.writeText(sender.id);
@@ -183,7 +197,7 @@ export const UserProfileModal = () => {
 					</div>
 
 					{/* 4. FOOTER ACTIONS */}
-					{!isOwnProfile && (
+					{currentProfile && !isOwnProfile && (
 						<div className="mt-8">
 							<Button
 								className="w-full h-11 bg-indigo-600 hover:bg-indigo-700 text-white font-semibold rounded-xl shadow-[0_0_20px_rgba(79,70,229,0.2)] transition-all active:scale-[0.98]"
