@@ -29,8 +29,9 @@ interface ModalData {
 	query?: Record<string, unknown>;
 	sender?: MessageSender;
 	profile?: ProfileBase;
-	isOwnProfile?: boolean;
-	currentProfileId?: string;
+	serverId?: string;
+	// isOwnProfile?: boolean;
+	// currentProfileId?: string;
 }
 
 interface ModalStore {
