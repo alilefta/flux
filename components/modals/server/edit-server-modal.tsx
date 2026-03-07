@@ -122,7 +122,7 @@ export const EditServerModal = () => {
 							<Button type="button" disabled={isLoading} variant="ghost" onClick={handleClose} className="text-zinc-400 hover:text-white">
 								Cancel
 							</Button>
-							<Button disabled={isLoading} className="bg-indigo-600 hover:bg-indigo-700 text-white min-w-[100px]">
+							<Button disabled={isLoading} className="bg-indigo-600 hover:bg-indigo-700 text-white min-w-25">
 								{isLoading ? <Loader2 className="animate-spin w-4 h-4" /> : "Save Changes"}
 							</Button>
 						</DialogFooter>
