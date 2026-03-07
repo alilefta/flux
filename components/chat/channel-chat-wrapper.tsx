@@ -18,14 +18,13 @@ interface ChatWrapperProps {
 export const ChannelChatWrapper = memo(
 	({ serverId, channel, member, mobileToggle }: ChatWrapperProps) => {
 		const chatMessagesRef = useRef<ChatMessagesHandle | null>(null);
-		console.log("ChatWrapper rendered!");
 		const handleJumpToMessage = useCallback((messageId: string) => {
 			chatMessagesRef.current?.jumpToMessage(messageId);
 		}, []);
 
 		return (
 			<>
-				<ChatHeader serverId={serverId} member={member} chatName={channel.name} contextId={channel.id} type="channel" toggle={mobileToggle} />{" "}
+				<ChatHeader serverId={serverId} member={member} chatName={channel.name} contextId={channel.id} type="channel" toggle={mobileToggle} />
 				<ChatPinnedMessage contextId={channel.id} onJumpToMessage={handleJumpToMessage} type="channel" />
 				<ChatMessages ref={chatMessagesRef} serverId={serverId} member={member} name={channel.name} channelId={channel.id} />
 				<ChatInput name={channel.name} channelId={channel.id} placeholder="Type..." member={member} />
