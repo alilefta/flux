@@ -28,7 +28,7 @@ export const NavigationSidebar = ({ servers, activeServerId, currentProfileId }:
 	const isDMSection = pathname?.includes("/conversations");
 
 	return (
-		<nav className="space-y-4 flex flex-col items-center h-full md:w-18 w-full bg-[#141417]/60 backdrop-blur-xl border border-white/5 rounded-3xl py-3 shadow-2xl shrink-0">
+		<nav className="space-y-4 flex flex-col items-center h-full w-18  bg-[#141417]/60 backdrop-blur-xl border border-white/5 rounded-3xl py-3 shadow-2xl shrink-0">
 			<NavigationNotifications profileId={currentProfileId} />
 
 			<NavigationAction
