@@ -13,7 +13,7 @@ export const addReactionAction = actionClientWithProfile
 	.metadata({ actionName: "add-reaction-action" })
 	.inputSchema(AddReactionSchema)
 	.action(async ({ ctx, parsedInput }) => {
-		const { messageId, emoji } = parsedInput;
+		const { messageId, emoji, optimisticId } = parsedInput;
 
 		// Get message
 		const message = await prisma.message.findUnique({
@@ -66,7 +66,7 @@ export const addReactionAction = actionClientWithProfile
 			});
 
 			// Broadcast addition
-			await pusherServer.trigger(`channel-${message.channelId}`, MessageEvent.REACTION_ADD, reaction);
+			await pusherServer.trigger(`channel-${message.channelId}`, MessageEvent.REACTION_ADD, { reaction: reaction, optimisticId });
 
 			return { success: true, data: { reaction, removed: false } };
 		} catch (e) {
@@ -127,7 +127,7 @@ export const addDirectReactionAction = actionClientWithProfile
 	.metadata({ actionName: "add-direct-reaction" })
 	.inputSchema(AddDirectMessageReactionSchema)
 	.action(async ({ ctx, parsedInput }) => {
-		const { messageId, emoji } = parsedInput;
+		const { messageId, emoji, optimisticId } = parsedInput;
 
 		// Fetch DM to verify access
 		const message = await prisma.directMessage.findUnique({
@@ -166,7 +166,7 @@ export const addDirectReactionAction = actionClientWithProfile
 
 		// Broadcast
 		const channelName = `conversation-${message.conversationId}`;
-		await pusherServer.trigger(channelName, MessageEvent.REACTION_ADD, reaction);
+		await pusherServer.trigger(channelName, MessageEvent.REACTION_ADD, { reaction, optimisticId });
 
 		return { success: true, data: reaction };
 	});
