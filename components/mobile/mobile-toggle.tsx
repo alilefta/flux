@@ -1,6 +1,6 @@
 import { ChevronLeft, Menu } from "lucide-react";
 import { Sheet, SheetClose, SheetContent, SheetDescription, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
-import { Button } from "@/components/ui/button";
+import { buttonVariants } from "@/components/ui/button";
 import { NavigationSidebar } from "@/components/navigation/navigation-sidebar";
 import { ServerSidebar } from "@/components/server/server-sidebar";
 import { ConversationSidebar } from "@/components/conversation/conversation-sidebar";
@@ -8,6 +8,7 @@ import { getCurrentProfile } from "@/data/profile";
 import { getServersByProfileId, getServerWithDetails } from "@/data/server";
 import { getConversations } from "@/data/conversation";
 import { getCurrentMemberByServerAndProfileId } from "@/data/member";
+import { cn } from "@/lib/utils";
 
 interface MobileToggleProps {
 	serverId?: string; // If present, we show Server Sidebar
@@ -50,10 +51,8 @@ export const MobileToggle = async ({ serverId }: MobileToggleProps) => {
 
 	return (
 		<Sheet>
-			<SheetTrigger asChild>
-				<Button variant="ghost" size="icon" className="md:hidden text-zinc-400 hover:text-white">
-					<Menu className="w-5 h-5" />
-				</Button>
+			<SheetTrigger className={cn(buttonVariants({ variant: "ghost", size: "icon" }), "md:hidden text-zinc-400 hover:text-white focus:outline-none")}>
+				<Menu className="w-5 h-5" />
 			</SheetTrigger>
 			<SheetContent showCloseButton={false} side="left" className="p-0 gap-0 w-84 bg-[#1e1e22] border-none">
 				<SheetHeader className="sr-only">

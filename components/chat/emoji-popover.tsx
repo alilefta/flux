@@ -23,10 +23,8 @@ export function EmojiPopover({ updateMessage, reactionsDefaultOpen = false, alig
 
 	return (
 		<Popover open={open} onOpenChange={setOpen}>
-			<PopoverTrigger asChild>
-				<button title="Emoji" type="button" className="p-2 rounded-lg text-zinc-400 hover:text-yellow-400 hover:bg-white/10 transition-colors">
-					<Smile className="w-5 h-5" />
-				</button>
+			<PopoverTrigger className="p-2 rounded-lg text-zinc-400 hover:text-yellow-400 hover:bg-white/10 transition-colors focus:outline-none">
+				<Smile className="w-5 h-5" />
 			</PopoverTrigger>
 
 			<PopoverContent align={align} className="w-auto p-0 border-none bg-transparent" sideOffset={8}>

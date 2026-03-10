@@ -39,8 +39,6 @@ export const ChatItemActions = ({
 }: ChatItemActionsProps) => {
 	const [isReactionPickerOpen, setIsReactionPickerOpen] = useState(false);
 
-	if (!canDeleteMessage) return null;
-
 	return (
 		<div
 			className={cn(
@@ -84,16 +82,18 @@ export const ChatItemActions = ({
 				</ActionTooltip>
 			)}
 
-			<ActionTooltip label="Delete">
-				<button
-					title="Delete"
-					onClick={onDelete}
-					disabled={isDeletePending}
-					className="cursor-pointer hover:bg-red-500/10 p-1.5 rounded-md text-zinc-400 hover:text-red-500 transition disabled:opacity-50"
-				>
-					<Trash className="w-3.5 h-3.5" />
-				</button>
-			</ActionTooltip>
+			{canDeleteMessage && (
+				<ActionTooltip label="Delete">
+					<button
+						title="Delete"
+						onClick={onDelete}
+						disabled={isDeletePending}
+						className="cursor-pointer hover:bg-red-500/10 p-1.5 rounded-md text-zinc-400 hover:text-red-500 transition disabled:opacity-50"
+					>
+						<Trash className="w-3.5 h-3.5" />
+					</button>
+				</ActionTooltip>
+			)}
 		</div>
 	);
 };

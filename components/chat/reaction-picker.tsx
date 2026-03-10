@@ -42,10 +42,8 @@ export const ReactionPicker = ({ onSelect, onOpenChange }: ReactionPickerProps) 
 
 	return (
 		<Popover open={open} onOpenChange={handleOpenChange}>
-			<PopoverTrigger asChild>
-				<button title="Add Reaction" type="button" className="p-1.5 rounded-md text-zinc-400 hover:text-white hover:bg-white/10 transition">
-					<Smile className="w-3.5 h-3.5" />
-				</button>
+			<PopoverTrigger title="Add Reaction" type="button" className="p-1.5 rounded-md text-zinc-400 hover:text-white hover:bg-white/10 transition">
+				<Smile className="w-3.5 h-3.5" />
 			</PopoverTrigger>
 			<PopoverContent align="start" className="w-auto p-0 border-none bg-transparent" sideOffset={8}>
 				<EmojiPicker theme={Theme.DARK} reactionsDefaultOpen reactions={DEFAULT_REACTIONS} onReactionClick={handleReactionClick} allowExpandReactions lazyLoadEmojis height={400} width={350} />

@@ -147,6 +147,7 @@ export type GetMessageInput = z.infer<typeof GetMessageInputSchema>;
 // ✅ Reaction Input Schemas
 export const AddReactionSchema = z.object({
 	messageId: z.uuid(),
+	optimisticId: z.uuid(),
 	emoji: z.string().min(1).max(10),
 });
 

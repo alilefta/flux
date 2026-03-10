@@ -73,8 +73,6 @@ export function useChannelMessagesQuery({ channelId, serverId, mode = "chronolog
 export function useDirectMessagesQuery({ conversationId, mode = "chronological", targetMessageId }: Omit<UseDirectMessagesQueryProps, "type">) {
 	const queryKey = mode === "around" && targetMessageId ? QUERY_KEYS.dm.jump(conversationId, targetMessageId) : QUERY_KEYS.dm.messages(conversationId);
 
-	console.log("🔑 DM Query Key:", queryKey, { mode, targetMessageId });
-
 	return useInfiniteQuery({
 		queryKey,
 		queryFn: async ({ pageParam }) => {

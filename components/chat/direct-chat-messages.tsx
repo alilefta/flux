@@ -15,9 +15,10 @@ import { DirectChatMessage } from "@/schemas/composed/direct-message.details";
 import { MessageReaction } from "@/schemas/message-reaction.base";
 import { ChatType, ReplyMessageUI } from "@/schemas/composed/shared.base";
 import { useDirectMessagesQuery } from "@/hooks/use-chat-query";
-import { profileToSender } from "@/lib/chat-adapters";
+import { memberToSender, profileToSender } from "@/lib/chat-adapters";
 import { UserAvatar } from "../user/user-avatar";
 import { ProfileBase } from "@/schemas/profile";
+import { QUERY_KEYS } from "@/lib/query-keys";
 
 const DATE_FORMAT = "d MMM yyyy, HH:mm";
 
@@ -37,6 +38,7 @@ export interface ChatMessagesHandle {
 
 export const DirectChatMessages = memo(
 	forwardRef<ChatMessagesHandle, DirectChatMessagesProps>(({ otherProfile, member, conversationId }, ref) => {
+		const [newMessageCount, setNewMessageCount] = useState(0);
 		const type: ChatType = "conversation";
 		// const currentMemberSender = useMemo(() => memberToSender(member), [member]);
 
@@ -49,7 +51,7 @@ export const DirectChatMessages = memo(
 		const fetchTimeoutRef = useRef<NodeJS.Timeout | null>(null); // Debounced Intersection Observer
 
 		const queryClient = useQueryClient();
-		const [newMessageCount, setNewMessageCount] = useState(0);
+		const conversationQueryKey = QUERY_KEYS.dm.messages(conversationId);
 
 		// Use a ref for immediate access inside event listeners
 		const isAtBottomRef = useRef(true);
@@ -261,8 +263,8 @@ export const DirectChatMessages = memo(
 			console.log("📡 Pusher subscribed");
 
 			// Subscribe to channel
-			const channelName = `conversation-${conversationId}`;
-			const channel = pusherClient.subscribe(channelName);
+			const conversationName = `conversation-${conversationId}`;
+			const conversation = pusherClient.subscribe(conversationName);
 
 			const handleNewMessage = (newMessage: DirectChatMessage & { optimisticClientId?: string }) => {
 				// // ✅ 1. If in Jump Mode, just notify and exit
@@ -278,7 +280,7 @@ export const DirectChatMessages = memo(
 					content: newMessage.content.slice(0, 50),
 				});
 
-				queryClient.setQueryData<QueryDataShape>(["messages", conversationId], (oldData: QueryDataShape | undefined) => {
+				queryClient.setQueryData<QueryDataShape>(conversationQueryKey, (oldData: QueryDataShape | undefined) => {
 					if (!oldData || !oldData.pages) return oldData;
 
 					let replaced = false;
@@ -365,7 +367,7 @@ export const DirectChatMessages = memo(
 				});
 			};
 			const handleMessageUpdate = (updatedMessage: DirectChatMessage) => {
-				queryClient.setQueryData<QueryDataShape>(["messages", conversationId], (oldData: QueryDataShape | undefined) => {
+				queryClient.setQueryData<QueryDataShape>(conversationQueryKey, (oldData: QueryDataShape | undefined) => {
 					if (!oldData?.pages) return oldData;
 
 					const newPages = oldData.pages.map((page: DirectChatMessage[]) => page.map((msg) => (msg.id === updatedMessage.id ? updatedMessage : msg)));
@@ -378,7 +380,7 @@ export const DirectChatMessages = memo(
 			};
 
 			const handleMessageDelete = (deletedMessage: DirectChatMessage) => {
-				queryClient.setQueryData<QueryDataShape>(["messages", conversationId], (oldData: QueryDataShape | undefined) => {
+				queryClient.setQueryData<QueryDataShape>(conversationQueryKey, (oldData: QueryDataShape | undefined) => {
 					if (!oldData?.pages) return oldData;
 
 					const newPages = oldData.pages.map((page: DirectChatMessage[]) => page.map((msg) => (msg.id === deletedMessage.id ? deletedMessage : msg)));
@@ -390,17 +392,35 @@ export const DirectChatMessages = memo(
 				});
 			};
 
-			const handleAddReaction = (reaction: MessageReaction) => {
-				queryClient.setQueryData<QueryDataShape>(["messages", conversationId], (oldData: QueryDataShape | undefined) => {
+			const handleAddReaction = ({ reaction, optimisticId }: { reaction: MessageReaction; optimisticId?: string }) => {
+				queryClient.setQueryData<QueryDataShape>(conversationQueryKey, (oldData: QueryDataShape | undefined) => {
 					if (!oldData?.pages) return oldData;
 
 					const newPages = oldData.pages.map((page) =>
 						page.map((msg) => {
-							if (msg.id === reaction.messageId) {
-								return {
-									...msg,
-									reactions: [...(msg.reactions || []), reaction],
-								};
+							// ✅ Handle both Channel and DM message IDs
+							const targetMessageId = reaction.messageId || reaction.directMessageId;
+
+							if (msg.id === targetMessageId) {
+								const existingReactions = msg.reactions || [];
+
+								// ✅ Check if we already added this optimistically
+								// We check by optimisticId OR (emoji + profileId) just to be safe
+								const isOptimisticPresent = existingReactions.some((r) => r.id === optimisticId || (r.emoji === reaction.emoji && r.profileId === reaction.profileId));
+
+								if (isOptimisticPresent) {
+									// 🔄 SWAP: Replace the fake reaction with the real DB reaction
+									return {
+										...msg,
+										reactions: existingReactions.map((r) => (r.id === optimisticId || (r.emoji === reaction.emoji && r.profileId === reaction.profileId) ? reaction : r)),
+									};
+								} else {
+									// ➕ APPEND: It's a new reaction from someone else
+									return {
+										...msg,
+										reactions: [...existingReactions, reaction],
+									};
+								}
 							}
 							return msg;
 						}),
@@ -410,7 +430,7 @@ export const DirectChatMessages = memo(
 				});
 			};
 			const handleRemoveReaction = (data: { messageId: string; emoji: string; profileId: string }) => {
-				queryClient.setQueryData<QueryDataShape>(["messages", conversationId], (oldData: QueryDataShape | undefined) => {
+				queryClient.setQueryData<QueryDataShape>(conversationQueryKey, (oldData: QueryDataShape | undefined) => {
 					if (!oldData?.pages) return oldData;
 
 					const newPages = oldData.pages.map((page) =>
@@ -429,19 +449,19 @@ export const DirectChatMessages = memo(
 				});
 			};
 
-			channel.bind(MessageEvent.NEW, handleNewMessage);
-			channel.bind(MessageEvent.UPDATE, handleMessageUpdate);
-			channel.bind(MessageEvent.DELETE, handleMessageDelete);
-			channel.bind(MessageEvent.REACTION_ADD, handleAddReaction);
-			channel.bind(MessageEvent.REACTION_REMOVE, handleRemoveReaction);
+			conversation.bind(MessageEvent.NEW, handleNewMessage);
+			conversation.bind(MessageEvent.UPDATE, handleMessageUpdate);
+			conversation.bind(MessageEvent.DELETE, handleMessageDelete);
+			conversation.bind(MessageEvent.REACTION_ADD, handleAddReaction);
+			conversation.bind(MessageEvent.REACTION_REMOVE, handleRemoveReaction);
 
 			// Cleanup on unmount or channel change
 			return () => {
 				console.log("📡 Pusher unsubscribed");
-				channel.unbind_all();
-				pusherClient.unsubscribe(channelName);
+				conversation.unbind_all();
+				pusherClient.unsubscribe(conversationName);
 			};
-		}, [conversationId, queryClient, jumpMode.active, scrollToBottomCallback]);
+		}, [conversationId, queryClient, jumpMode.active, scrollToBottomCallback, conversationQueryKey]);
 
 		if (isLoading) {
 			return (
@@ -525,7 +545,7 @@ export const DirectChatMessages = memo(
 
 								<ChatItem
 									id={message.id}
-									currentMember={member}
+									currentMember={memberToSender(member)}
 									attachments={message.attachments}
 									sender={profileToSender(message.member)}
 									content={message.content}

@@ -74,10 +74,8 @@ export const ChatHeader = ({ serverId, imageUrl, member, type = "channel", chatN
 				{/* ✅ CHANNEL SETTINGS DROPDOWN */}
 				{type === "channel" && canManageChannel && (
 					<DropdownMenu>
-						<DropdownMenuTrigger asChild>
-							<button className="p-2 rounded-lg text-zinc-400 hover:text-white hover:bg-white/5 transition-colors focus:outline-none" title="Channel Settings">
-								<Settings className="w-5 h-5" />
-							</button>
+						<DropdownMenuTrigger title="Channel Settings" className="p-2 rounded-lg text-zinc-400 hover:text-white hover:bg-white/5 transition-colors focus:outline-none">
+							<Settings className="w-5 h-5" />
 						</DropdownMenuTrigger>
 						<DropdownMenuContent align="end" className="bg-[#1e1e22] border-white/10 text-zinc-300 w-48 shadow-xl backdrop-blur-xl">
 							{/* EDIT ACTION */}

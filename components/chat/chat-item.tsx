@@ -7,13 +7,10 @@ import { cn } from "@/lib/utils";
 import React, { useCallback, useState } from "react";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { UserAvatar } from "../user/user-avatar";
-import { useMutation } from "@tanstack/react-query";
-import { useAction } from "next-safe-action/hooks";
-import { markMessageAsDeletedAction, pinMessageAction } from "@/actions/message";
+import { InfiniteData, useMutation, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { useModal } from "@/hooks/use-modal-store";
 import Link from "next/link";
-import { addReactionAction } from "@/actions/reaction";
 import { MessageReactions } from "./message-reactions";
 import { useChatStore } from "@/hooks/use-chat-store";
 import { ReplyToMessage } from "./reply-to-message";
@@ -22,13 +19,21 @@ import { ChatEditForm } from "./chat-edit-form";
 import { FileAttachment } from "@/schemas/file-attachement.base";
 import { MessageReaction } from "@/schemas/message-reaction.base";
 import { ChatType, MessageSender, ReplyMessageUI } from "@/schemas/composed/shared.base";
-import { MemberProfile } from "@/schemas/member";
+import { QUERY_KEYS } from "@/lib/query-keys";
 
+// ✅ Import BOTH sets of actions
+import { pinMessageAction as pinChannelMsg } from "@/actions/message";
+import { addReactionAction as reactChannelMsg } from "@/actions/reaction";
+
+import { pinDirectMessageAction as pinDMMsg } from "@/actions/direct-message";
+import { addDirectReactionAction as reactDMMsg } from "@/actions/reaction";
+import { ChannelMessage } from "@/schemas/message";
+import { DirectChatMessage } from "@/schemas/composed/direct-message.details";
 interface ChatItemProps {
 	id: string;
 	content: string;
 	sender: MessageSender;
-	currentMember: MemberProfile;
+	currentMember: MessageSender;
 	timestamp: string;
 	fileUrl: string | null; // deprecated
 	attachments: FileAttachment[];
@@ -48,22 +53,30 @@ const roleIconMap = {
 };
 
 export const ChatItem = React.memo(
-	function ChatItem({ id, content, sender, timestamp, fileUrl, deleted, currentMember, isUpdated, attachments = [], reactions, replyTo, pinned }: ChatItemProps) {
+	function ChatItem({ id, content, sender, timestamp, deleted, currentMember, isUpdated, attachments = [], reactions, replyTo, pinned, chatType, contextId }: ChatItemProps) {
+		const queryClient = useQueryClient();
 		const [isEditing, setIsEditing] = useState(false);
-		// const [editedContent, setEditedContent] = useState(content);
-
 		const isOptimistic = id.startsWith("optimistic-");
 
 		const onOpen = useModal((state) => state.onOpen);
 		const setReplyingTo = useChatStore((state) => state.setReplyingTo);
-		const isAdmin = currentMember.role === "ADMIN";
-		const isOwner = currentMember.profileId === sender.profileId;
-		const canDeleteMessage = !deleted && (isAdmin || isOwner);
 
-		const canEditMessage = !deleted && isOwner && !fileUrl;
+		// --- PERMISSIONS ---
+		const isAdmin = currentMember.role === "ADMIN";
+		const isModerator = currentMember.role === "MODERATOR";
+		const isOwner = currentMember.profileId === sender.profileId;
+
+		// Delete: Owner or Admin/Mod (if in channel)
+		const canDeleteMessage = !deleted && (isOwner || (chatType === "channel" && (isAdmin || isModerator)));
+		const canEditMessage = !deleted && isOwner;
+
+		// Pin: Anyone in DM, Admin/Mod in Channel
+		const canPinMessage = chatType === "conversation" || isAdmin || isModerator;
+
 		const hasAttachments = attachments && attachments.length > 0;
 		const hasContent = content && content.trim().length > 0;
-		const canPinMessage = currentMember.role === "ADMIN" || currentMember.role === "MODERATOR";
+
+		const queryKey = chatType === "channel" ? QUERY_KEYS.channel.messages(contextId) : QUERY_KEYS.dm.messages(contextId);
 
 		const handleReply = () => {
 			const replyMessage: ReplyMessageUI = {
@@ -76,78 +89,167 @@ export const ChatItem = React.memo(
 			setReplyingTo(replyMessage);
 		};
 
-		const { executeAsync: deleteMessage } = useAction(markMessageAsDeletedAction, {
-			onError: ({ error }) => {
-				toast.error(error.serverError || "Failed to delete message");
-			},
-		});
-
-		const { executeAsync: addReaction } = useAction(addReactionAction);
-
 		const reactionMutation = useMutation({
-			mutationFn: async (emoji: string) => {
-				const result = await addReaction({
-					messageId: id,
-					emoji,
-				});
+			mutationFn: async ({ emoji, optimisticId }: { emoji: string; optimisticId: string }) => {
+				const action = chatType === "channel" ? reactChannelMsg : reactDMMsg;
+				const result = await action({ messageId: id, emoji, optimisticId });
 
-				if (result?.serverError) {
-					throw new Error(result.serverError);
-				}
-
+				if (result?.serverError) throw new Error(result.serverError);
 				return result?.data;
 			},
-			onError: (error) => {
-				toast.error(error.message || "Failed to add reaction");
+			onMutate: async ({ emoji, optimisticId }, { client }) => {
+				await queryClient.cancelQueries({ queryKey });
+
+				type QueryDataShape = InfiniteData<ChannelMessage[] | DirectChatMessage[], Date | undefined>;
+
+				// 2. Snapshot the previous value
+				const previousMessages = queryClient.getQueryData<QueryDataShape>(queryKey);
+
+				// 3. Create Optimistic Reaction
+				const optimisticReaction: MessageReaction = {
+					id: optimisticId,
+					emoji: emoji,
+					profileId: currentMember.profileId,
+					messageId: chatType === "channel" ? id : null,
+					directMessageId: chatType === "conversation" ? id : null,
+					createdAt: new Date(),
+				};
+
+				// 4. Update Cache
+				queryClient.setQueryData<QueryDataShape>(queryKey, (oldData) => {
+					if (!oldData || !oldData.pages) return oldData; // ✅ Safe return
+
+					// Check if user already reacted with this emoji in the current UI state
+					// to prevent optimistic spamming
+					let alreadyReacted = false;
+
+					const newPages = oldData.pages.map((page) =>
+						page.map((msg) => {
+							if (msg.id === id) {
+								const existingReactions = msg.reactions || [];
+								alreadyReacted = existingReactions.some((r) => r.emoji === emoji && r.profileId === currentMember.profileId);
+
+								if (alreadyReacted) return msg;
+
+								return {
+									...msg,
+									reactions: [...existingReactions, optimisticReaction],
+								};
+							}
+							return msg;
+						}),
+					);
+
+					// If they already reacted, don't change the cache
+					if (alreadyReacted) return oldData;
+
+					return { ...oldData, pages: newPages };
+				});
+
+				return { previousMessages, optimisticId };
+			},
+
+			// We already added optimistic updates for this earlier, add onMutate here if needed!
+			onError: (error, variables, context) => {
+				// ❌ Rollback to the snapshot
+				if (context?.previousMessages) {
+					queryClient.setQueryData(queryKey, context.previousMessages);
+				}
+
+				// Only toast if it's not the "Already reacted" error, which is expected on rapid clicks
+				if (!error.message.includes("Already reacted")) {
+					toast.error("Failed to add reaction");
+				}
 			},
 		});
 
-		// ✅ Mutation
-		const { executeAsync: pinMessage } = useAction(pinMessageAction, {
-			onError: ({ error }) => toast.error(error.serverError || "Failed to pin"),
-			onSuccess: ({ data }) => {
-				const msg = data?.data.message.pinned ? "Message pinned" : "Message unpinned";
-				toast.success(msg);
+		const removeReactionMutation = useMutation({
+			mutationFn: async (emoji: string) => {
+				// You need to ensure you have a removeAction for both channel and DM
+				// Assuming you exported `removeReactionAction` and `removeDirectReactionAction`
+				const action = chatType === "channel" ? removeReactionAction : removeDirectReactionAction;
+				const result = await action({ messageId: id, emoji });
+
+				if (result?.serverError) throw new Error(result.serverError);
+				return result?.data;
+			},
+			onMutate: async (emoji: string) => {
+				await queryClient.cancelQueries({ queryKey });
+				const previousMessages = queryClient.getQueryData<QueryDataShape>(queryKey);
+
+				queryClient.setQueryData<QueryDataShape>(queryKey, (oldData) => {
+					if (!oldData || !oldData.pages) return oldData;
+
+					const newPages = oldData.pages.map((page) =>
+						page.map((msg) => {
+							if (msg.id === id) {
+								return {
+									...msg,
+									// Filter out the specific reaction from this user
+									reactions: (msg.reactions || []).filter((r) => !(r.emoji === emoji && r.profileId === currentMember.profileId)),
+								};
+							}
+							return msg;
+						}),
+					);
+
+					return { ...oldData, pages: newPages };
+				});
+
+				return { previousMessages };
+			},
+			onError: (error, variables, context) => {
+				if (context?.previousMessages) {
+					queryClient.setQueryData(queryKey, context.previousMessages);
+				}
+				toast.error("Failed to remove reaction");
 			},
 		});
 
-		// ✅ STABILIZE HANDLER
+		// 2. UPDATE THE CLICK HANDLER TO TOGGLE
 		const handleReactionClick = useCallback(
 			(emoji: string) => {
-				reactionMutation.mutate(emoji);
-			},
-			[reactionMutation],
-		);
+				// Prevent rapid clicking if a mutation is already running
+				if (reactionMutation.isPending || removeReactionMutation.isPending) return;
 
-		// Delete mutation
-		const deleteMutation = useMutation({
-			mutationFn: async () => {
-				const result = await deleteMessage({
-					messageId: id,
-				});
+				// Check if the user already reacted with this specific emoji
+				const hasReacted = reactions?.some((r) => r.emoji === emoji && r.profileId === currentMember.profileId);
 
-				if (result?.serverError) {
-					throw new Error(result.serverError);
+				if (hasReacted) {
+					// ✅ REMOVE REACTION
+					removeReactionMutation.mutate(emoji);
+				} else {
+					// ✅ ADD REACTION
+					const optimisticId = `optimistic-${crypto.randomUUID()}`;
+					reactionMutation.mutate({ emoji, optimisticId });
 				}
+			},
+			[reactionMutation, removeReactionMutation, reactions, currentMember.profileId],
+		);
+		// 2. PIN MUTATION
+		const pinMutation = useMutation({
+			mutationFn: async () => {
+				const action = chatType === "channel" ? pinChannelMsg : pinDMMsg;
+				const result = await action({ messageId: id });
 
+				if (result?.serverError) throw new Error(result.serverError);
 				return result?.data;
 			},
-			onSuccess: () => {
-				// ❌ REMOVE THIS - Pusher handles updates now!
-				// queryClient.invalidateQueries({ queryKey: ["messages"] });
-				// ✅ Optional: Show success toast
-				// toast.success("Message deleted");
+			onSuccess: (data) => {
+				// Data will be uniquely shaped depending on the action, but both have `message.pinned`
+				const isPinnedNow = data?.data.message?.pinned;
+				toast.success(isPinnedNow ? "Message pinned" : "Message unpinned");
 			},
-			onError: (error) => {
-				toast.error(error.message || "Failed to delete message");
-			},
+			onError: (error) => toast.error(error.message || "Failed to pin message"),
 		});
 
 		const handleDelete = () => {
-			// ✅ Add confirmation for better UX
-			if (confirm("Are you sure you want to delete this message?")) {
-				deleteMutation.mutate();
-			}
+			onOpen("deleteMessage", {
+				query: {
+					messageId: id,
+					chatType: chatType,
+				},
+			});
 		};
 
 		// ✅ 1. Navigation Logic
@@ -236,11 +338,13 @@ export const ChatItem = React.memo(
 						)}
 
 						{/* Render Reactions */}
-						{!deleted && <MessageReactions reactions={reactions ?? []} currentProfileId={currentMember.profile.id} onReactionClick={handleReactionClick} />}
+						{!deleted && <MessageReactions reactions={reactions ?? []} currentProfileId={currentMember.profileId} onReactionClick={handleReactionClick} />}
 						{/* Edit Mode */}
 
 						{/* ✅ EDIT MODE: Render the isolated form */}
-						{!deleted && isEditing && <ChatEditForm messageId={id} initialContent={content} onCancel={() => setIsEditing(false)} onSuccess={() => setIsEditing(false)} />}
+						{!deleted && isEditing && (
+							<ChatEditForm messageId={id} initialContent={content} onCancel={() => setIsEditing(false)} onSuccess={() => setIsEditing(false)} chatType={chatType} />
+						)}
 					</div>
 				</div>
 
@@ -250,7 +354,7 @@ export const ChatItem = React.memo(
 					canEditMessage={canEditMessage}
 					isDeleted={deleted}
 					isEditPending={isEditing}
-					isDeletePending={deleteMutation.isPending}
+					isDeletePending={false}
 					isOptimistic={isOptimistic}
 					onReply={handleReply}
 					onEdit={() => setIsEditing(true)}
@@ -258,7 +362,7 @@ export const ChatItem = React.memo(
 					onReaction={handleReactionClick}
 					canPinMessage={canPinMessage}
 					isPinned={pinned}
-					onPin={() => pinMessage({ messageId: id })}
+					onPin={() => pinMutation.mutate()}
 				/>
 			</div>
 		);

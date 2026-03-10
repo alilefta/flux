@@ -2,38 +2,35 @@
 
 import { useState, useEffect } from "react";
 import { useMutation } from "@tanstack/react-query";
-import { useAction } from "next-safe-action/hooks";
 import { editMessageAction } from "@/actions/message";
 import { toast } from "sonner";
 import TextareaAutoSize from "react-textarea-autosize";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
+import { editDirectMessageAction } from "@/actions/direct-message";
+import { ChatType } from "@/schemas/composed/shared.base";
 
 interface ChatEditFormProps {
 	messageId: string;
 	initialContent: string;
 	onCancel: () => void;
 	onSuccess: () => void;
+	chatType: ChatType;
 }
 
-export const ChatEditForm = ({ messageId, initialContent, onCancel, onSuccess }: ChatEditFormProps) => {
+export const ChatEditForm = ({ messageId, initialContent, onCancel, onSuccess, chatType }: ChatEditFormProps) => {
 	const [content, setContent] = useState(initialContent);
 
-	const { executeAsync: editMessage } = useAction(editMessageAction, {
-		onError: ({ error }) => {
-			toast.error(error.serverError || "Failed to update message");
-		},
-	});
-
-	const mutation = useMutation({
+	const editMutation = useMutation({
 		mutationFn: async () => {
-			const result = await editMessage({ messageId, content });
+			// ✅ Dynamic Routing
+			const action = chatType === "channel" ? editMessageAction : editDirectMessageAction;
+			const result = await action({ messageId, content });
+
 			if (result?.serverError) throw new Error(result.serverError);
+			return result?.data;
 		},
-		onSuccess: () => {
-			onSuccess();
-			toast.success("Updated");
-		},
+		onSuccess: () => onSuccess(),
 		onError: (error) => toast.error(error.message),
 	});
 
@@ -42,7 +39,7 @@ export const ChatEditForm = ({ messageId, initialContent, onCancel, onSuccess }:
 			onCancel();
 			return;
 		}
-		mutation.mutate();
+		editMutation.mutate();
 	};
 
 	// Handle Keys (Esc / Enter)
@@ -62,7 +59,7 @@ export const ChatEditForm = ({ messageId, initialContent, onCancel, onSuccess }:
 			<div
 				className={cn(
 					"relative w-full rounded-xl bg-[#09090b] border ring-1 overflow-hidden shadow-sm transition-all",
-					mutation.isPending ? "border-white/10 ring-transparent opacity-50 cursor-not-allowed" : "border-indigo-500/30 ring-indigo-500/20",
+					editMutation.isPending ? "border-white/10 ring-transparent opacity-50 cursor-not-allowed" : "border-indigo-500/30 ring-indigo-500/20",
 				)}
 			>
 				<TextareaAutoSize
@@ -70,7 +67,7 @@ export const ChatEditForm = ({ messageId, initialContent, onCancel, onSuccess }:
 					maxRows={10}
 					value={content}
 					onChange={(e) => setContent(e.target.value)}
-					disabled={mutation.isPending}
+					disabled={editMutation.isPending}
 					className="p-3 bg-transparent text-zinc-200 w-full text-[15px] focus:outline-none resize-none font-sans leading-relaxed"
 					onKeyDown={(e) => {
 						if (e.key === "Enter" && !e.shiftKey) {
@@ -97,11 +94,11 @@ export const ChatEditForm = ({ messageId, initialContent, onCancel, onSuccess }:
 				<Button
 					size="sm"
 					variant="default"
-					disabled={mutation.isPending || !content.trim()}
+					disabled={editMutation.isPending || !content.trim()}
 					onClick={handleSave}
 					className="ml-auto h-6 text-[10px] bg-indigo-600 hover:bg-indigo-700 text-white px-3 py-0"
 				>
-					{mutation.isPending ? "Saving..." : "Save"}
+					{editMutation.isPending ? "Saving..." : "Save"}
 				</Button>
 			</div>
 		</div>

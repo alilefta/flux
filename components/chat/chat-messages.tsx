@@ -16,6 +16,7 @@ import { MessageReaction } from "@/schemas/message-reaction.base";
 import { ChatType, ReplyMessageUI } from "@/schemas/composed/shared.base";
 import { memberToSender } from "@/lib/chat-adapters";
 import { useChannelMessagesQuery } from "@/hooks/use-chat-query";
+import { QUERY_KEYS } from "@/lib/query-keys";
 
 const DATE_FORMAT = "d MMM yyyy, HH:mm";
 
@@ -33,32 +34,6 @@ export interface ChatMessagesHandle {
 	jumpToMessage: (messageId: string) => void;
 }
 
-// ✅ Add whyDidYouRender tracking
-// function useWhyDidYouRender(componentName: string, props: any) {
-// 	const previousProps = useRef<any | null>(null);
-
-// 	useEffect(() => {
-// 		if (previousProps.current) {
-// 			const allKeys = Object.keys({ ...previousProps.current, ...props });
-// 			const changedProps: any = {};
-
-// 			allKeys.forEach((key) => {
-// 				if (previousProps.current[key] !== props[key]) {
-// 					changedProps[key] = {
-// 						from: previousProps.current[key],
-// 						to: props[key],
-// 					};
-// 				}
-// 			});
-
-// 			if (Object.keys(changedProps).length > 0) {
-// 				console.log(`🔍 ${componentName} re-rendered because:`, changedProps);
-// 			}
-// 		}
-
-// 		previousProps.current = props;
-// 	});
-// }
 export const ChatMessages = memo(
 	forwardRef<ChatMessagesHandle, ChatMessagesProps>(({ name, member, channelId, serverId }, ref) => {
 		console.log("🔄 ChatMessages rendered");
@@ -77,6 +52,8 @@ export const ChatMessages = memo(
 
 		const queryClient = useQueryClient();
 		const [newMessageCount, setNewMessageCount] = useState(0);
+
+		const channelQueryKey = QUERY_KEYS.channel.messages(channelId);
 
 		// Use a ref for immediate access inside event listeners
 		const isAtBottomRef = useRef(true);
@@ -304,7 +281,7 @@ export const ChatMessages = memo(
 					content: newMessage.content.slice(0, 50),
 				});
 
-				queryClient.setQueryData<QueryDataShape>(["messages", channelId], (oldData: QueryDataShape | undefined) => {
+				queryClient.setQueryData<QueryDataShape>(channelQueryKey, (oldData: QueryDataShape | undefined) => {
 					if (!oldData || !oldData.pages) return oldData;
 
 					let replaced = false;
@@ -391,7 +368,7 @@ export const ChatMessages = memo(
 				});
 			};
 			const handleMessageUpdate = (updatedMessage: ChannelMessage) => {
-				queryClient.setQueryData<QueryDataShape>(["messages", channelId], (oldData: QueryDataShape | undefined) => {
+				queryClient.setQueryData<QueryDataShape>(channelQueryKey, (oldData: QueryDataShape | undefined) => {
 					if (!oldData?.pages) return oldData;
 
 					const newPages = oldData.pages.map((page: ChannelMessage[]) => page.map((msg) => (msg.id === updatedMessage.id ? updatedMessage : msg)));
@@ -404,7 +381,7 @@ export const ChatMessages = memo(
 			};
 
 			const handleMessageDelete = (deletedMessage: ChannelMessage) => {
-				queryClient.setQueryData<QueryDataShape>(["messages", channelId], (oldData: QueryDataShape | undefined) => {
+				queryClient.setQueryData<QueryDataShape>(channelQueryKey, (oldData: QueryDataShape | undefined) => {
 					if (!oldData?.pages) return oldData;
 
 					const newPages = oldData.pages.map((page: ChannelMessage[]) => page.map((msg) => (msg.id === deletedMessage.id ? deletedMessage : msg)));
@@ -416,17 +393,35 @@ export const ChatMessages = memo(
 				});
 			};
 
-			const handleAddReaction = (reaction: MessageReaction) => {
-				queryClient.setQueryData<QueryDataShape>(["messages", channelId], (oldData: QueryDataShape | undefined) => {
+			const handleAddReaction = ({ reaction, optimisticId }: { reaction: MessageReaction; optimisticId?: string }) => {
+				queryClient.setQueryData<QueryDataShape>(channelQueryKey, (oldData: QueryDataShape | undefined) => {
 					if (!oldData?.pages) return oldData;
 
 					const newPages = oldData.pages.map((page) =>
 						page.map((msg) => {
-							if (msg.id === reaction.messageId) {
-								return {
-									...msg,
-									reactions: [...(msg.reactions || []), reaction],
-								};
+							// ✅ Handle both Channel and DM message IDs
+							const targetMessageId = reaction.messageId || reaction.directMessageId;
+
+							if (msg.id === targetMessageId) {
+								const existingReactions = msg.reactions || [];
+
+								// ✅ Check if we already added this optimistically
+								// We check by optimisticId OR (emoji + profileId) just to be safe
+								const isOptimisticPresent = existingReactions.some((r) => r.id === optimisticId || (r.emoji === reaction.emoji && r.profileId === reaction.profileId));
+
+								if (isOptimisticPresent) {
+									// 🔄 SWAP: Replace the fake reaction with the real DB reaction
+									return {
+										...msg,
+										reactions: existingReactions.map((r) => (r.id === optimisticId || (r.emoji === reaction.emoji && r.profileId === reaction.profileId) ? reaction : r)),
+									};
+								} else {
+									// ➕ APPEND: It's a new reaction from someone else
+									return {
+										...msg,
+										reactions: [...existingReactions, reaction],
+									};
+								}
 							}
 							return msg;
 						}),
@@ -436,7 +431,7 @@ export const ChatMessages = memo(
 				});
 			};
 			const handleRemoveReaction = (data: { messageId: string; emoji: string; profileId: string }) => {
-				queryClient.setQueryData<QueryDataShape>(["messages", channelId], (oldData: QueryDataShape | undefined) => {
+				queryClient.setQueryData<QueryDataShape>(channelQueryKey, (oldData: QueryDataShape | undefined) => {
 					if (!oldData?.pages) return oldData;
 
 					const newPages = oldData.pages.map((page) =>
@@ -467,7 +462,7 @@ export const ChatMessages = memo(
 				channel.unbind_all();
 				pusherClient.unsubscribe(channelName);
 			};
-		}, [channelId, queryClient, jumpMode.active, scrollToBottomCallback]);
+		}, [channelId, queryClient, jumpMode.active, scrollToBottomCallback, channelQueryKey]);
 
 		if (isLoading) {
 			return (
@@ -548,7 +543,7 @@ export const ChatMessages = memo(
 
 								<ChatItem
 									id={message.id}
-									currentMember={member}
+									currentMember={memberToSender(member)}
 									attachments={message.attachments}
 									sender={memberToSender(message.member)}
 									content={message.content}

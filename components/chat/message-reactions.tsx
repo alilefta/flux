@@ -3,8 +3,8 @@
 
 import { cn } from "@/lib/utils";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
-import { MessageReaction } from "@/schemas/message";
 import React from "react";
+import { MessageReaction } from "@/schemas/message-reaction.base";
 
 interface MessageReactionsProps {
 	reactions: MessageReaction[];
