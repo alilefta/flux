@@ -110,7 +110,7 @@ export type GetDirectMessageInput = z.infer<typeof GetDirectMessageInputSchema>;
 // ✅ Reaction Input Schemas
 export const AddDirectMessageReactionSchema = z.object({
 	messageId: z.uuid(),
-	optimisticId: z.uuid(),
+	optimisticId: z.string(),
 	emoji: z.string().min(1).max(10),
 });
 
