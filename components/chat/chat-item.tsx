@@ -23,12 +23,12 @@ import { QUERY_KEYS } from "@/lib/query-keys";
 
 // ✅ Import BOTH sets of actions
 import { pinMessageAction as pinChannelMsg } from "@/actions/message";
-import { addReactionAction as reactChannelMsg } from "@/actions/reaction";
+import { addReactionAction as reactChannelMsg, addDirectReactionAction as reactDMMsg, removeDirectReactionAction, removeReactionAction } from "@/actions/reaction";
 
 import { pinDirectMessageAction as pinDMMsg } from "@/actions/direct-message";
-import { addDirectReactionAction as reactDMMsg } from "@/actions/reaction";
 import { ChannelMessage } from "@/schemas/message";
 import { DirectChatMessage } from "@/schemas/composed/direct-message.details";
+import { handleSafeActionError } from "@/lib/safe-action-helpers";
 interface ChatItemProps {
 	id: string;
 	content: string;
@@ -51,6 +51,8 @@ const roleIconMap = {
 	MODERATOR: <ShieldCheck className="h-3.5 w-3.5 text-indigo-400" />,
 	ADMIN: <ShieldAlert className="h-3.5 w-3.5 text-rose-500" />,
 };
+
+type QueryDataShape = InfiniteData<ChannelMessage[] | DirectChatMessage[], Date | undefined>;
 
 export const ChatItem = React.memo(
 	function ChatItem({ id, content, sender, timestamp, deleted, currentMember, isUpdated, attachments = [], reactions, replyTo, pinned, chatType, contextId }: ChatItemProps) {
@@ -95,12 +97,12 @@ export const ChatItem = React.memo(
 				const result = await action({ messageId: id, emoji, optimisticId });
 
 				if (result?.serverError) throw new Error(result.serverError);
+
+				handleSafeActionError<typeof action>({ serverError: result.serverError, validationErrors: result.validationErrors });
 				return result?.data;
 			},
-			onMutate: async ({ emoji, optimisticId }, { client }) => {
+			onMutate: async ({ emoji, optimisticId }) => {
 				await queryClient.cancelQueries({ queryKey });
-
-				type QueryDataShape = InfiniteData<ChannelMessage[] | DirectChatMessage[], Date | undefined>;
 
 				// 2. Snapshot the previous value
 				const previousMessages = queryClient.getQueryData<QueryDataShape>(queryKey);
@@ -143,7 +145,7 @@ export const ChatItem = React.memo(
 					// If they already reacted, don't change the cache
 					if (alreadyReacted) return oldData;
 
-					return { ...oldData, pages: newPages };
+					return { ...oldData, pages: newPages } as QueryDataShape;
 				});
 
 				return { previousMessages, optimisticId };
@@ -151,7 +153,6 @@ export const ChatItem = React.memo(
 
 			// We already added optimistic updates for this earlier, add onMutate here if needed!
 			onError: (error, variables, context) => {
-				// ❌ Rollback to the snapshot
 				if (context?.previousMessages) {
 					queryClient.setQueryData(queryKey, context.previousMessages);
 				}
@@ -160,6 +161,8 @@ export const ChatItem = React.memo(
 				if (!error.message.includes("Already reacted")) {
 					toast.error("Failed to add reaction");
 				}
+
+				console.error("[Add-Reaction-Mutation-Error]:", error);
 			},
 		});
 
@@ -171,6 +174,9 @@ export const ChatItem = React.memo(
 				const result = await action({ messageId: id, emoji });
 
 				if (result?.serverError) throw new Error(result.serverError);
+
+				handleSafeActionError<typeof action>({ serverError: result.serverError, validationErrors: result.validationErrors });
+
 				return result?.data;
 			},
 			onMutate: async (emoji: string) => {
@@ -193,7 +199,7 @@ export const ChatItem = React.memo(
 						}),
 					);
 
-					return { ...oldData, pages: newPages };
+					return { ...oldData, pages: newPages } as QueryDataShape;
 				});
 
 				return { previousMessages };
@@ -210,16 +216,23 @@ export const ChatItem = React.memo(
 		const handleReactionClick = useCallback(
 			(emoji: string) => {
 				// Prevent rapid clicking if a mutation is already running
-				if (reactionMutation.isPending || removeReactionMutation.isPending) return;
+				if (reactionMutation.isPending || removeReactionMutation.isPending) {
+					console.log("Add reaction handler cancelled!");
+					return;
+				}
 
 				// Check if the user already reacted with this specific emoji
 				const hasReacted = reactions?.some((r) => r.emoji === emoji && r.profileId === currentMember.profileId);
 
 				if (hasReacted) {
 					// ✅ REMOVE REACTION
+					console.log("Add reaction handler - Remove reaction");
+
 					removeReactionMutation.mutate(emoji);
 				} else {
 					// ✅ ADD REACTION
+					console.log("Add reaction handler - Add reaction");
+
 					const optimisticId = `optimistic-${crypto.randomUUID()}`;
 					reactionMutation.mutate({ emoji, optimisticId });
 				}

@@ -9,6 +9,7 @@ import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { editDirectMessageAction } from "@/actions/direct-message";
 import { ChatType } from "@/schemas/composed/shared.base";
+import { handleSafeActionError } from "@/lib/safe-action-helpers";
 
 interface ChatEditFormProps {
 	messageId: string;
@@ -28,6 +29,8 @@ export const ChatEditForm = ({ messageId, initialContent, onCancel, onSuccess, c
 			const result = await action({ messageId, content });
 
 			if (result?.serverError) throw new Error(result.serverError);
+			handleSafeActionError<typeof action>({ serverError: result.serverError, validationErrors: result.validationErrors });
+
 			return result?.data;
 		},
 		onSuccess: () => onSuccess(),

@@ -13,6 +13,8 @@ import { EmojiPopover } from "./emoji-popover";
 import { useModal } from "@/hooks/use-modal-store";
 import { useChatStore } from "@/hooks/use-chat-store";
 import { cn } from "@/lib/utils";
+import { QUERY_KEYS } from "@/lib/query-keys";
+import { handleSafeActionError } from "@/lib/safe-action-helpers";
 
 interface ChatInputProps {
 	placeholder?: string;
@@ -30,8 +32,8 @@ export const ChatInput = ({ placeholder, channelId, name, member }: ChatInputPro
 
 	const [message, setMessage] = useState("");
 	const queryClient = useQueryClient();
-
 	const [openEmojiPicker, setOpenEmojiPicker] = useState(false);
+	const queryKey = QUERY_KEYS.channel.messages(channelId);
 
 	const { executeAsync: sendMessage } = useAction(sendMessageAction, {
 		onError: ({ error }) => {
@@ -58,15 +60,17 @@ export const ChatInput = ({ placeholder, channelId, name, member }: ChatInputPro
 				throw new Error(result.serverError);
 			}
 
+			handleSafeActionError<typeof sendMessageAction>({ serverError: result.serverError, validationErrors: result.validationErrors });
+
 			return result?.data;
 		},
 		// optimistic UI update
 		onMutate: async ({ content, optimisticId }, context) => {
 			// Cancel outgoing queries
-			await context.client.cancelQueries({ queryKey: ["messages", channelId] });
+			await context.client.cancelQueries({ queryKey });
 
 			// Snapshot previous state
-			const previousMessages = queryClient.getQueryData<QueryDataShape>(["messages", channelId]);
+			const previousMessages = queryClient.getQueryData<QueryDataShape>(queryKey);
 
 			const replyingToPayload: ChannelMessage["replyTo"] | null = replyingTo
 				? {
@@ -120,7 +124,7 @@ export const ChatInput = ({ placeholder, channelId, name, member }: ChatInputPro
 			};
 
 			// Add optimistic message
-			queryClient.setQueryData<QueryDataShape>(["messages", channelId], (oldData) => {
+			queryClient.setQueryData<QueryDataShape>(queryKey, (oldData) => {
 				if (!oldData?.pages) return oldData;
 
 				// const firstPage = oldData.pages[0];
@@ -155,7 +159,7 @@ export const ChatInput = ({ placeholder, channelId, name, member }: ChatInputPro
 
 			// Rollback
 			if (context?.previousMessages) {
-				queryClient.setQueryData(["messages", channelId], context.previousMessages);
+				queryClient.setQueryData(queryKey, context.previousMessages);
 			}
 		},
 	});

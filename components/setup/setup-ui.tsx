@@ -17,6 +17,7 @@ type JoinServerActionResults = InferSafeActionFnResult<typeof joinServerAction>;
 
 export const SetupUI = () => {
 	const onOpen = useModal((state) => state.onOpen);
+	const onClose = useModal((state) => state.onClose);
 	const router = useRouter();
 	const [inviteCode, setInviteCode] = useState("");
 
@@ -28,6 +29,7 @@ export const SetupUI = () => {
 		onSuccess: (data) => {
 			if (data?.data?.success && data.data.serverId) {
 				router.push(`/servers/${data.data.serverId}`);
+				onClose();
 			}
 		},
 		onError: ({ error }) => handleActionError(error),

@@ -22,7 +22,10 @@ export const ServerHeader = ({ server, role }: ServerHeaderProps) => {
 
 	return (
 		<DropdownMenu>
-			<DropdownMenuTrigger className="w-full h-12 font-semibold px-4 flex items-center justify-between border-b border-white/5 hover:bg-white/5 transition-colors group focus:outline-none">
+			<DropdownMenuTrigger
+				suppressHydrationWarning
+				className="w-full h-12 font-semibold px-4 flex items-center justify-between border-b border-white/5 hover:bg-white/5 transition-colors group focus:outline-none"
+			>
 				<span className="truncate text-white text-sm font-bold">{server.name}</span>
 				<ChevronDown className="h-4 w-4 text-zinc-500 group-hover:text-zinc-300 transition-transform duration-200 group-data-[state=open]:rotate-180" />
 			</DropdownMenuTrigger>

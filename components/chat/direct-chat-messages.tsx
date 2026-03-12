@@ -154,6 +154,14 @@ export const DirectChatMessages = memo(
 			toast.info("Returned to latest messages");
 		}, [conversationId, queryClient]);
 
+		const replaceMessageDOMId = useCallback((id: string, optimisticId?: string) => {
+			if (!optimisticId) return;
+			const message = document.getElementById(`message-${optimisticId}`);
+			if (message) {
+				message.id = `message-${id}`;
+			}
+		}, []);
+
 		// --- EFFECTS: Jump Mode Handling ---
 		useEffect(() => {
 			if (!jumpMode.active || !jumpMode.targetMessageId || messages.length === 0) return;
@@ -360,6 +368,8 @@ export const DirectChatMessages = memo(
 						setNewMessageCount((prev) => prev + 1);
 					}
 
+					replaceMessageDOMId(newMessage.id, newMessage.optimisticClientId);
+
 					return {
 						...oldData,
 						pages: newPages,
@@ -393,36 +403,50 @@ export const DirectChatMessages = memo(
 			};
 
 			const handleAddReaction = ({ reaction, optimisticId }: { reaction: MessageReaction; optimisticId?: string }) => {
-				queryClient.setQueryData<QueryDataShape>(conversationQueryKey, (oldData: QueryDataShape | undefined) => {
+				console.log("📡 Pusher REACTION_ADD:", {
+					reactionId: reaction.id,
+					optimisticId,
+					emoji: reaction.emoji,
+				});
+
+				queryClient.setQueryData<QueryDataShape>(conversationQueryKey, (oldData) => {
 					if (!oldData?.pages) return oldData;
 
 					const newPages = oldData.pages.map((page) =>
 						page.map((msg) => {
-							// ✅ Handle both Channel and DM message IDs
+							// ✅ Match by messageId OR directMessageId
 							const targetMessageId = reaction.messageId || reaction.directMessageId;
+							if (msg.id !== targetMessageId) return msg;
 
-							if (msg.id === targetMessageId) {
-								const existingReactions = msg.reactions || [];
+							const existingReactions = msg.reactions || [];
 
-								// ✅ Check if we already added this optimistically
-								// We check by optimisticId OR (emoji + profileId) just to be safe
-								const isOptimisticPresent = existingReactions.some((r) => r.id === optimisticId || (r.emoji === reaction.emoji && r.profileId === reaction.profileId));
+							// ✅ CASE 1: Replace optimistic with real
+							if (optimisticId) {
+								const hasOptimistic = existingReactions.some((r) => r.id === optimisticId);
 
-								if (isOptimisticPresent) {
-									// 🔄 SWAP: Replace the fake reaction with the real DB reaction
+								if (hasOptimistic) {
+									console.log("🔄 Replacing optimistic:", optimisticId, "with real:", reaction.id);
 									return {
 										...msg,
-										reactions: existingReactions.map((r) => (r.id === optimisticId || (r.emoji === reaction.emoji && r.profileId === reaction.profileId) ? reaction : r)),
-									};
-								} else {
-									// ➕ APPEND: It's a new reaction from someone else
-									return {
-										...msg,
-										reactions: [...existingReactions, reaction],
+										reactions: existingReactions.map((r) => (r.id === optimisticId ? reaction : r)),
 									};
 								}
 							}
-							return msg;
+
+							// ✅ CASE 2: Check if real reaction already exists (prevent duplicates)
+							const realExists = existingReactions.some((r) => r.id === reaction.id);
+
+							if (realExists) {
+								console.log("⚠️ Real reaction already exists, skipping:", reaction.id);
+								return msg;
+							}
+
+							// ✅ CASE 3: New reaction from another user
+							console.log("➕ Adding new reaction from other user:", reaction.id);
+							return {
+								...msg,
+								reactions: [...existingReactions, reaction],
+							};
 						}),
 					);
 
@@ -461,7 +485,7 @@ export const DirectChatMessages = memo(
 				conversation.unbind_all();
 				pusherClient.unsubscribe(conversationName);
 			};
-		}, [conversationId, queryClient, jumpMode.active, scrollToBottomCallback, conversationQueryKey]);
+		}, [conversationId, queryClient, jumpMode.active, scrollToBottomCallback, conversationQueryKey, replaceMessageDOMId]);
 
 		if (isLoading) {
 			return (
