@@ -14,6 +14,7 @@ export const addReactionAction = actionClientWithProfile
 	.inputSchema(AddReactionSchema)
 	.action(async ({ ctx, parsedInput }) => {
 		const { messageId, emoji, optimisticId } = parsedInput;
+		console.log("Add-Reaction-Action Called:", parsedInput);
 
 		// Get message
 		const message = await prisma.message.findUnique({
@@ -40,6 +41,8 @@ export const addReactionAction = actionClientWithProfile
 
 		// If already reacted, remove it (toggle)
 		if (existingReaction) {
+			console.log("Reaction already exists!");
+
 			await prisma.messageReaction.delete({
 				where: { id: existingReaction.id },
 			});
@@ -53,6 +56,7 @@ export const addReactionAction = actionClientWithProfile
 
 			return { success: true, data: { removed: true } };
 		}
+		console.log("Reaction Doesn't exists!");
 
 		try {
 			// Add new reaction
