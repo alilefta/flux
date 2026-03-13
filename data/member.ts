@@ -9,6 +9,15 @@ export async function getCurrentMemberByServerAndProfileId(serverId: string, pro
 	});
 }
 
+export async function getMemberByServerAndProfileId(serverId: string, profileId: string) {
+	return await prisma.member.findFirst({
+		where: {
+			serverId: serverId,
+			profileId: profileId,
+		},
+	});
+}
+
 export async function getMemberByProfileId(profileId: string) {
 	return await prisma.member.findFirst({
 		where: {

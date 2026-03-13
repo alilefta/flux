@@ -16,6 +16,7 @@ const makeSchema = () => z.object({
   description: z.union([SortOrderSchema, z.lazy(() => SortOrderInputObjectSchema)]).optional(),
   memberCount: SortOrderSchema.optional(),
   profileId: SortOrderSchema.optional(),
+  isPublic: SortOrderSchema.optional(),
   createdAt: SortOrderSchema.optional(),
   updatedAt: SortOrderSchema.optional(),
   profile: z.lazy(() => ProfileOrderByWithRelationInputObjectSchema).optional(),

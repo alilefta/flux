@@ -10,6 +10,7 @@ const makeSchema = () => z.object({
   description: SortOrderSchema.optional(),
   memberCount: SortOrderSchema.optional(),
   profileId: SortOrderSchema.optional(),
+  isPublic: SortOrderSchema.optional(),
   createdAt: SortOrderSchema.optional(),
   updatedAt: SortOrderSchema.optional()
 }).strict();

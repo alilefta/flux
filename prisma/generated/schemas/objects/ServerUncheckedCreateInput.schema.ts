@@ -13,6 +13,7 @@ const makeSchema = () => z.object({
   description: z.string().optional().nullable(),
   memberCount: z.number().int().optional(),
   profileId: z.string(),
+  isPublic: z.boolean().optional(),
   createdAt: z.coerce.date().optional(),
   members: z.lazy(() => MemberUncheckedCreateNestedManyWithoutServerInputObjectSchema).optional(),
   channels: z.lazy(() => ChannelUncheckedCreateNestedManyWithoutServerInputObjectSchema).optional(),

@@ -19,6 +19,7 @@ const makeSchema = () => z.object({
   members: z.union([z.boolean(), z.lazy(() => MemberFindManySchema)]).optional(),
   channels: z.union([z.boolean(), z.lazy(() => ChannelFindManySchema)]).optional(),
   categories: z.union([z.boolean(), z.lazy(() => ChannelCategoryFindManySchema)]).optional(),
+  isPublic: z.boolean().optional(),
   auditLog: z.union([z.boolean(), z.lazy(() => AuditLogFindManySchema)]).optional(),
   createdAt: z.boolean().optional(),
   updatedAt: z.boolean().optional(),

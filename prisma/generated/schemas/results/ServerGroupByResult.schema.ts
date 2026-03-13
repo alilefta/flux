@@ -7,6 +7,7 @@ export const ServerGroupByResultSchema = z.array(z.object({
   description: z.string(),
   memberCount: z.number().int(),
   profileId: z.string(),
+  isPublic: z.boolean(),
   createdAt: z.date(),
   updatedAt: z.date(),
   _count: z.object({
@@ -21,6 +22,7 @@ export const ServerGroupByResultSchema = z.array(z.object({
     members: z.number(),
     channels: z.number(),
     categories: z.number(),
+    isPublic: z.number(),
     auditLog: z.number(),
     createdAt: z.number(),
     updatedAt: z.number()

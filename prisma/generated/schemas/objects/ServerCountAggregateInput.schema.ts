@@ -10,6 +10,7 @@ const makeSchema = () => z.object({
   description: z.literal(true).optional(),
   memberCount: z.literal(true).optional(),
   profileId: z.literal(true).optional(),
+  isPublic: z.literal(true).optional(),
   createdAt: z.literal(true).optional(),
   updatedAt: z.literal(true).optional(),
   _all: z.literal(true).optional()

@@ -76,6 +76,8 @@ model Server {
   channels   Channel[]
   categories ChannelCategory[] // ✅ Channel organization
 
+  isPublic   Boolean    @default(false) // for showing public servers for new users on landing page
+
   auditLog   AuditLog[]     // many audit records per server
 
   createdAt DateTime @default(now())

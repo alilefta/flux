@@ -12,6 +12,7 @@ export const ServerModelSchema = z.object({
     members: z.array(z.unknown()),
     channels: z.array(z.unknown()),
     categories: z.array(z.unknown()),
+    isPublic: z.boolean(),
     auditLog: z.array(z.unknown()),
     createdAt: z.date(),
     updatedAt: z.date()

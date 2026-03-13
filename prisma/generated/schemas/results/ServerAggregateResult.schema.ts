@@ -11,6 +11,7 @@ export const ServerAggregateResultSchema = z.object({  _count: z.object({
     members: z.number(),
     channels: z.number(),
     categories: z.number(),
+    isPublic: z.number(),
     auditLog: z.number(),
     createdAt: z.number(),
     updatedAt: z.number()
