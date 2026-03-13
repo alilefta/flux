@@ -100,3 +100,19 @@ export async function getServerByIniteCode(inviteCode: string) {
 	});
 	return server;
 }
+export async function getPublicServers() {
+	return await prisma.server.findMany({
+		where: {
+			isPublic: true,
+		},
+		include: {
+			_count: {
+				select: { members: true },
+			},
+		},
+		orderBy: {
+			members: { _count: "desc" }, // Order by most popular
+		},
+		take: 6,
+	});
+}

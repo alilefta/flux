@@ -101,7 +101,7 @@ export const updateServerAction = actionClientWithProfile
 	.metadata({ actionName: "update-server-action" })
 	.inputSchema(UpdateServerSchema)
 	.action(async ({ parsedInput, ctx: { profile } }) => {
-		const { name, imageUrl, serverId } = parsedInput;
+		const { name, imageUrl, serverId, isPublic } = parsedInput;
 
 		if (!serverId) {
 			throw new ActionError("Server ID is missing", "INVALID_INPUT", 400);
@@ -112,11 +112,6 @@ export const updateServerAction = actionClientWithProfile
 				serverId,
 				profileId: profile.id,
 			},
-		});
-
-		console.info("INFO:========", {
-			profile: profile,
-			server_data: parsedInput,
 		});
 
 		const isAdmin = member?.role === "ADMIN";
@@ -133,6 +128,7 @@ export const updateServerAction = actionClientWithProfile
 				data: {
 					name,
 					imageUrl,
+					isPublic,
 				},
 			});
 

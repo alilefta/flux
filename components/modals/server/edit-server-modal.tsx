@@ -116,6 +116,22 @@ export const EditServerModal = () => {
 								name="name"
 								render={({ field, fieldState }) => <FluxInput field={field} fieldState={fieldState} nameInSchema="name" fieldTitle="Server Name" placeholder="Enter server name" />}
 							/>
+
+							{/* <FormField
+								control={control}
+								name="isPublic"
+								render={({ field }) => (
+									<FormItem className="flex flex-row items-center justify-between rounded-xl border border-white/10 bg-black/20 p-4 mt-4">
+										<div className="space-y-0.5">
+											<FormLabel className="text-base font-bold text-white">Public Server</FormLabel>
+											<p className="text-xs text-zinc-400">Allow anyone to discover and join this workspace from the homepage.</p>
+										</div>
+										<FormControl>
+											<Switch checked={field.value} onCheckedChange={field.onChange} disabled={isLoading} className="data-[state=checked]:bg-indigo-500" />
+										</FormControl>
+									</FormItem>
+								)}
+							/> */}
 						</div>
 
 						<DialogFooter className="bg-zinc-900/50 px-6 py-4 border-t border-white/5">

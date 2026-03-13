@@ -70,6 +70,7 @@ export const UpdateServerSchema = z.object({
 	name: z.string().min(1).max(100).optional(),
 	imageUrl: z.url(),
 	serverId: z.uuid(),
+	isPublic: z.boolean().default(false), // ✅ ADD THIS
 });
 
 export type UpdateServerInput = z.infer<typeof UpdateServerSchema>;
